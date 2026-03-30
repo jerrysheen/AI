@@ -1,0 +1,61 @@
+# Sider CLI Wrapper
+
+This wrapper sends a message to the logged-in Sider web app by talking directly to Chrome's remote debugging endpoint.
+
+## Files
+
+- `config/sider-chat.json`: site and browser behavior.
+- `scripts/sider/init-sider-profile.ps1`: one-time dedicated profile launcher.
+- `scripts/sider/ask-sider.js`: zero-dependency Node script that drives Chrome through the DevTools Protocol.
+- `scripts/sider/ask-sider.ps1`: normal entrypoint script.
+- `scripts/ask-sider.ps1`: compatibility wrapper for older callers.
+
+## One-Time Setup
+
+Run this once to create and open the dedicated automation Chrome profile:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\init-sider-profile.ps1
+```
+
+Then in that Chrome window:
+
+1. Log in to your Google / Sider account.
+2. Confirm `https://sider.ai/zh-CN/chat` opens normally.
+3. Close the browser when you are done.
+
+The login state will stay in `F:\AI\.chrome-sider-profile`.
+
+## Daily Usage
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ask-sider.ps1 "帮我总结今天的工作计划"
+```
+
+Print structured JSON instead of plain reply text:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ask-sider.ps1 "帮我总结今天的工作计划" -AsJson
+```
+
+Skip browser cleanup if you do not want the script to close existing browsers:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ask-sider.ps1 "帮我总结今天的工作计划" -SkipBrowserCleanup
+```
+
+## Behavior
+
+1. Optionally kills common browser processes.
+2. Starts one dedicated Chrome with `F:\AI\.chrome-sider-profile`.
+3. Enables remote debugging on port `9222`.
+4. Runs `scripts/sider/ask-sider.js`.
+5. The Node script reuses an existing Sider chat tab when available, sends the message, waits for a reply, and returns structured output.
+
+## Notes
+
+- This flow does not use `codex exec`.
+- It also does not rely on your default Chrome profile.
+- The default output is only the assistant reply text. Use `-AsJson` for the full payload.
+- The helper uses DOM heuristics to find the chat box and extract the latest answer. If Sider changes its page structure, update `scripts/sider/ask-sider.js`.
+- This flow is designed for serial use per profile. Do not run multiple `ask-sider` calls in parallel against the same logged-in Sider session.

@@ -1,0 +1,30 @@
+{
+  "site": {
+    "url": "https://sider.ai/zh-CN/chat",
+    "response_timeout_ms": 30000
+  },
+  "chrome": {
+    "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "user_data_dir": "F:\\AI\\.chrome-sider-profile",
+    "startup_url": "https://sider.ai/zh-CN/chat",
+    "startup_delay_ms": 4000,
+    "remote_debug_port": 9222,
+    "devtools_active_port_path": "F:\\AI\\.chrome-sider-profile\\DevToolsActivePort",
+    "extra_args": [
+      "--no-first-run",
+      "--no-default-browser-check"
+    ]
+  },
+  "browser_cleanup": {
+    "enabled": true,
+    "process_names": [
+      "chrome",
+      "msedge",
+      "firefox",
+      "brave",
+      "opera",
+      "360chrome"
+    ],
+    "wait_after_kill_ms": 2000
+  }
+}

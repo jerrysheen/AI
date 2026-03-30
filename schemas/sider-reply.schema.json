@@ -1,0 +1,33 @@
+﻿{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "sent_message",
+    "reply_text",
+    "page_url",
+    "note"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "error"
+      ]
+    },
+    "sent_message": {
+      "type": "string"
+    },
+    "reply_text": {
+      "type": "string"
+    },
+    "page_url": {
+      "type": "string"
+    },
+    "note": {
+      "type": "string"
+    }
+  }
+}
