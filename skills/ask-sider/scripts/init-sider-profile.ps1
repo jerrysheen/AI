@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$ConfigPath
 )
 
@@ -10,10 +10,10 @@ function Resolve-FullPath {
 }
 
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
-$rootDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
+$skillDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir ".."))
 
 if (-not $ConfigPath) {
-    $ConfigPath = Join-Path $rootDir "config\sider-chat.json"
+    $ConfigPath = Join-Path $skillDir "config\sider-chat.json"
 }
 
 $configFullPath = Resolve-FullPath -PathValue $ConfigPath
@@ -35,3 +35,4 @@ foreach ($arg in $config.chrome.extra_args) {
 Start-Process -FilePath $config.chrome.path -ArgumentList $arguments | Out-Null
 Write-Output "Chrome launched with profile: $($config.chrome.user_data_dir)"
 Write-Output "Log in to Sider in that window once, then future runs can stay fully automated."
+

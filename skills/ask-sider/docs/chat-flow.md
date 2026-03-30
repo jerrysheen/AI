@@ -39,7 +39,7 @@ This file records the browser flow validated against `https://sider.ai/zh-CN/cha
 
 ## Implementation notes
 
-- `scripts/sider/ask-sider.js` now prefers the verified selectors above instead of relying mainly on generic leaf-text diffs.
+- `scripts/ask-sider.js` now prefers the verified selectors above instead of relying mainly on generic leaf-text diffs.
 - A leaf-text diff is still kept as a fallback in case Sider adjusts its message DOM.
 - The script reuses an existing chat tab instead of always creating and later closing a second tab.
 - The script assumes the dedicated Chrome profile is already logged in once and can be reused for future runs.

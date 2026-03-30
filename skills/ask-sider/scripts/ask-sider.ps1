@@ -56,10 +56,10 @@ function Wait-ForDebugPort {
 }
 
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
-$rootDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
+$skillDir = [System.IO.Path]::GetFullPath((Join-Path $scriptDir ".."))
 
 if (-not $ConfigPath) {
-    $ConfigPath = Join-Path $rootDir "config\sider-chat.json"
+    $ConfigPath = Join-Path $skillDir "config\sider-chat.json"
 }
 
 $configFullPath = Resolve-FullPath -PathValue $ConfigPath
@@ -92,7 +92,7 @@ if (-not $portReady) {
     Start-Sleep -Milliseconds ([int]$config.chrome.startup_delay_ms)
 
     if (-not (Wait-ForDebugPort -Port $port -TimeoutMs 15000)) {
-        throw "Chrome remote debugging port $port is not reachable. Run scripts\\sider\\init-sider-profile.ps1 once, confirm the dedicated Chrome window can open Sider, then rerun."
+        throw "Chrome remote debugging port $port is not reachable. Run skills\\ask-sider\\scripts\\init-sider-profile.ps1 once, confirm the dedicated Chrome window can open Sider, then rerun."
     }
 }
 
@@ -114,3 +114,4 @@ if ($AsJson) {
 } else {
     Write-Output $result.reply_text
 }
+
