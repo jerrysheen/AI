@@ -43,3 +43,33 @@ This folder is not currently a Git repository; adopt these conventions once Git 
 - Never commit secrets, tokens, or private keys.
 - Use environment variables and provide a checked-in `.env.example` for required settings.
 - Validate third-party dependencies before adding them.
+
+## Shared Runtime Conventions
+- Prefer repository-relative defaults so skills remain portable across machines.
+- Shared runtime configuration is injected through environment variables, with repo-root `.env` as local developer convenience.
+- Current shared variables:
+  - `AI_SHARED_DATA_DIR`
+  - `AI_CHROME_PROFILE_DIR`
+  - `AI_CHROME_DEBUG_PORT`
+  - `AI_CHROME_PATH`
+  - `AI_CHROME_STARTUP_DELAY_MS`
+
+## Shared Data Layout
+- Default shared data root is `.ai-data/` under the repository root unless `AI_SHARED_DATA_DIR` overrides it.
+- Keep reusable cross-skill data under:
+  - `.ai-data/config/`
+  - `.ai-data/cache/`
+  - `.ai-data/<source>/runs/`
+- Use `runs/` for process artifacts and manifests.
+- Use `cache/` for canonical reusable content records that other skills or agents may consume later.
+- Group cache data by source, then by date bucket, then by category when possible.
+
+## Shared Browser Rules
+- Reuse a shared Chrome debugging session instead of creating per-skill browser sessions.
+- Do not hardcode machine-specific Chrome profile paths inside skill logic.
+- Chrome settings should resolve from shared environment variables first.
+
+## Watchlists
+- Keep source lists outside skill folders.
+- Store watchlists under `.ai-data/config/watchlists/`.
+- Put time-window defaults in watchlist config rather than hardcoding them into prompts or skill text.

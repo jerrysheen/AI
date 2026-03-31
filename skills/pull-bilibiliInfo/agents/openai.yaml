@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pull Bilibili Info"
+  short_description: "Fetch Bilibili subtitles and summarize"
+  default_prompt: "Use $pull-bilibiliInfo to fetch one Bilibili video transcript and summarize the content."
