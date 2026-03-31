@@ -19,6 +19,146 @@ function stripBom(text) {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
+function pad(num) {
+  return String(num).padStart(2, '0');
+}
+
+function formatLocalDate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatLocalDateTime(date) {
+  return `${formatLocalDate(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function parseLocalDate(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(`${value}T00:00:00`);
+  }
+
+  return new Date(value);
+}
+
+function getDayBounds(dateText) {
+  const base = dateText ? parseLocalDate(dateText) : new Date();
+  if (!(base instanceof Date) || Number.isNaN(base.getTime())) {
+    throw new Error(`Invalid date value: ${dateText}`);
+  }
+
+  const start = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0);
+  const end = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 23, 59, 59);
+  return {
+    date: formatLocalDate(start),
+    start,
+    end,
+  };
+}
+
+function toComparableTime(value, fallback) {
+  const parsed = parseLocalDate(value);
+  return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed.getTime() : fallback;
+}
+
+function getEventEdge(event, edge) {
+  const directValue = event?.[edge];
+  if (typeof directValue === 'string') {
+    return directValue;
+  }
+
+  const nested = event?.[edge];
+  if (nested && typeof nested === 'object') {
+    if (typeof nested.dateTime === 'string') {
+      return nested.dateTime;
+    }
+    if (typeof nested.date === 'string') {
+      return `${nested.date}T00:00:00`;
+    }
+  }
+
+  const camel = edge === 'start' ? 'startTime' : 'endTime';
+  if (typeof event?.[camel] === 'string') {
+    return event[camel];
+  }
+
+  return '';
+}
+
+function buildDailyBrief(events, tasks, options = {}) {
+  const now = options.now || new Date();
+  const dayBounds = getDayBounds(options.date);
+  const nowTime = now.getTime();
+  const groups = {
+    ended: [],
+    in_progress: [],
+    upcoming: [],
+  };
+
+  for (const event of Array.isArray(events) ? events : []) {
+    const startText = getEventEdge(event, 'start');
+    const endText = getEventEdge(event, 'end');
+    const startTime = toComparableTime(startText, dayBounds.start.getTime());
+    const endTime = toComparableTime(endText, startTime);
+    const bucket = endTime < nowTime ? 'ended' : startTime <= nowTime ? 'in_progress' : 'upcoming';
+
+    groups[bucket].push({
+      kind: 'event',
+      id: event.id || '',
+      title: event.title || event.summary || 'Untitled event',
+      status: bucket,
+      start: startText,
+      end: endText,
+      location: event.location || '',
+      description: event.description || '',
+      sortTime: bucket === 'ended' ? endTime : startTime,
+      raw: event,
+    });
+  }
+
+  for (const task of Array.isArray(tasks) ? tasks : []) {
+    const isCompleted =
+      task?.status === 'completed' ||
+      task?.completed === true ||
+      typeof task?.completed === 'string' ||
+      typeof task?.completedAt === 'string';
+    const dueText = typeof task?.due === 'string' ? task.due : '';
+    const bucket = isCompleted ? 'ended' : 'in_progress';
+
+    groups[bucket].push({
+      kind: 'task',
+      id: task.id || '',
+      title: task.title || 'Untitled task',
+      status: bucket,
+      due: dueText,
+      notes: task.notes || '',
+      taskStatus: task.status || '',
+      sortTime: isCompleted ? nowTime : toComparableTime(dueText, dayBounds.start.getTime()),
+      raw: task,
+    });
+  }
+
+  groups.ended.sort((a, b) => b.sortTime - a.sortTime);
+  groups.in_progress.sort((a, b) => a.sortTime - b.sortTime);
+  groups.upcoming.sort((a, b) => a.sortTime - b.sortTime);
+
+  return {
+    success: true,
+    date: dayBounds.date,
+    now: formatLocalDateTime(now),
+    counts: {
+      ended: groups.ended.length,
+      in_progress: groups.in_progress.length,
+      upcoming: groups.upcoming.length,
+      total: groups.ended.length + groups.in_progress.length + groups.upcoming.length,
+    },
+    groups,
+    items: [...groups.ended, ...groups.in_progress, ...groups.upcoming],
+  };
+}
+
 function parseArgs(argv) {
   const [action, ...rest] = argv;
   const options = {};
@@ -56,9 +196,14 @@ function buildContract() {
     actions: {
       calendar: [
         {
+          action: 'daily_brief',
+          required: [],
+          optional: ['date', 'calendarId', 'tasklistId', 'includeCompleted', 'includeHidden', 'showNotes'],
+        },
+        {
           action: 'list_events',
           required: [],
-          optional: ['days', 'calendarId'],
+          optional: ['days', 'start', 'end', 'calendarId'],
         },
         {
           action: 'create_event',
@@ -85,7 +230,7 @@ function buildContract() {
         {
           action: 'list_tasks',
           required: [],
-          optional: ['tasklistId'],
+          optional: ['tasklistId', 'dueStart', 'dueEnd', 'includeCompleted', 'includeHidden', 'showNotes'],
         },
         {
           action: 'create_task',
@@ -112,8 +257,14 @@ function buildContract() {
     normalization_rules: [
       'Return exactly one JSON object.',
       'Choose one action only.',
+      'Use daily_brief when the user asks broad questions like "what should I do today" or wants tasks and events together.',
       'For calendar time fields, use local ISO datetime: YYYY-MM-DDTHH:mm:ss.',
+      'For list_events, prefer explicit start/end for natural ranges like today, tomorrow, this week, and this month instead of a rolling now+days window.',
+      'A request for "today\'s schedule" should include the full local day from 00:00:00 through 23:59:59.',
+      'For daily_brief, include both calendar events and tasks for that local day and classify returned items into ended, in_progress, and upcoming.',
+      'For list_tasks, include completed tasks when the user asks for a full-day summary, progress check, or "what did I have today".',
       'For task due fields, prefer date-only YYYY-MM-DD unless the user explicitly gives a time.',
+      'For quick capture, default to create_task when the user gives a short reminder without a concrete start/end time, and default to create_event when a concrete meeting time or time range is explicit.',
       'Do not invent eventId or taskId. If missing, list candidates first.',
     ],
   };
@@ -151,6 +302,83 @@ async function postJson(url, payload) {
   }
 
   return { status: response.status, data };
+}
+
+async function runDailyBrief(url, options) {
+  const dayBounds = getDayBounds(options.date);
+  const eventsUrl = new URL(url);
+  eventsUrl.searchParams.set('action', 'list_events');
+  eventsUrl.searchParams.set('start', formatLocalDateTime(dayBounds.start));
+  eventsUrl.searchParams.set('end', formatLocalDateTime(dayBounds.end));
+  if (options.calendarId) {
+    eventsUrl.searchParams.set('calendarId', options.calendarId);
+  }
+
+  const tasksUrl = new URL(url);
+  tasksUrl.searchParams.set('action', 'list_tasks');
+  tasksUrl.searchParams.set('dueStart', dayBounds.date);
+  tasksUrl.searchParams.set('dueEnd', dayBounds.date);
+  tasksUrl.searchParams.set('includeCompleted', options.includeCompleted || 'true');
+  if (options.tasklistId) {
+    tasksUrl.searchParams.set('tasklistId', options.tasklistId);
+  }
+  if (options.includeHidden) {
+    tasksUrl.searchParams.set('includeHidden', options.includeHidden);
+  }
+  if (options.showNotes) {
+    tasksUrl.searchParams.set('showNotes', options.showNotes);
+  }
+
+  const [eventsResult, tasksResult] = await Promise.all([getJson(eventsUrl.toString()), getJson(tasksUrl.toString())]);
+  if (!(eventsResult.status >= 200 && eventsResult.status < 300)) {
+    return {
+      status: eventsResult.status,
+      data: {
+        success: false,
+        failed_action: 'list_events',
+        response: eventsResult.data,
+      },
+      request: {
+        method: 'LOCAL',
+        action: 'daily_brief',
+        upstream: [
+          { method: 'GET', url: eventsUrl.toString() },
+          { method: 'GET', url: tasksUrl.toString() },
+        ],
+      },
+    };
+  }
+  if (!(tasksResult.status >= 200 && tasksResult.status < 300)) {
+    return {
+      status: tasksResult.status,
+      data: {
+        success: false,
+        failed_action: 'list_tasks',
+        response: tasksResult.data,
+      },
+      request: {
+        method: 'LOCAL',
+        action: 'daily_brief',
+        upstream: [
+          { method: 'GET', url: eventsUrl.toString() },
+          { method: 'GET', url: tasksUrl.toString() },
+        ],
+      },
+    };
+  }
+
+  return {
+    status: 200,
+    data: buildDailyBrief(eventsResult.data?.events, tasksResult.data?.tasks, { date: dayBounds.date }),
+    request: {
+      method: 'LOCAL',
+      action: 'daily_brief',
+      upstream: [
+        { method: 'GET', url: eventsUrl.toString() },
+        { method: 'GET', url: tasksUrl.toString() },
+      ],
+    },
+  };
 }
 
 function buildRequest(url, action, options) {
@@ -191,10 +419,18 @@ function buildRequest(url, action, options) {
   }
 
   if (action === 'list_events') {
-    const days = options.days || '7';
     const requestUrl = new URL(url);
     requestUrl.searchParams.set('action', 'list_events');
-    requestUrl.searchParams.set('days', days);
+    if (options.start || options.end) {
+      if (!options.start || !options.end) {
+        throw new Error('list_events requires both --start and --end when using an explicit range');
+      }
+      requestUrl.searchParams.set('start', options.start);
+      requestUrl.searchParams.set('end', options.end);
+    } else {
+      const days = options.days || '7';
+      requestUrl.searchParams.set('days', days);
+    }
     if (options.calendarId) {
       requestUrl.searchParams.set('calendarId', options.calendarId);
     }
@@ -213,7 +449,27 @@ function buildRequest(url, action, options) {
     if (options.tasklistId) {
       requestUrl.searchParams.set('tasklistId', options.tasklistId);
     }
+    if ((options.dueStart && !options.dueEnd) || (!options.dueStart && options.dueEnd)) {
+      throw new Error('list_tasks requires both --dueStart and --dueEnd when using a due-date range');
+    }
+    if (options.dueStart) {
+      requestUrl.searchParams.set('dueStart', options.dueStart);
+      requestUrl.searchParams.set('dueEnd', options.dueEnd);
+    }
+    for (const key of ['includeCompleted', 'includeHidden', 'showNotes']) {
+      if (options[key]) {
+        requestUrl.searchParams.set(key, options[key]);
+      }
+    }
     return { method: 'GET', url: requestUrl.toString() };
+  }
+
+  if (action === 'daily_brief') {
+    return {
+      method: 'LOCAL_DAILY_BRIEF',
+      url,
+      options,
+    };
   }
 
   if (action === 'create_event') {
@@ -355,6 +611,8 @@ async function main() {
     const response =
       request.method === 'LOCAL'
         ? { status: 200, data: request.data }
+        : request.method === 'LOCAL_DAILY_BRIEF'
+        ? await runDailyBrief(request.url, request.options)
         : request.method === 'GET'
         ? await getJson(request.url)
         : await postJson(request.url, request.body);
@@ -366,7 +624,9 @@ async function main() {
           action,
           status: response.status,
           request:
-            request.method === 'GET'
+            request.method === 'LOCAL_DAILY_BRIEF'
+              ? response.request
+              : request.method === 'GET'
               ? { method: request.method, url: request.url }
               : { method: request.method, url: request.url, body: request.body },
           response: response.data,

@@ -10,6 +10,7 @@
     "action": {
       "type": "string",
       "enum": [
+        "daily_brief",
         "list_events",
         "create_event",
         "update_event",
@@ -26,6 +27,18 @@
       "type": "integer",
       "minimum": 1
     },
+    "date": {
+      "type": "string",
+      "description": "Local date in YYYY-MM-DD, mainly for daily_brief"
+    },
+    "start": {
+      "type": "string",
+      "description": "Local ISO datetime range start, for example 2026-04-02T00:00:00"
+    },
+    "end": {
+      "type": "string",
+      "description": "Local ISO datetime range end, for example 2026-04-02T23:59:59"
+    },
     "calendarId": {
       "type": "string"
     },
@@ -35,14 +48,6 @@
     "title": {
       "type": "string",
       "minLength": 1
-    },
-    "start": {
-      "type": "string",
-      "description": "Local ISO datetime, for example 2026-04-02T14:00:00"
-    },
-    "end": {
-      "type": "string",
-      "description": "Local ISO datetime, for example 2026-04-02T15:00:00"
     },
     "description": {
       "type": "string"
@@ -62,9 +67,99 @@
     "due": {
       "type": "string",
       "description": "Prefer date-only YYYY-MM-DD unless the user explicitly gives a time"
+    },
+    "dueStart": {
+      "type": "string",
+      "description": "Task due-date range start, usually YYYY-MM-DD"
+    },
+    "dueEnd": {
+      "type": "string",
+      "description": "Task due-date range end, usually YYYY-MM-DD"
+    },
+    "includeCompleted": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "Whether completed tasks should be included in list_tasks"
+    },
+    "includeHidden": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "Whether hidden tasks should be included in list_tasks"
+    },
+    "showNotes": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "Whether task notes/details should be requested when listing tasks"
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "daily_brief"
+          }
+        }
+      },
+      "then": {}
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "list_events"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "not": {
+              "required": [
+                "days",
+                "start"
+              ]
+            }
+          },
+          {
+            "not": {
+              "required": [
+                "days",
+                "end"
+              ]
+            }
+          },
+          {
+            "if": {
+              "anyOf": [
+                {
+                  "required": [
+                    "start"
+                  ]
+                },
+                {
+                  "required": [
+                    "end"
+                  ]
+                }
+              ]
+            },
+            "then": {
+              "required": [
+                "start",
+                "end"
+              ]
+            }
+          }
+        ]
+      }
+    },
     {
       "if": {
         "properties": {
@@ -79,6 +174,37 @@
           "start",
           "end"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "list_tasks"
+          }
+        }
+      },
+      "then": {
+        "if": {
+          "anyOf": [
+            {
+              "required": [
+                "dueStart"
+              ]
+            },
+            {
+              "required": [
+                "dueEnd"
+              ]
+            }
+          ]
+        },
+        "then": {
+          "required": [
+            "dueStart",
+            "dueEnd"
+          ]
+        }
       }
     },
     {
