@@ -28,7 +28,7 @@ Do not use this skill when:
 ## Outputs
 
 - default: plain reply text
-- `-AsJson`: JSON object with `status`, `sent_message`, `reply_text`, `page_url`, `note`
+- `-AsJson`: JSON object with `status`, `sent_message`, `reply_text`, `page_url`, `note`, `send_confirmed`, `generation_observed`, `reply_observed`, `recovery_hint`
 
 ## Entry Points
 
@@ -46,8 +46,9 @@ Do not use this skill when:
 4. Reuse the dedicated Chrome profile configured in [sider-chat.json](/F:/AI/skills/ask-sider/config/sider-chat.json).
 5. Reuse an existing Sider chat tab when present.
 6. Send the prompt through the web UI.
-7. Wait until the visible `停止生成` state disappears.
-8. Return the latest assistant message from the chat thread.
+7. Confirm whether the page actually accepted the message.
+8. Wait until the visible `停止生成` state disappears.
+9. Return the latest assistant message from the chat thread.
 
 ## Constraints
 
@@ -55,6 +56,8 @@ Do not use this skill when:
 - Do not run multiple `ASK Sider` invocations in parallel against the same Sider session.
 - Prefer the PowerShell wrapper unless a caller explicitly needs the Node entrypoint.
 - If the browser session is unavailable, initialize it first instead of silently switching to another tool or API.
+- If `status` is `send_not_confirmed`, retrying the send is safe.
+- If `status` is `reply_not_observed`, do not resend the prompt. Try a recovery read first.
 
 ## Examples
 

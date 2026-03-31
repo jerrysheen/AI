@@ -7,13 +7,19 @@
     "sent_message",
     "reply_text",
     "page_url",
-    "note"
+    "note",
+    "send_confirmed",
+    "generation_observed",
+    "reply_observed",
+    "recovery_hint"
   ],
   "properties": {
     "status": {
       "type": "string",
       "enum": [
         "ok",
+        "send_not_confirmed",
+        "reply_not_observed",
         "error"
       ]
     },
@@ -28,6 +34,25 @@
     },
     "note": {
       "type": "string"
+    },
+    "send_confirmed": {
+      "type": "boolean"
+    },
+    "generation_observed": {
+      "type": "boolean"
+    },
+    "reply_observed": {
+      "type": "boolean"
+    },
+    "recovery_hint": {
+      "type": "string",
+      "enum": [
+        "none",
+        "safe_to_resend",
+        "read_again_do_not_resend",
+        "manual_check_do_not_resend",
+        "manual_check"
+      ]
     }
   }
 }

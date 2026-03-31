@@ -104,7 +104,7 @@ if (-not (Test-Path -LiteralPath $nodeScript)) {
 $jsonText = node $nodeScript --config $configFullPath --question $Question
 $result = $jsonText | ConvertFrom-Json
 
-if ($LASTEXITCODE -ne 0) {
+if ($LASTEXITCODE -ne 0 -or $result.status -eq 'error') {
     $message = if ($result.note) { $result.note } else { "Unknown error" }
     throw "ask-sider.js failed: $message"
 }
@@ -112,6 +112,10 @@ if ($LASTEXITCODE -ne 0) {
 if ($AsJson) {
     $result | ConvertTo-Json -Depth 10
 } else {
+    if ($result.status -ne 'ok') {
+        $hint = if ($result.recovery_hint) { $result.recovery_hint } else { 'manual_check' }
+        throw "ask-sider.js returned status '$($result.status)' with recovery_hint '$hint': $($result.note)"
+    }
     Write-Output $result.reply_text
 }
 

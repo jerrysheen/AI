@@ -50,7 +50,7 @@ powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps
 2. Starts one dedicated Chrome with `F:\AI\.chrome-sider-profile`.
 3. Enables remote debugging on port `9222`.
 4. Runs `scripts/ask-sider.js`.
-5. The Node script reuses an existing Sider chat tab when available, sends the message, waits for a reply, and returns structured output.
+5. The Node script reuses an existing Sider chat tab when available, sends the message, confirms whether the page accepted the send, waits for a reply, and returns structured output.
 
 ## Notes
 
@@ -59,3 +59,6 @@ powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps
 - The default output is only the assistant reply text. Use `-AsJson` for the full payload.
 - The helper uses DOM heuristics to find the chat box and extract the latest answer. If Sider changes its page structure, update `scripts/ask-sider.js`.
 - This flow is designed for serial use per profile. Do not run multiple `ask-sider` calls in parallel against the same logged-in Sider session.
+- In JSON mode, prefer branching on `status` and `recovery_hint` instead of treating every non-`ok` outcome as a resend.
+- `send_not_confirmed` means the page never showed evidence that the message was accepted; resending is safe.
+- `reply_not_observed` means the message was likely sent but reply extraction timed out or failed; do not resend, recover by re-reading the page instead.

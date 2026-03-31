@@ -21,6 +21,10 @@ const ASSISTANT_REPLY_SELECTORS = [
   '.message-inner .answer-markdown-box',
   '.answer-markdown-box',
 ];
+const USER_MESSAGE_SELECTORS = [
+  'main .message-inner',
+  'main [class*="message"]',
+];
 const GENERATING_TEXT = '停止生成';
 
 const IGNORED_TEXTS = new Set(
@@ -297,6 +301,39 @@ async function getAssistantReplies(client, sessionId) {
     : [];
 }
 
+async function getUserMessages(client, sessionId) {
+  const messages = await evaluate(
+    client,
+    sessionId,
+    `(() => {
+      const main = document.querySelector(${JSON.stringify(MAIN_SELECTOR)});
+      if (!main) return [];
+      const selectors = ${JSON.stringify(USER_MESSAGE_SELECTORS)};
+      const isVisible = (el) => {
+        if (!el) return false;
+        const style = getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+      };
+      const results = [];
+      const seen = new Set();
+      for (const selector of selectors) {
+        for (const el of main.querySelectorAll(selector)) {
+          if (!isVisible(el)) continue;
+          const text = (el.innerText || '').trim();
+          if (!text || seen.has(text)) continue;
+          seen.add(text);
+          results.push(text);
+        }
+      }
+      return results;
+    })()`,
+  );
+  return Array.isArray(messages)
+    ? messages.map((value) => String(value || '').trim()).filter(Boolean)
+    : [];
+}
+
 async function sendMessage(client, sessionId, question) {
   return evaluate(
     client,
@@ -369,45 +406,181 @@ async function sendMessage(client, sessionId, question) {
   );
 }
 
-async function waitForReplyText(client, sessionId, beforeState, question, timeoutMs) {
+async function confirmSendState(client, sessionId, question, timeoutMs) {
+  const normalizedQuestion = normalizeText(question);
+  return withTimeout(async () => {
+    let lastState = {
+      sendConfirmed: false,
+      inputCleared: false,
+      questionEchoed: false,
+      generationObserved: false,
+      latestUserMessage: '',
+    };
+    while (true) {
+      const payload = await evaluate(
+        client,
+        sessionId,
+        `(() => {
+          const main = document.querySelector(${JSON.stringify(MAIN_SELECTOR)});
+          if (!main) {
+            return {
+              inputCleared: false,
+              generationObserved: false,
+              latestUserMessage: '',
+            };
+          }
+          const inputSelectors = ${JSON.stringify(INPUT_SELECTORS)};
+          const selectors = ${JSON.stringify(USER_MESSAGE_SELECTORS)};
+          const isVisible = (el) => {
+            if (!el) return false;
+            const style = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0;
+          };
+
+          let inputValue = '';
+          for (const selector of inputSelectors) {
+            const input = main.querySelector(selector);
+            if (!isVisible(input)) continue;
+            if (typeof input.value === 'string') {
+              inputValue = input.value;
+            } else {
+              inputValue = input.innerText || input.textContent || '';
+            }
+            break;
+          }
+
+          const candidates = [];
+          const seen = new Set();
+          for (const selector of selectors) {
+            for (const el of main.querySelectorAll(selector)) {
+              if (!isVisible(el)) continue;
+              const text = (el.innerText || '').trim();
+              if (!text || seen.has(text)) continue;
+              seen.add(text);
+              candidates.push(text);
+            }
+          }
+
+          return {
+            inputCleared: !(inputValue || '').trim(),
+            generationObserved: (main.innerText || '').includes(${JSON.stringify(GENERATING_TEXT)}),
+            latestUserMessage: candidates.length ? candidates[candidates.length - 1] : '',
+          };
+        })()`,
+      );
+
+      const latestUserMessage = typeof payload?.latestUserMessage === 'string' ? payload.latestUserMessage : '';
+      const questionEchoed = normalizeText(latestUserMessage).includes(normalizedQuestion);
+      const inputCleared = Boolean(payload?.inputCleared);
+      const generationObserved = Boolean(payload?.generationObserved);
+      const sendConfirmed = inputCleared || questionEchoed || generationObserved;
+
+      lastState = {
+        sendConfirmed,
+        inputCleared,
+        questionEchoed,
+        generationObserved,
+        latestUserMessage,
+      };
+
+      if (sendConfirmed) {
+        return lastState;
+      }
+      await delay(400);
+    }
+  }, timeoutMs, 'Send confirmation');
+}
+
+async function waitForReplyText(client, sessionId, beforeState, question, idleTimeoutMs, maxTimeoutMs) {
   const beforeSet = new Set(beforeState.leafTexts.map(normalizeText));
   const ignored = new Set([...IGNORED_TEXTS, normalizeText(question)]);
   const beforeReplyCount = beforeState.replyCount || 0;
 
-  return withTimeout(async () => {
-    let lastCandidate = '';
-    while (true) {
-      const [state, replies] = await Promise.all([
-        getVisibleMainState(client, sessionId),
-        getAssistantReplies(client, sessionId),
-      ]);
-      const additions = [];
+  const startedAt = Date.now();
+  let lastIdleActivityAt = Date.now();
+  let previousIsGenerating = false;
+  let previousLatestReply = '';
+  let lastCandidate = '';
 
-      for (const rawValue of state.leafTexts) {
-        const raw = rawValue.trim();
-        const normalized = normalizeText(raw);
-        if (!normalized || beforeSet.has(normalized) || ignored.has(normalized)) {
-          continue;
-        }
-        if (/^GPT-\d|^Claude|^Gemini/i.test(raw)) continue;
-        additions.push(raw);
+  while (true) {
+    const [state, replies] = await Promise.all([
+      getVisibleMainState(client, sessionId),
+      getAssistantReplies(client, sessionId),
+    ]);
+    const additions = [];
+
+    for (const rawValue of state.leafTexts) {
+      const raw = rawValue.trim();
+      const normalized = normalizeText(raw);
+      if (!normalized || beforeSet.has(normalized) || ignored.has(normalized)) {
+        continue;
       }
-
-      if (additions.length > 0) {
-        lastCandidate = dedupeOrdered(additions).join('\n');
-      }
-
-      if (replies.length > beforeReplyCount) {
-        const latestReply = replies[replies.length - 1];
-        if (normalizeText(latestReply)) {
-          lastCandidate = latestReply;
-        }
-      }
-
-      if (!state.isGenerating && lastCandidate) return lastCandidate;
-      await delay(800);
+      if (/^GPT-\d|^Claude|^Gemini/i.test(raw)) continue;
+      additions.push(raw);
     }
-  }, timeoutMs, 'Assistant reply');
+
+    if (additions.length > 0) {
+      lastCandidate = dedupeOrdered(additions).join('\n');
+      lastIdleActivityAt = Date.now();
+    }
+
+    const latestReply =
+      replies.length > beforeReplyCount ? replies[replies.length - 1] : '';
+    if (normalizeText(latestReply)) {
+      lastCandidate = latestReply;
+    }
+
+    if (normalizeText(latestReply) && latestReply !== previousLatestReply) {
+      lastIdleActivityAt = Date.now();
+      previousLatestReply = latestReply;
+    }
+
+    if (state.isGenerating !== previousIsGenerating) {
+      lastIdleActivityAt = Date.now();
+      previousIsGenerating = state.isGenerating;
+    }
+
+    if (!state.isGenerating && lastCandidate) return lastCandidate;
+
+    if (Date.now() - startedAt > maxTimeoutMs) {
+      throw new Error(`Assistant reply max timeout after ${maxTimeoutMs}ms`);
+    }
+
+    if (!state.isGenerating && Date.now() - lastIdleActivityAt > idleTimeoutMs) {
+      throw new Error(`Assistant reply idle timeout after ${idleTimeoutMs}ms`);
+    }
+
+    await delay(800);
+  }
+}
+
+async function recoverLatestReply(client, sessionId, beforeReplyCount) {
+  const [state, replies, userMessages] = await Promise.all([
+    getVisibleMainState(client, sessionId),
+    getAssistantReplies(client, sessionId),
+    getUserMessages(client, sessionId),
+  ]);
+  const latestReply = replies.length ? replies[replies.length - 1] : '';
+  return {
+    latestReply,
+    replyObserved: replies.length > beforeReplyCount && Boolean(normalizeText(latestReply)),
+    generationObserved: state.isGenerating,
+    latestUserMessage: userMessages.length ? userMessages[userMessages.length - 1] : '',
+    pageTextSample: state.mainText.slice(0, 500),
+  };
+}
+
+async function waitForRecoveryReply(client, sessionId, beforeReplyCount, timeoutMs) {
+  return withTimeout(async () => {
+    while (true) {
+      const recovery = await recoverLatestReply(client, sessionId, beforeReplyCount);
+      if (!recovery.generationObserved && normalizeText(recovery.latestReply)) {
+        return recovery;
+      }
+      await delay(1000);
+    }
+  }, timeoutMs, 'Reply recovery');
 }
 
 async function getLocationHref(client, sessionId) {
@@ -439,7 +612,8 @@ async function main() {
   const config = JSON.parse(configText);
   const question = args.question;
   const baseUrl = `http://127.0.0.1:${config.chrome.remote_debug_port}`;
-  const responseTimeoutMs = Number(config.site.response_timeout_ms || 30000);
+  const responseIdleTimeoutMs = Number(config.site.response_idle_timeout_ms || 30000);
+  const responseMaxTimeoutMs = Number(config.site.response_max_timeout_ms || 180000);
 
   const browserWsUrl = await resolveBrowserWsUrl(baseUrl, config);
   const client = new CdpClient(browserWsUrl);
@@ -489,16 +663,92 @@ async function main() {
       throw new Error(sendResult.reason || 'Failed to send message');
     }
 
-    const replyText = await waitForReplyText(
-      client,
-      sessionId,
-      {
-        ...beforeState,
-        replyCount: beforeReplies.length,
-      },
-      question,
-      responseTimeoutMs,
-    );
+    const sendState = await confirmSendState(client, sessionId, question, 8000);
+    if (!sendState.sendConfirmed) {
+      const pageUrl = await getLocationHref(client, sessionId);
+      process.stdout.write(
+        `${JSON.stringify(
+          {
+            status: 'send_not_confirmed',
+            sent_message: question,
+            reply_text: '',
+            page_url: pageUrl,
+            note: 'The page did not confirm that the message was sent.',
+            send_confirmed: false,
+            generation_observed: false,
+            reply_observed: false,
+            recovery_hint: 'safe_to_resend',
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      return;
+    }
+
+    let replyText = '';
+    let replyObserved = false;
+    let generationObserved = Boolean(sendState.generationObserved);
+    try {
+      replyText = await waitForReplyText(
+        client,
+        sessionId,
+        {
+          ...beforeState,
+          replyCount: beforeReplies.length,
+        },
+        question,
+        responseIdleTimeoutMs,
+        responseMaxTimeoutMs,
+      );
+      replyObserved = Boolean(normalizeText(replyText));
+    } catch (error) {
+      let recovery = await recoverLatestReply(client, sessionId, beforeReplies.length);
+      if (!normalizeText(recovery.latestReply) || recovery.generationObserved) {
+        try {
+          recovery = await waitForRecoveryReply(client, sessionId, beforeReplies.length, 10000);
+        } catch {}
+      }
+      const pageUrl = await getLocationHref(client, sessionId);
+      if (normalizeText(recovery.latestReply) && !recovery.generationObserved) {
+        process.stdout.write(
+          `${JSON.stringify(
+            {
+              status: 'ok',
+              sent_message: question,
+              reply_text: recovery.latestReply,
+              page_url: pageUrl,
+              note: `Recovered visible reply after timeout: ${error.message}`,
+              send_confirmed: true,
+              generation_observed: generationObserved || recovery.generationObserved,
+              reply_observed: true,
+              recovery_hint: 'none',
+            },
+            null,
+            2,
+          )}\n`,
+        );
+        return;
+      }
+      process.stdout.write(
+        `${JSON.stringify(
+          {
+            status: 'reply_not_observed',
+            sent_message: question,
+            reply_text: recovery.latestReply,
+            page_url: pageUrl,
+            note: error.message,
+            send_confirmed: true,
+            generation_observed: generationObserved || recovery.generationObserved,
+            reply_observed: recovery.replyObserved,
+            recovery_hint: recovery.replyObserved ? 'read_again_do_not_resend' : 'manual_check_do_not_resend',
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      return;
+    }
     const pageUrl = await getLocationHref(client, sessionId);
 
     process.stdout.write(
@@ -509,6 +759,10 @@ async function main() {
           reply_text: replyText,
           page_url: pageUrl,
           note: '',
+          send_confirmed: true,
+          generation_observed: generationObserved,
+          reply_observed: replyObserved,
+          recovery_hint: 'none',
         },
         null,
         2,
@@ -540,6 +794,10 @@ main().catch((error) => {
         reply_text: '',
         page_url: '',
         note: error.message,
+        send_confirmed: false,
+        generation_observed: false,
+        reply_observed: false,
+        recovery_hint: 'manual_check',
       },
       null,
       2,
