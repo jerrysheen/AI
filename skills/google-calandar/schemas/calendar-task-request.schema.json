@@ -29,15 +29,15 @@
     },
     "date": {
       "type": "string",
-      "description": "Local date in YYYY-MM-DD, mainly for daily_brief"
+      "description": "UTC date in YYYY-MM-DD. Optional override for daily_brief; omit it for today's requests so the script uses the current UTC day."
     },
     "start": {
       "type": "string",
-      "description": "Local ISO datetime range start, for example 2026-04-02T00:00:00"
+      "description": "ISO datetime range start. For UTC day boundaries, use a Z suffix, for example 2026-04-02T00:00:00Z"
     },
     "end": {
       "type": "string",
-      "description": "Local ISO datetime range end, for example 2026-04-02T23:59:59"
+      "description": "ISO datetime range end. For UTC day boundaries, use a Z suffix, for example 2026-04-02T23:59:59Z"
     },
     "calendarId": {
       "type": "string"

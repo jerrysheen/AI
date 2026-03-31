@@ -23,43 +23,43 @@ function pad(num) {
   return String(num).padStart(2, '0');
 }
 
-function formatLocalDate(date) {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+function formatUtcDate(date) {
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
-function formatLocalDateTime(date) {
-  return `${formatLocalDate(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+function formatUtcDateTime(date) {
+  return `${formatUtcDate(date)}T${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}Z`;
 }
 
-function parseLocalDate(value) {
+function parseDateValue(value) {
   if (!value) {
     return null;
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return new Date(`${value}T00:00:00`);
+    return new Date(`${value}T00:00:00.000Z`);
   }
 
   return new Date(value);
 }
 
-function getDayBounds(dateText) {
-  const base = dateText ? parseLocalDate(dateText) : new Date();
+function getUtcDayBounds(dateText) {
+  const base = dateText ? parseDateValue(dateText) : new Date();
   if (!(base instanceof Date) || Number.isNaN(base.getTime())) {
     throw new Error(`Invalid date value: ${dateText}`);
   }
 
-  const start = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 0, 0, 0);
-  const end = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 23, 59, 59);
+  const start = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 0, 0, 0));
+  const end = new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), 23, 59, 59));
   return {
-    date: formatLocalDate(start),
+    date: formatUtcDate(start),
     start,
     end,
   };
 }
 
 function toComparableTime(value, fallback) {
-  const parsed = parseLocalDate(value);
+  const parsed = parseDateValue(value);
   return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed.getTime() : fallback;
 }
 
@@ -89,7 +89,7 @@ function getEventEdge(event, edge) {
 
 function buildDailyBrief(events, tasks, options = {}) {
   const now = options.now || new Date();
-  const dayBounds = getDayBounds(options.date);
+  const dayBounds = getUtcDayBounds(options.date);
   const nowTime = now.getTime();
   const groups = {
     ended: [],
@@ -147,7 +147,7 @@ function buildDailyBrief(events, tasks, options = {}) {
   return {
     success: true,
     date: dayBounds.date,
-    now: formatLocalDateTime(now),
+    now: now.toISOString(),
     counts: {
       ended: groups.ended.length,
       in_progress: groups.in_progress.length,
@@ -198,7 +198,7 @@ function buildContract() {
         {
           action: 'daily_brief',
           required: [],
-          optional: ['date', 'calendarId', 'tasklistId', 'includeCompleted', 'includeHidden', 'showNotes'],
+          optional: ['calendarId', 'tasklistId', 'includeCompleted', 'includeHidden', 'showNotes', 'date'],
         },
         {
           action: 'list_events',
@@ -257,11 +257,12 @@ function buildContract() {
     normalization_rules: [
       'Return exactly one JSON object.',
       'Choose one action only.',
-      'Use daily_brief when the user asks broad questions like "what should I do today" or wants tasks and events together.',
-      'For calendar time fields, use local ISO datetime: YYYY-MM-DDTHH:mm:ss.',
+      'Use daily_brief directly when the user asks broad questions like "what should I do today", "today what should I do", or wants tasks and events together.',
+      'Do not make the upper layer infer or pass a date for "today". google-calendar.js should compute the current UTC day internally.',
+      'For calendar time fields, use ISO datetime. For UTC day boundaries, use YYYY-MM-DDTHH:mm:ssZ.',
       'For list_events, prefer explicit start/end for natural ranges like today, tomorrow, this week, and this month instead of a rolling now+days window.',
-      'A request for "today\'s schedule" should include the full local day from 00:00:00 through 23:59:59.',
-      'For daily_brief, include both calendar events and tasks for that local day and classify returned items into ended, in_progress, and upcoming.',
+      'A request for "today\'s schedule" should use the full UTC day from 00:00:00Z through 23:59:59Z.',
+      'For daily_brief, include both calendar events and tasks for that UTC day and classify returned items into ended, in_progress, and upcoming.',
       'For list_tasks, include completed tasks when the user asks for a full-day summary, progress check, or "what did I have today".',
       'For task due fields, prefer date-only YYYY-MM-DD unless the user explicitly gives a time.',
       'For quick capture, default to create_task when the user gives a short reminder without a concrete start/end time, and default to create_event when a concrete meeting time or time range is explicit.',
@@ -305,11 +306,11 @@ async function postJson(url, payload) {
 }
 
 async function runDailyBrief(url, options) {
-  const dayBounds = getDayBounds(options.date);
+  const dayBounds = getUtcDayBounds(options.date);
   const eventsUrl = new URL(url);
   eventsUrl.searchParams.set('action', 'list_events');
-  eventsUrl.searchParams.set('start', formatLocalDateTime(dayBounds.start));
-  eventsUrl.searchParams.set('end', formatLocalDateTime(dayBounds.end));
+  eventsUrl.searchParams.set('start', formatUtcDateTime(dayBounds.start));
+  eventsUrl.searchParams.set('end', formatUtcDateTime(dayBounds.end));
   if (options.calendarId) {
     eventsUrl.searchParams.set('calendarId', options.calendarId);
   }

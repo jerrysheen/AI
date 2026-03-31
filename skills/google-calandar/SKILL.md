@@ -33,9 +33,9 @@ Model-facing helper commands:
 
 Supported commands:
 
-- `daily_brief [--date "2026-04-02"] [--calendarId "..."] [--tasklistId "..."] [--includeCompleted "true"] [--includeHidden "false"] [--showNotes "true"]`
+- `daily_brief [--calendarId "..."] [--tasklistId "..."] [--includeCompleted "true"] [--includeHidden "false"] [--showNotes "true"]`
 - `list_events --days 7 [--calendarId "..."]`
-- `list_events --start "2026-04-02T00:00:00" --end "2026-04-02T23:59:59" [--calendarId "..."]`
+- `list_events --start "2026-04-02T00:00:00Z" --end "2026-04-02T23:59:59Z" [--calendarId "..."]`
 - `create_event --title "团队会议" --start "2026-04-02T14:00:00" --end "2026-04-02T15:00:00" [--description "讨论Q2计划"] [--location "会议室A"] [--calendarId "..."]`
 - `update_event --eventId "<id>" [--title ...] [--start ... --end ...] [--description ...] [--location ...]`
 - `delete_event --eventId "<id>"`
@@ -46,19 +46,19 @@ Supported commands:
 - `complete_task --taskId "<id>" [--tasklistId "..."]`
 - `delete_task --taskId "<id>" [--tasklistId "..."]`
 
-When the user gives a natural-language request, infer these fields before calling the script:
+When the user gives a natural-language request:
 
-- For broad "today" queries like "查看 google calendar 我今天要干嘛":
-- Prefer `daily_brief` so tasks and events come back together.
-- Do not hide past items. The full day should be included, then grouped into `ended`, `in_progress`, and `upcoming` based on the current time.
+- For broad "today" queries like "查看 google calendar 我今天要干嘛" or "今天我要做什么", call `daily_brief` directly.
+- Do not make the upper layer calculate or infer a day range for "today". Let `google-calendar.js` compute the current UTC day internally.
+- Do not hide past items. The full UTC day should be included, then grouped into `ended`, `in_progress`, and `upcoming` based on the current time.
 - Avoid splitting the answer into separate "calendar" and "tasks" sections unless the user explicitly asks for that.
 - For calendar events:
 - `title`: Required for `create_event`.
-- `start` and `end`: Use ISO local datetime like `2026-04-02T14:00:00`.
+- `start` and `end`: Use ISO datetime. For UTC day boundaries, prefer `Z` form like `2026-04-02T00:00:00Z`.
 - `description` and `location`: Optional.
 - `days`: Optional for `list_events`, default to `7`.
 - For natural calendar windows like "today", "tomorrow", "this week", and "this month", prefer `start` plus `end` instead of `days`.
-- "今天的日程" should cover the full local day from `00:00:00` through `23:59:59`, including already-finished and upcoming events.
+- "今天的日程" should cover the full UTC day from `00:00:00Z` through `23:59:59Z`, including already-finished and upcoming events.
 - `eventId`: Required for `update_event` and `delete_event`.
 - For tasks:
 - `title`: Required for `create_task`.

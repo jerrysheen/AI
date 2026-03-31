@@ -1,1 +1,3 @@
 .chrome-*
+.env
+.ai-data*
