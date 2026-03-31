@@ -492,13 +492,22 @@ async function confirmSendState(client, sessionId, question, timeoutMs) {
   }, timeoutMs, 'Send confirmation');
 }
 
-async function waitForReplyText(client, sessionId, beforeState, question, idleTimeoutMs, maxTimeoutMs) {
+async function waitForReplyText(
+  client,
+  sessionId,
+  beforeState,
+  question,
+  idleTimeoutMs,
+  maxTimeoutMs,
+  settleMs,
+) {
   const beforeSet = new Set(beforeState.leafTexts.map(normalizeText));
   const ignored = new Set([...IGNORED_TEXTS, normalizeText(question)]);
   const beforeReplyCount = beforeState.replyCount || 0;
 
   const startedAt = Date.now();
   let lastIdleActivityAt = Date.now();
+  let lastReplyChangeAt = Date.now();
   let previousIsGenerating = false;
   let previousLatestReply = '';
   let lastCandidate = '';
@@ -523,6 +532,7 @@ async function waitForReplyText(client, sessionId, beforeState, question, idleTi
     if (additions.length > 0) {
       lastCandidate = dedupeOrdered(additions).join('\n');
       lastIdleActivityAt = Date.now();
+      lastReplyChangeAt = Date.now();
     }
 
     const latestReply =
@@ -533,6 +543,7 @@ async function waitForReplyText(client, sessionId, beforeState, question, idleTi
 
     if (normalizeText(latestReply) && latestReply !== previousLatestReply) {
       lastIdleActivityAt = Date.now();
+      lastReplyChangeAt = Date.now();
       previousLatestReply = latestReply;
     }
 
@@ -541,7 +552,9 @@ async function waitForReplyText(client, sessionId, beforeState, question, idleTi
       previousIsGenerating = state.isGenerating;
     }
 
-    if (!state.isGenerating && lastCandidate) return lastCandidate;
+    if (!state.isGenerating && lastCandidate && Date.now() - lastReplyChangeAt > settleMs) {
+      return lastCandidate;
+    }
 
     if (Date.now() - startedAt > maxTimeoutMs) {
       throw new Error(`Assistant reply max timeout after ${maxTimeoutMs}ms`);
@@ -614,6 +627,7 @@ async function main() {
   const baseUrl = `http://127.0.0.1:${config.chrome.remote_debug_port}`;
   const responseIdleTimeoutMs = Number(config.site.response_idle_timeout_ms || 30000);
   const responseMaxTimeoutMs = Number(config.site.response_max_timeout_ms || 180000);
+  const responseSettleMs = Number(config.site.response_settle_ms || 5000);
 
   const browserWsUrl = await resolveBrowserWsUrl(baseUrl, config);
   const client = new CdpClient(browserWsUrl);
@@ -700,6 +714,7 @@ async function main() {
         question,
         responseIdleTimeoutMs,
         responseMaxTimeoutMs,
+        responseSettleMs,
       );
       replyObserved = Boolean(normalizeText(replyText));
     } catch (error) {
