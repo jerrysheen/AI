@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Google Calendar And Tasks Skill Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "action"
+  ],
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "list_events",
+        "create_event",
+        "update_event",
+        "delete_event",
+        "list_tasklists",
+        "list_tasks",
+        "create_task",
+        "update_task",
+        "complete_task",
+        "delete_task"
+      ]
+    },
+    "days": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "calendarId": {
+      "type": "string"
+    },
+    "eventId": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start": {
+      "type": "string",
+      "description": "Local ISO datetime, for example 2026-04-02T14:00:00"
+    },
+    "end": {
+      "type": "string",
+      "description": "Local ISO datetime, for example 2026-04-02T15:00:00"
+    },
+    "description": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "tasklistId": {
+      "type": "string"
+    },
+    "taskId": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "due": {
+      "type": "string",
+      "description": "Prefer date-only YYYY-MM-DD unless the user explicitly gives a time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "create_event"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "title",
+          "start",
+          "end"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "update_event"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "eventId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "delete_event"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "eventId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "create_task"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "title"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "update_task"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "taskId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "complete_task"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "taskId"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "action": {
+            "const": "delete_task"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "taskId"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,388 @@
+const fs = require('node:fs');
+const path = require('node:path');
+
+function loadUrl(urlFilePath) {
+  const text = fs.readFileSync(urlFilePath, 'utf8');
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const url = lines.find(
+    (line) => line.startsWith('https://script.google.com/macros/s/') && line.endsWith('/exec'),
+  );
+
+  if (!url) {
+    throw new Error(`No Google Apps Script exec URL found in ${urlFilePath}`);
+  }
+
+  return url;
+}
+
+function stripBom(text) {
+  return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
+}
+
+function parseArgs(argv) {
+  const [action, ...rest] = argv;
+  const options = {};
+
+  for (let i = 0; i < rest.length; i += 1) {
+    const arg = rest[i];
+    if (!arg.startsWith('--')) {
+      throw new Error(`Unexpected argument: ${arg}`);
+    }
+
+    const key = arg.slice(2);
+    const value = rest[i + 1];
+    if (value === undefined || value.startsWith('--')) {
+      throw new Error(`Missing value for --${key}`);
+    }
+
+    options[key] = value;
+    i += 1;
+  }
+
+  if (!action) {
+    throw new Error('Usage: node scripts/google-calendar.js <action> [--key value]');
+  }
+
+  return { action, options };
+}
+
+function buildContract() {
+  return {
+    skill: 'google-calandar',
+    version: '1',
+    output_mode: 'json',
+    request_schema_file: 'skills/google-calandar/schemas/calendar-task-request.schema.json',
+    execution_entrypoint: 'node skills/google-calandar/scripts/google-calendar.js execute --payload <json>',
+    actions: {
+      calendar: [
+        {
+          action: 'list_events',
+          required: [],
+          optional: ['days', 'calendarId'],
+        },
+        {
+          action: 'create_event',
+          required: ['title', 'start', 'end'],
+          optional: ['description', 'location', 'calendarId'],
+        },
+        {
+          action: 'update_event',
+          required: ['eventId'],
+          optional: ['title', 'start', 'end', 'description', 'location'],
+        },
+        {
+          action: 'delete_event',
+          required: ['eventId'],
+          optional: [],
+        },
+      ],
+      tasks: [
+        {
+          action: 'list_tasklists',
+          required: [],
+          optional: [],
+        },
+        {
+          action: 'list_tasks',
+          required: [],
+          optional: ['tasklistId'],
+        },
+        {
+          action: 'create_task',
+          required: ['title'],
+          optional: ['notes', 'due', 'tasklistId'],
+        },
+        {
+          action: 'update_task',
+          required: ['taskId'],
+          optional: ['title', 'notes', 'due', 'tasklistId'],
+        },
+        {
+          action: 'complete_task',
+          required: ['taskId'],
+          optional: ['tasklistId'],
+        },
+        {
+          action: 'delete_task',
+          required: ['taskId'],
+          optional: ['tasklistId'],
+        },
+      ],
+    },
+    normalization_rules: [
+      'Return exactly one JSON object.',
+      'Choose one action only.',
+      'For calendar time fields, use local ISO datetime: YYYY-MM-DDTHH:mm:ss.',
+      'For task due fields, prefer date-only YYYY-MM-DD unless the user explicitly gives a time.',
+      'Do not invent eventId or taskId. If missing, list candidates first.',
+    ],
+  };
+}
+
+async function getJson(url) {
+  const response = await fetch(url);
+  const text = await response.text();
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = { raw: text };
+  }
+
+  return { status: response.status, data };
+}
+
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const text = await response.text();
+  let data;
+
+  try {
+    data = JSON.parse(text);
+  } catch {
+    data = { raw: text };
+  }
+
+  return { status: response.status, data };
+}
+
+function buildRequest(url, action, options) {
+  if (action === 'describe') {
+    return { method: 'LOCAL', data: buildContract() };
+  }
+
+  if (action === 'execute') {
+    if (!options.payload && !options.payloadFile) {
+      throw new Error('execute requires --payload or --payloadFile');
+    }
+
+    let payloadText = options.payload;
+    if (options.payloadFile) {
+      payloadText = fs.readFileSync(options.payloadFile, 'utf8');
+    }
+    payloadText = stripBom(payloadText);
+
+    let payload;
+    try {
+      payload = JSON.parse(payloadText);
+    } catch (error) {
+      throw new Error(`Invalid JSON in execute payload: ${error.message}`);
+    }
+
+    if (!payload.action || typeof payload.action !== 'string') {
+      throw new Error('execute payload must include string field "action"');
+    }
+
+    const executeOptions = {};
+    for (const [key, value] of Object.entries(payload)) {
+      if (key !== 'action' && value !== undefined && value !== null) {
+        executeOptions[key] = String(value);
+      }
+    }
+
+    return buildRequest(url, payload.action, executeOptions);
+  }
+
+  if (action === 'list_events') {
+    const days = options.days || '7';
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set('action', 'list_events');
+    requestUrl.searchParams.set('days', days);
+    if (options.calendarId) {
+      requestUrl.searchParams.set('calendarId', options.calendarId);
+    }
+    return { method: 'GET', url: requestUrl.toString() };
+  }
+
+  if (action === 'list_tasklists') {
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set('action', 'list_tasklists');
+    return { method: 'GET', url: requestUrl.toString() };
+  }
+
+  if (action === 'list_tasks') {
+    const requestUrl = new URL(url);
+    requestUrl.searchParams.set('action', 'list_tasks');
+    if (options.tasklistId) {
+      requestUrl.searchParams.set('tasklistId', options.tasklistId);
+    }
+    return { method: 'GET', url: requestUrl.toString() };
+  }
+
+  if (action === 'create_event') {
+    if (!options.title || !options.start || !options.end) {
+      throw new Error('create_event requires --title, --start, and --end');
+    }
+
+    return {
+      method: 'POST',
+      url,
+      body: {
+        action: 'create_event',
+        title: options.title,
+        start: options.start,
+        end: options.end,
+        description: options.description || '',
+        location: options.location || '',
+        ...(options.calendarId ? { calendarId: options.calendarId } : {}),
+      },
+    };
+  }
+
+  if (action === 'update_event') {
+    if (!options.eventId) {
+      throw new Error('update_event requires --eventId');
+    }
+    if ((options.start && !options.end) || (!options.start && options.end)) {
+      throw new Error('update_event requires both --start and --end when changing time');
+    }
+
+    const body = {
+      action: 'update_event',
+      eventId: options.eventId,
+    };
+
+    for (const key of ['title', 'description', 'location', 'start', 'end']) {
+      if (options[key]) {
+        body[key] = options[key];
+      }
+    }
+
+    return { method: 'POST', url, body };
+  }
+
+  if (action === 'delete_event') {
+    if (!options.eventId) {
+      throw new Error('delete_event requires --eventId');
+    }
+
+    return {
+      method: 'POST',
+      url,
+      body: {
+        action: 'delete_event',
+        eventId: options.eventId,
+      },
+    };
+  }
+
+  if (action === 'create_task') {
+    if (!options.title) {
+      throw new Error('create_task requires --title');
+    }
+
+    return {
+      method: 'POST',
+      url,
+      body: {
+        action: 'create_task',
+        title: options.title,
+        ...(options.notes ? { notes: options.notes } : {}),
+        ...(options.due ? { due: options.due } : {}),
+        ...(options.tasklistId ? { tasklistId: options.tasklistId } : {}),
+      },
+    };
+  }
+
+  if (action === 'update_task') {
+    if (!options.taskId) {
+      throw new Error('update_task requires --taskId');
+    }
+
+    const body = {
+      action: 'update_task',
+      taskId: options.taskId,
+    };
+
+    for (const key of ['tasklistId', 'title', 'notes', 'due']) {
+      if (options[key]) {
+        body[key] = options[key];
+      }
+    }
+
+    return { method: 'POST', url, body };
+  }
+
+  if (action === 'complete_task') {
+    if (!options.taskId) {
+      throw new Error('complete_task requires --taskId');
+    }
+
+    return {
+      method: 'POST',
+      url,
+      body: {
+        action: 'complete_task',
+        taskId: options.taskId,
+        ...(options.tasklistId ? { tasklistId: options.tasklistId } : {}),
+      },
+    };
+  }
+
+  if (action === 'delete_task') {
+    if (!options.taskId) {
+      throw new Error('delete_task requires --taskId');
+    }
+
+    return {
+      method: 'POST',
+      url,
+      body: {
+        action: 'delete_task',
+        taskId: options.taskId,
+        ...(options.tasklistId ? { tasklistId: options.tasklistId } : {}),
+      },
+    };
+  }
+
+  throw new Error(`Unsupported action: ${action}`);
+}
+
+async function main() {
+  try {
+    const skillDir = path.resolve(__dirname, '..');
+    const url = loadUrl(path.join(skillDir, 'url.txt'));
+    const { action, options } = parseArgs(process.argv.slice(2));
+    const request = buildRequest(url, action, options);
+
+    const response =
+      request.method === 'LOCAL'
+        ? { status: 200, data: request.data }
+        : request.method === 'GET'
+        ? await getJson(request.url)
+        : await postJson(request.url, request.body);
+
+    console.log(
+      JSON.stringify(
+        {
+          ok: response.status >= 200 && response.status < 300,
+          action,
+          status: response.status,
+          request:
+            request.method === 'GET'
+              ? { method: request.method, url: request.url }
+              : { method: request.method, url: request.url, body: request.body },
+          response: response.data,
+        },
+        null,
+        2,
+      ),
+    );
+
+    if (!(response.status >= 200 && response.status < 300)) {
+      process.exitCode = 1;
+    }
+  } catch (error) {
+    console.log(JSON.stringify({ ok: false, error: error.message }, null, 2));
+    process.exitCode = 1;
+  }
+}
+
+main();
