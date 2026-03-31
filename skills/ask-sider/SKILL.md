@@ -58,6 +58,8 @@ Do not use this skill when:
 - If the browser session is unavailable, initialize it first instead of silently switching to another tool or API.
 - If `status` is `send_not_confirmed`, retrying the send is safe.
 - If `status` is `reply_not_observed`, do not resend the prompt. Try a recovery read first.
+- If visible reply text is still growing after `response_max_timeout_ms`, keep waiting instead of treating it as a hard failure.
+- If visible reply text stops growing for `response_idle_timeout_ms`, return the visible partial reply instead of waiting forever.
 
 ## Examples
 

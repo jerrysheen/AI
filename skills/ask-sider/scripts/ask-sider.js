@@ -511,6 +511,7 @@ async function waitForReplyText(
   let previousIsGenerating = false;
   let previousLatestReply = '';
   let lastCandidate = '';
+  let maxTimeoutExceeded = false;
 
   while (true) {
     const [state, replies] = await Promise.all([
@@ -553,11 +554,37 @@ async function waitForReplyText(
     }
 
     if (!state.isGenerating && lastCandidate && Date.now() - lastReplyChangeAt > settleMs) {
-      return lastCandidate;
+      return {
+        replyText: lastCandidate,
+        isGenerating: false,
+        completion: maxTimeoutExceeded ? 'complete_after_max_timeout' : 'complete',
+      };
     }
 
     if (Date.now() - startedAt > maxTimeoutMs) {
-      throw new Error(`Assistant reply max timeout after ${maxTimeoutMs}ms`);
+      maxTimeoutExceeded = true;
+      if (
+        normalizeText(lastCandidate) &&
+        Date.now() - lastReplyChangeAt > idleTimeoutMs
+      ) {
+        return {
+          replyText: lastCandidate,
+          isGenerating: state.isGenerating,
+          completion: state.isGenerating
+            ? 'partial_stalled_after_max_timeout'
+            : 'complete_after_max_timeout',
+        };
+      }
+
+      if (
+        !normalizeText(lastCandidate) &&
+        !state.isGenerating &&
+        Date.now() - lastIdleActivityAt > idleTimeoutMs
+      ) {
+        throw new Error(
+          `Assistant reply max timeout after ${maxTimeoutMs}ms and no reply text was observed within an additional ${idleTimeoutMs}ms`,
+        );
+      }
     }
 
     if (!state.isGenerating && Date.now() - lastIdleActivityAt > idleTimeoutMs) {
@@ -703,8 +730,9 @@ async function main() {
     let replyText = '';
     let replyObserved = false;
     let generationObserved = Boolean(sendState.generationObserved);
+    let completion = 'complete';
     try {
-      replyText = await waitForReplyText(
+      const waitResult = await waitForReplyText(
         client,
         sessionId,
         {
@@ -716,6 +744,9 @@ async function main() {
         responseMaxTimeoutMs,
         responseSettleMs,
       );
+      replyText = waitResult.replyText;
+      completion = waitResult.completion;
+      generationObserved = generationObserved || waitResult.isGenerating;
       replyObserved = Boolean(normalizeText(replyText));
     } catch (error) {
       let recovery = await recoverLatestReply(client, sessionId, beforeReplies.length);
@@ -773,7 +804,12 @@ async function main() {
           sent_message: question,
           reply_text: replyText,
           page_url: pageUrl,
-          note: '',
+          note:
+            completion === 'partial_stalled_after_max_timeout'
+              ? `Returned partial visible reply after max timeout because text did not grow for ${responseIdleTimeoutMs}ms.`
+              : completion === 'complete_after_max_timeout'
+                ? 'Reply completed after exceeding the max timeout because visible text was still growing.'
+                : '',
           send_confirmed: true,
           generation_observed: generationObserved,
           reply_observed: replyObserved,

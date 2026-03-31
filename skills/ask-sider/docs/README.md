@@ -61,4 +61,6 @@ powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps
 - This flow is designed for serial use per profile. Do not run multiple `ask-sider` calls in parallel against the same logged-in Sider session.
 - In JSON mode, prefer branching on `status` and `recovery_hint` instead of treating every non-`ok` outcome as a resend.
 - `send_not_confirmed` means the page never showed evidence that the message was accepted; resending is safe.
-- `reply_not_observed` means the message was likely sent but reply extraction timed out or failed; do not resend, recover by re-reading the page instead.
+- `reply_not_observed` means the message was likely sent but reply extraction timed out or failed before any stable visible reply could be recovered; do not resend, recover by re-reading the page instead.
+- `response_max_timeout_ms` is no longer a hard stop when reply text is still growing. After that timeout, the script keeps watching the visible reply and only stops when text has not grown for `response_idle_timeout_ms`.
+- If generation still appears active but visible text has not grown for `response_idle_timeout_ms`, the script returns the partial visible reply with `status: "ok"` and a note explaining that it ended on stalled growth.
