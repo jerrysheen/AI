@@ -499,53 +499,40 @@ async function waitForReplyText(
   question,
   idleTimeoutMs,
   maxTimeoutMs,
-  settleMs,
+  pollIntervalMs,
+  stableChecks,
 ) {
-  const beforeSet = new Set(beforeState.leafTexts.map(normalizeText));
   const ignored = new Set([...IGNORED_TEXTS, normalizeText(question)]);
   const beforeReplyCount = beforeState.replyCount || 0;
 
   const startedAt = Date.now();
   let lastIdleActivityAt = Date.now();
-  let lastReplyChangeAt = Date.now();
   let previousIsGenerating = false;
   let previousLatestReply = '';
   let lastCandidate = '';
   let maxTimeoutExceeded = false;
+  let observedReply = false;
+  let stablePollCount = 0;
 
   while (true) {
     const [state, replies] = await Promise.all([
       getVisibleMainState(client, sessionId),
       getAssistantReplies(client, sessionId),
     ]);
-    const additions = [];
-
-    for (const rawValue of state.leafTexts) {
-      const raw = rawValue.trim();
-      const normalized = normalizeText(raw);
-      if (!normalized || beforeSet.has(normalized) || ignored.has(normalized)) {
-        continue;
-      }
-      if (/^GPT-\d|^Claude|^Gemini/i.test(raw)) continue;
-      additions.push(raw);
-    }
-
-    if (additions.length > 0) {
-      lastCandidate = dedupeOrdered(additions).join('\n');
-      lastIdleActivityAt = Date.now();
-      lastReplyChangeAt = Date.now();
-    }
 
     const latestReply =
       replies.length > beforeReplyCount ? replies[replies.length - 1] : '';
     if (normalizeText(latestReply)) {
       lastCandidate = latestReply;
+      observedReply = true;
     }
 
     if (normalizeText(latestReply) && latestReply !== previousLatestReply) {
       lastIdleActivityAt = Date.now();
-      lastReplyChangeAt = Date.now();
       previousLatestReply = latestReply;
+      stablePollCount = 0;
+    } else if (observedReply && normalizeText(latestReply)) {
+      stablePollCount += 1;
     }
 
     if (state.isGenerating !== previousIsGenerating) {
@@ -553,32 +540,60 @@ async function waitForReplyText(
       previousIsGenerating = state.isGenerating;
     }
 
-    if (!state.isGenerating && lastCandidate && Date.now() - lastReplyChangeAt > settleMs) {
+    if (!observedReply) {
+      const additions = [];
+      for (const rawValue of state.leafTexts) {
+        const raw = rawValue.trim();
+        const normalized = normalizeText(raw);
+        if (!normalized || ignored.has(normalized)) {
+          continue;
+        }
+        if (/^GPT-\d|^Claude|^Gemini/i.test(raw)) continue;
+        additions.push(raw);
+      }
+
+      if (additions.length > 0) {
+        const fallbackCandidate = dedupeOrdered(additions).join('\n');
+        if (fallbackCandidate && fallbackCandidate !== lastCandidate) {
+          lastCandidate = fallbackCandidate;
+          lastIdleActivityAt = Date.now();
+          stablePollCount = 0;
+        } else if (fallbackCandidate) {
+          stablePollCount += 1;
+        }
+      }
+    }
+
+    if (observedReply && lastCandidate && stablePollCount >= stableChecks) {
       return {
         replyText: lastCandidate,
-        isGenerating: false,
-        completion: maxTimeoutExceeded ? 'complete_after_max_timeout' : 'complete',
+        isGenerating: state.isGenerating,
+        completion: maxTimeoutExceeded
+          ? state.isGenerating
+            ? 'partial_stalled_after_max_timeout'
+            : 'complete_after_max_timeout'
+          : state.isGenerating
+            ? 'partial_stalled'
+            : 'complete',
       };
     }
 
     if (Date.now() - startedAt > maxTimeoutMs) {
       maxTimeoutExceeded = true;
       if (
+        !observedReply &&
         normalizeText(lastCandidate) &&
-        Date.now() - lastReplyChangeAt > idleTimeoutMs
+        stablePollCount >= stableChecks
       ) {
         return {
           replyText: lastCandidate,
           isGenerating: state.isGenerating,
-          completion: state.isGenerating
-            ? 'partial_stalled_after_max_timeout'
-            : 'complete_after_max_timeout',
+          completion: 'partial_stalled_fallback',
         };
       }
-
       if (
+        !observedReply &&
         !normalizeText(lastCandidate) &&
-        !state.isGenerating &&
         Date.now() - lastIdleActivityAt > idleTimeoutMs
       ) {
         throw new Error(
@@ -587,11 +602,11 @@ async function waitForReplyText(
       }
     }
 
-    if (!state.isGenerating && Date.now() - lastIdleActivityAt > idleTimeoutMs) {
+    if (!observedReply && !normalizeText(lastCandidate) && Date.now() - lastIdleActivityAt > idleTimeoutMs) {
       throw new Error(`Assistant reply idle timeout after ${idleTimeoutMs}ms`);
     }
 
-    await delay(800);
+    await delay(pollIntervalMs);
   }
 }
 
@@ -654,7 +669,8 @@ async function main() {
   const baseUrl = `http://127.0.0.1:${config.chrome.remote_debug_port}`;
   const responseIdleTimeoutMs = Number(config.site.response_idle_timeout_ms || 30000);
   const responseMaxTimeoutMs = Number(config.site.response_max_timeout_ms || 180000);
-  const responseSettleMs = Number(config.site.response_settle_ms || 5000);
+  const responsePollIntervalMs = Number(config.site.response_poll_interval_ms || 2000);
+  const responseStableChecks = Number(config.site.response_stable_checks || 4);
 
   const browserWsUrl = await resolveBrowserWsUrl(baseUrl, config);
   const client = new CdpClient(browserWsUrl);
@@ -742,7 +758,8 @@ async function main() {
         question,
         responseIdleTimeoutMs,
         responseMaxTimeoutMs,
-        responseSettleMs,
+        responsePollIntervalMs,
+        responseStableChecks,
       );
       replyText = waitResult.replyText;
       completion = waitResult.completion;
@@ -805,7 +822,11 @@ async function main() {
           reply_text: replyText,
           page_url: pageUrl,
           note:
-            completion === 'partial_stalled_after_max_timeout'
+            completion === 'partial_stalled'
+              ? `Returned partial visible reply because text did not grow for ${responseIdleTimeoutMs}ms.`
+              : completion === 'partial_stalled_fallback'
+                ? `Returned visible reply text after selector fallback stalled for ${responseIdleTimeoutMs}ms.`
+              : completion === 'partial_stalled_after_max_timeout'
               ? `Returned partial visible reply after max timeout because text did not grow for ${responseIdleTimeoutMs}ms.`
               : completion === 'complete_after_max_timeout'
                 ? 'Reply completed after exceeding the max timeout because visible text was still growing.'

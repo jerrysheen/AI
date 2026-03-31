@@ -1,9 +1,10 @@
 {
   "site": {
     "url": "https://sider.ai/zh-CN/chat",
-    "response_idle_timeout_ms": 30000,
+    "response_idle_timeout_ms": 50000,
     "response_max_timeout_ms": 180000,
-    "response_settle_ms": 5000
+    "response_poll_interval_ms": 2000,
+    "response_stable_checks": 4
   },
   "chrome": {
     "path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",

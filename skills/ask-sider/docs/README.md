@@ -62,5 +62,7 @@ powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps
 - In JSON mode, prefer branching on `status` and `recovery_hint` instead of treating every non-`ok` outcome as a resend.
 - `send_not_confirmed` means the page never showed evidence that the message was accepted; resending is safe.
 - `reply_not_observed` means the message was likely sent but reply extraction timed out or failed before any stable visible reply could be recovered; do not resend, recover by re-reading the page instead.
+- Reply completion is determined primarily by text growth, not by the presence or absence of a `停止生成` label. Once a visible reply exists, the script polls every `response_poll_interval_ms` and ends after `response_stable_checks` consecutive polls with no text growth.
 - `response_max_timeout_ms` is no longer a hard stop when reply text is still growing. After that timeout, the script keeps watching the visible reply and only stops when text has not grown for `response_idle_timeout_ms`.
-- If generation still appears active but visible text has not grown for `response_idle_timeout_ms`, the script returns the partial visible reply with `status: "ok"` and a note explaining that it ended on stalled growth.
+- By default, the completion heartbeat is `2s * 4` stable polls, so normal replies should finish about 8 seconds after visible text stops changing.
+- If visible text stops growing for the configured stable polls, the script returns the current visible reply with `status: "ok"`. If the page still appears to be generating, the note explains that the result ended on stalled growth and may be partial.
