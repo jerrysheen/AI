@@ -4,8 +4,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { getChromeDebugPort } = require("../../../src/shared/runtime_config");
 const { fetchBilibiliSubtitle, extractBvid } = require("./fetch_bilibili_subtitle");
-const { downloadBilibiliAudio } = require("./fetch_bilibili_audio");
-const { transcribeBilibiliAudio } = require("./transcribe_bilibili_audio");
 
 async function fetchBilibiliTranscriptAuto(urlOrBvid, options = {}) {
   const bvid = extractBvid(urlOrBvid);
@@ -29,39 +27,14 @@ async function fetchBilibiliTranscriptAuto(urlOrBvid, options = {}) {
     };
   }
 
-  if (options.enableAudioFallback === false) {
-    return {
-      ...subtitleResult,
-      transcript_source: null,
-      audio_file: null,
-      asr_file: null,
-      fallback_used: false,
-    };
-  }
-
-  const videoUrl = `https://www.bilibili.com/video/${bvid}`;
-  const audioResult = downloadBilibiliAudio(videoUrl, {
-    audioFormat: options.audioFormat || "m4a",
-    timeoutMs: options.audioTimeoutMs,
-  });
-  const asrResult = transcribeBilibiliAudio(audioResult.audio_file, {
-    model: options.whisperModel || "small",
-    language: options.whisperLanguage || "Chinese",
-    timeoutMs: options.asrTimeoutMs,
-  });
-
+  // Future ASR hook: if Whisper fallback is re-enabled later, branch here and
+  // wire in `fetch_bilibili_audio.js` plus `transcribe_bilibili_audio.js`.
   return {
     ...subtitleResult,
-    subtitle_lang: null,
-    subtitle_lang_doc: null,
-    has_ai_subtitle: false,
-    full_text: asrResult.transcript_text,
-    error: asrResult.transcript_text ? null : "ASR completed but transcript text was empty.",
-    transcript_source: "audio_asr",
-    audio_file: audioResult.audio_file,
-    asr_file: asrResult.transcript_file,
-    fallback_used: true,
-    asr_model: asrResult.model,
+    transcript_source: null,
+    audio_file: null,
+    asr_file: null,
+    fallback_used: false,
   };
 }
 
@@ -74,10 +47,6 @@ function parseArgs(argv) {
     pretty: false,
     withSegments: false,
     debugPort: getChromeDebugPort(),
-    whisperModel: "small",
-    whisperLanguage: "Chinese",
-    audioFormat: "m4a",
-    enableAudioFallback: true,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -101,11 +70,6 @@ function parseArgs(argv) {
       continue;
     }
 
-    if (token === "--no-audio-fallback") {
-      args.enableAudioFallback = false;
-      continue;
-    }
-
     const nextValue = argv[index + 1];
     if (!nextValue || nextValue.startsWith("--")) {
       throw new Error(`Missing value for ${token}`);
@@ -119,12 +83,6 @@ function parseArgs(argv) {
       args.writeJson = nextValue;
     } else if (token === "--debug-port") {
       args.debugPort = Number(nextValue);
-    } else if (token === "--whisper-model") {
-      args.whisperModel = nextValue;
-    } else if (token === "--whisper-language") {
-      args.whisperLanguage = nextValue;
-    } else if (token === "--audio-format") {
-      args.audioFormat = nextValue;
     } else {
       throw new Error(`Unknown option: ${token}`);
     }
@@ -133,7 +91,7 @@ function parseArgs(argv) {
 
   if (!args.video) {
     throw new Error(
-      "Usage: node fetch_bilibili_transcript_auto.js <video-url-or-bvid> [--prefer-lang ai-zh] [--whisper-model small] [--whisper-language Chinese] [--audio-format m4a] [--no-audio-fallback] [--write-json path] [--pretty]"
+      "Usage: node fetch_bilibili_transcript_auto.js <video-url-or-bvid> [--prefer-lang ai-zh] [--write-json path] [--with-segments] [--pretty]"
     );
   }
 
@@ -148,10 +106,6 @@ async function main() {
       cookie: args.cookie,
       withSegments: args.withSegments,
       debugPort: args.debugPort,
-      whisperModel: args.whisperModel,
-      whisperLanguage: args.whisperLanguage,
-      audioFormat: args.audioFormat,
-      enableAudioFallback: args.enableAudioFallback,
     });
     const output = JSON.stringify(data, null, args.pretty ? 2 : 0);
     process.stdout.write(`${output}\n`);

@@ -84,12 +84,31 @@ function requestJsonViaHttp(method, url, timeoutMs = 10000) {
   });
 }
 
-async function callCdp(wsUrl, actions) {
-  if (typeof WebSocket !== "function") {
-    throw new Error("Global WebSocket is unavailable in this Node runtime.");
+function resolveWebSocketConstructor() {
+  if (typeof WebSocket === "function") {
+    return WebSocket;
   }
 
-  const socket = new WebSocket(wsUrl);
+  const candidates = [
+    path.resolve(__dirname, "..", "..", "ask-sider", "node_modules", "ws"),
+    path.resolve(__dirname, "..", "..", "..", ".ai-data", "tmp", "ask-sider-runtime", "node_modules", "ws"),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      // Reuse the existing ws dependency from ask-sider instead of adding a second copy here.
+      return require(candidate);
+    } catch {
+      // Try the next location.
+    }
+  }
+
+  throw new Error("WebSocket runtime is unavailable. Install or reuse the existing ws dependency first.");
+}
+
+async function callCdp(wsUrl, actions) {
+  const WebSocketImpl = resolveWebSocketConstructor();
+  const socket = new WebSocketImpl(wsUrl);
   const pending = new Map();
   let nextId = 0;
 
@@ -162,14 +181,18 @@ async function getBilibiliPageTarget(debugPort = getChromeDebugPort()) {
 
 function ensureBrowser(debugPort) {
   try {
-    const scriptPath = path.resolve(__dirname, "ensure_bilibili_browser.ps1");
+    const scriptPath = path.resolve(__dirname, "ensure_bilibili_browser.js");
     const result = cp.spawnSync(
-      "powershell",
-      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath],
+      process.execPath,
+      [scriptPath],
       {
         encoding: "utf8",
         timeout: 30000,
         maxBuffer: 1024 * 1024 * 8,
+        env: {
+          ...process.env,
+          AI_CHROME_DEBUG_PORT: String(debugPort || getChromeDebugPort()),
+        },
       }
     );
 
@@ -374,15 +397,11 @@ function chooseSubtitle(subtitles, preferLang) {
   }
 
   if (preferLang.startsWith("ai-")) {
-    const baseLang = preferLang.slice(3);
     const aiMatch = subtitles.find((item) => String(item.lan || "").startsWith("ai-"));
     if (aiMatch) {
       return aiMatch;
     }
-    const baseMatch = subtitles.find((item) => item.lan === baseLang);
-    if (baseMatch) {
-      return baseMatch;
-    }
+    return null;
   }
 
   return subtitles[0];
@@ -442,9 +461,9 @@ async function fetchBilibiliSubtitle(urlOrBvid, preferLang = "ai-zh", cookie = "
 
     const chosen = chooseSubtitle(subtitles, preferLang);
     if (!chosen) {
-      result.error =
-        "No subtitles were returned. The video may have no subtitles, " +
-        "or AI subtitles may require a valid BILIBILI_COOKIE.";
+      result.error = preferLang.startsWith("ai-")
+        ? `No AI subtitle track was available for preferred language "${preferLang}".`
+        : "No subtitles were returned for the requested video.";
       return result;
     }
 

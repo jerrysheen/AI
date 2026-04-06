@@ -6,9 +6,7 @@ const { getBilibiliRunsDir, getChromeDebugPort } = require("./runtime_shim");
 const { upsertContentCache } = require("./content_cache_shim");
 
 const { fetchBilibiliSubtitle } = require("./fetch_bilibili_subtitle");
-const { downloadBilibiliAudio } = require("./fetch_bilibili_audio");
 const { listUpVideos } = require("./list_bilibili_up_videos");
-const { transcribeBilibiliAudio } = require("./transcribe_bilibili_audio");
 
 function formatRunId(date = new Date()) {
   return date.toISOString().replace(/[:]/g, "-").replace(/\.\d{3}Z$/, "Z");
@@ -90,35 +88,9 @@ async function fetchUpTranscripts(target, options = {}) {
 
       let finalTranscript = transcript;
       let transcriptSource = transcript.error ? null : "subtitle";
-      let audioResult = null;
-      let asrResult = null;
 
-      if (transcript.error && options.enableAudioFallback !== false) {
-        audioResult = downloadBilibiliAudio(entry.video_url, {
-          audioFormat: options.audioFormat || "m4a",
-          timeoutMs: options.audioTimeoutMs,
-        });
-
-        asrResult = transcribeBilibiliAudio(audioResult.audio_file, {
-          model: options.whisperModel || "small",
-          language: options.whisperLanguage || "Chinese",
-          timeoutMs: options.asrTimeoutMs,
-        });
-
-        finalTranscript = {
-          ...transcript,
-          subtitle_lang: null,
-          subtitle_lang_doc: null,
-          has_ai_subtitle: false,
-          full_text: asrResult.transcript_text,
-          error: asrResult.transcript_text ? null : "ASR completed but transcript text was empty.",
-          asr_used: true,
-          asr_model: asrResult.model,
-          asr_transcript_file: asrResult.transcript_file,
-        };
-        transcriptSource = "audio_asr";
-      }
-
+      // Future ASR hook: if Whisper fallback is re-enabled later, branch on
+      // `transcript.error` here and wire in the existing audio + ASR scripts.
       const outputFile = path.join(videosDir, `${sanitizeFilename(entry.bvid)}.json`);
       writeJson(outputFile, {
         ...finalTranscript,
@@ -127,14 +99,14 @@ async function fetchUpTranscripts(target, options = {}) {
         publish_time: entry.publish_time,
         publish_timestamp: entry.publish_timestamp,
         transcript_source: transcriptSource,
-        audio_file: audioResult ? audioResult.audio_file : null,
-        asr_file: asrResult ? asrResult.transcript_file : null,
+        audio_file: null,
+        asr_file: null,
       });
 
       entry.status = finalTranscript.error ? "error" : "done";
       entry.output_file = outputFile;
-      entry.audio_file = audioResult ? audioResult.audio_file : null;
-      entry.asr_file = asrResult ? asrResult.transcript_file : null;
+      entry.audio_file = null;
+      entry.asr_file = null;
       entry.transcript_source = transcriptSource;
       entry.error = finalTranscript.error || null;
       entry.cache_file = null;
@@ -154,8 +126,8 @@ async function fetchUpTranscripts(target, options = {}) {
             has_ai_subtitle: finalTranscript.has_ai_subtitle,
             full_text: finalTranscript.full_text,
             transcript_source: transcriptSource,
-            audio_file: audioResult ? audioResult.audio_file : null,
-            asr_file: asrResult ? asrResult.transcript_file : null,
+            audio_file: null,
+            asr_file: null,
             source_ref: manifest.space_url,
             video_url: entry.video_url,
             run_id: manifest.run_id,
@@ -197,10 +169,6 @@ function parseArgs(argv) {
     publishedBefore: null,
     outputDir: null,
     preferLang: "ai-zh",
-    whisperModel: "small",
-    whisperLanguage: "Chinese",
-    audioFormat: "m4a",
-    enableAudioFallback: true,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -216,11 +184,6 @@ function parseArgs(argv) {
 
     if (token === "--pretty") {
       args.pretty = true;
-      continue;
-    }
-
-    if (token === "--no-audio-fallback") {
-      args.enableAudioFallback = false;
       continue;
     }
 
@@ -243,12 +206,6 @@ function parseArgs(argv) {
       args.outputDir = nextValue;
     } else if (token === "--prefer-lang") {
       args.preferLang = nextValue;
-    } else if (token === "--whisper-model") {
-      args.whisperModel = nextValue;
-    } else if (token === "--whisper-language") {
-      args.whisperLanguage = nextValue;
-    } else if (token === "--audio-format") {
-      args.audioFormat = nextValue;
     } else {
       throw new Error(`Unknown option: ${token}`);
     }
@@ -275,10 +232,6 @@ async function main() {
       publishedBefore: args.publishedBefore,
       outputDir: args.outputDir,
       preferLang: args.preferLang,
-      whisperModel: args.whisperModel,
-      whisperLanguage: args.whisperLanguage,
-      audioFormat: args.audioFormat,
-      enableAudioFallback: args.enableAudioFallback,
     });
     process.stdout.write(`${JSON.stringify(result, null, args.pretty ? 2 : 0)}\n`);
   } catch (error) {

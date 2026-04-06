@@ -1,9 +1,24 @@
 ---
 name: pull-bilibiliInfo
-description: Fetch Bilibili transcript text with minimal metadata. Use when Codex needs to pull one or more Bilibili videos by URL or BV id, detect whether CC or AI subtitles are available, and fall back to audio ASR when subtitles are missing.
+description: Fetch Bilibili transcript text with minimal metadata. Trigger this skill when the user pastes a `bilibili.com` video link, provides a `BV...` id, or asks what a Bilibili video said or talked about.
 ---
 
 # Pull Bilibili Info
+
+## When To Trigger
+
+Use this skill immediately when any of the following is true:
+
+- The user provides a `BV...` id.
+- The user pastes a `https://www.bilibili.com/video/...` link.
+- The user pastes a `b23.tv` short link that resolves to a Bilibili video.
+- The user asks questions such as "这个 B 站视频说了什么", "这视频讲了什么", "帮我总结这个 B 站视频", or similar requests to read or summarize one Bilibili video's content.
+
+Do not wait for the user to explicitly mention subtitles or transcript extraction first. If the input clearly points to one Bilibili video and the user wants its content, invoke this skill.
+
+## Primary Goal
+
+Return the video's transcript text and minimal metadata in structured JSON so external callers can read the result directly.
 
 Use these entrypoints:
 
@@ -23,7 +38,7 @@ Prefer this workflow:
 
 1. For one video, run the automatic transcript entrypoint first.
 2. Prefer `ai-zh` first when subtitles exist.
-3. If subtitles are missing, fall back to audio download plus Whisper ASR.
+3. If AI subtitles are missing, stop immediately and return a no-subtitle result directly.
 4. Prefer the default lightweight JSON output and summarize from `full_text`.
 5. Preserve metadata such as `title`, `subtitle_lang`, `has_ai_subtitle`, and `transcript_source`.
 
@@ -51,18 +66,21 @@ Output contract:
 
 - Every entrypoint prints JSON to stdout by default.
 - `full_text` contains the final transcript text.
-- `transcript_source` is:
-  - `subtitle`
-  - `audio_asr`
+- `transcript_source` is `subtitle` when a transcript is available.
 - `available_subtitles` lists subtitle tracks when subtitle lookup succeeds.
 - `has_ai_subtitle` indicates whether an `ai-*` track was exposed.
-- `audio_file` and `asr_file` are populated when fallback ASR is used.
-- `error` is non-null when metadata, audio download, or ASR failed.
+- `error` is non-null when metadata fetch failed or the preferred AI subtitle track was unavailable.
+- If `has_ai_subtitle` is `false` or `error` indicates no AI subtitle track, the caller must explicitly say that this video currently has no AI subtitles.
+- When there is no AI subtitle track, stop there. Do not try audio download, ASR, OCR, manual guessing, or summary generation from incomplete data.
 
 If the script reports no subtitles:
 
-- The automatic transcript entrypoint should continue into audio ASR unless audio fallback is explicitly disabled.
-- Tell the user whether the final transcript came from subtitles or ASR.
+- Treat that result as no available AI subtitle for the requested video.
+- Tell the user explicitly that no AI subtitle is available for this video.
+- Stop after reporting that status.
+- Do not continue looking for alternative extraction paths.
 - Do not claim a transcript summary when `full_text` is empty.
+- Do not infer what the video said from title, metadata, comments, or thumbnails.
+- Tell the user whether the final transcript came from subtitles only when `full_text` is non-empty.
 
 For multi-video work later, keep each fetched result as one JSON artifact first. Aggregate only after individual pulls are verified.
