@@ -1,0 +1,167 @@
+{
+  "cards": [
+    {
+      "id": "f3621f4f-557f-4b28-acdb-898f9fb8ad46",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是渲染管线？现代实时渲染管线通常包含哪些主要阶段？",
+      "back": "渲染管线是把场景数据转换为最终像素图像的一系列 GPU/CPU 处理阶段。常见阶段包括：应用阶段、顶点处理、图元装配、裁剪、光栅化、片元/像素着色、深度与模板测试、混合与输出。",
+      "tags": [
+        "graphics-engine",
+        "rendering",
+        "interview"
+      ]
+    },
+    {
+      "id": "b352a97e-b099-4d44-a062-e66b03705d17",
+      "deckName": "Graphics Engine Interview",
+      "front": "前向渲染和延迟渲染的核心区别是什么？各自的主要优缺点是什么？",
+      "back": "前向渲染在一次物体绘制时直接完成光照，带宽较低、透明处理简单，但多光源成本高。延迟渲染先写 G-buffer 再统一做光照，多光源效率高，但显存与带宽开销大、MSAA 和透明处理更复杂。",
+      "tags": [
+        "graphics-engine",
+        "deferred-rendering",
+        "interview"
+      ]
+    },
+    {
+      "id": "3d38b44a-54c6-46a1-8c9b-f267190b7ebb",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是 draw call？为什么 draw call 太多会成为性能瓶颈？",
+      "back": "draw call 是 CPU 向 GPU 提交一次绘制命令。数量太多会导致 CPU 端状态切换、命令录制、驱动调用和同步开销上升，GPU 还没吃满时 CPU 先成为瓶颈。优化手段包括批处理、实例化、材质合批和减少状态切换。",
+      "tags": [
+        "graphics-engine",
+        "performance",
+        "interview"
+      ]
+    },
+    {
+      "id": "3c84cc11-d7ed-4c4f-9cff-9e4013aa6241",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是视锥裁剪和遮挡裁剪？它们分别解决什么问题？",
+      "back": "视锥裁剪剔除不在相机可见体积内的对象，减少无意义提交。遮挡裁剪剔除虽然在视锥内但被其他物体完全挡住的对象，进一步减少绘制和着色成本。前者解决可见范围问题，后者解决被挡问题。",
+      "tags": [
+        "graphics-engine",
+        "culling",
+        "interview"
+      ]
+    },
+    {
+      "id": "87456c48-fda1-42e7-bb26-dce328d6efba",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是帧图（Frame Graph）？为什么现代渲染器常用它管理渲染流程？",
+      "back": "帧图用有向图描述渲染 pass 与资源读写依赖。它能自动推导资源生命周期、pass 顺序、barrier、aliasing 和临时资源复用，降低渲染流程维护成本，并提升显存利用率与正确性。",
+      "tags": [
+        "graphics-engine",
+        "frame-graph",
+        "interview"
+      ]
+    },
+    {
+      "id": "b5872457-80ae-43ba-a6c8-2784170aa601",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是 double buffering / triple buffering？它们对延迟和吞吐量有什么影响？",
+      "back": "double buffering 用前后台缓冲交替显示与渲染，结构简单但更容易因同步导致等待。triple buffering 多一个缓冲区，能提升吞吐量、减少 GPU/CPU 因显示同步而阻塞，但通常会增加显存占用和输入到显示的延迟。",
+      "tags": [
+        "graphics-engine",
+        "swapchain",
+        "interview"
+      ]
+    },
+    {
+      "id": "8b18a4fc-3ba9-42ae-85d7-881c9545b003",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是 GPU/CPU 同步问题？为什么要尽量避免强同步？",
+      "back": "GPU/CPU 同步是两端为了共享资源状态或结果而等待对方完成。强同步会让流水线停住，降低并行度并放大帧时间抖动。通常应使用多帧资源、fence、ring buffer 和异步队列来减少阻塞。",
+      "tags": [
+        "graphics-engine",
+        "synchronization",
+        "interview"
+      ]
+    },
+    {
+      "id": "f48376f2-33df-4135-9dda-e21154d411a5",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是 Mipmap？它为什么能提升性能和图像质量？",
+      "back": "Mipmap 是同一纹理在不同分辨率下的预过滤层级。远处采样时使用更低层级可以减少 cache miss 与纹理带宽，降低闪烁和走样，提高采样稳定性和整体性能。",
+      "tags": [
+        "graphics-engine",
+        "texture",
+        "interview"
+      ]
+    },
+    {
+      "id": "8c43fdfb-eb7f-4fb3-8bb7-35c958edbd38",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是 PBR？金属度/粗糙度工作流里最关键的输入有哪些？",
+      "back": "PBR 是基于物理规律近似材料与光照交互的渲染方法。金属度/粗糙度工作流的关键输入通常包括 base color、metallic、roughness、normal，以及在需要时的 AO、emissive。核心目标是能量守恒和跨光照环境下更稳定的材质表现。",
+      "tags": [
+        "graphics-engine",
+        "pbr",
+        "interview"
+      ]
+    },
+    {
+      "id": "ab95382e-d687-45f3-8eab-22edee7f6834",
+      "deckName": "Graphics Engine Interview",
+      "front": "如果一个场景帧率低，你会如何系统地定位是 CPU 瓶颈、GPU 瓶颈还是带宽/同步问题？",
+      "back": "先用 profiler 区分 CPU frame time 和 GPU frame time；看 draw call、pass 耗时、state change、资源上传与等待点；用 GPU capture 工具检查热点 pass、overdraw、带宽和 barrier；通过降分辨率、关闭特效、减少物体数、关闭 VSync 等实验判断瓶颈类型；最后再定向优化。",
+      "tags": [
+        "graphics-engine",
+        "profiling",
+        "interview"
+      ]
+    },
+    {
+      "id": "114c0e3b-02e1-488d-9c3e-4ff034bdb7ab",
+      "deckName": "Graphics Engine Interview",
+      "front": "什么是帧图（Frame Graph）？为什么现代渲染器常用它管理渲染流程？",
+      "back": "帧图用有向图描述渲染 pass 与资源读写依赖。它能自动推导资源生命周期、pass 顺序、barrier、aliasing 和临时资源复用，降低渲染流程维护成本，并提升显存利用率与正确性。",
+      "tags": [
+        "graphics-engine",
+        "frame-graph",
+        "interview"
+      ],
+      "followups": [
+        {
+          "question": "为什么 frame graph 能自动推导资源 barrier？",
+          "concept": "barrier 推导",
+          "coveredSignals": [
+            "barrier",
+            "状态转换",
+            "资源状态",
+            "读写依赖"
+          ],
+          "tags": [
+            "followup",
+            "barrier"
+          ]
+        },
+        {
+          "question": "为什么资源 aliasing 能成立？",
+          "concept": "资源生命周期与 aliasing",
+          "coveredSignals": [
+            "aliasing",
+            "生命周期",
+            "复用同一块内存",
+            "临时资源复用"
+          ],
+          "tags": [
+            "followup",
+            "aliasing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "29db9582-b89a-4c96-b1a3-e3dd77854669",
+      "deckName": "Graphics Engine Interview",
+      "front": "为什么 frame graph 能自动推导资源 barrier？",
+      "back": "因为 frame graph 显式知道每个 pass 对资源的读写关系和执行顺序，所以可以在资源访问模式变化时自动插入所需的状态转换与同步。",
+      "tags": [
+        "graphics-engine",
+        "frame-graph",
+        "followup"
+      ],
+      "followups": []
+    }
+  ]
+}

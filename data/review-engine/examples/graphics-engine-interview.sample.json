@@ -1,0 +1,70 @@
+{
+  "notes": [
+    {
+      "deckName": "Graphics Engine Interview",
+      "domain": "graphics",
+      "questionType": "mechanism",
+      "difficulty": "mid",
+      "fields": {
+        "Front": "什么是帧图（Frame Graph）？为什么现代渲染器常用它管理渲染流程？",
+        "Back": "帧图用有向图描述渲染 pass 与资源读写依赖。它能自动推导资源生命周期、pass 顺序、barrier、aliasing 和临时资源复用，降低渲染流程维护成本，并提升显存利用率与正确性。"
+      },
+      "tags": ["graphics-engine", "frame-graph", "interview"],
+      "followups": [
+        {
+          "question": "为什么 frame graph 能自动推导资源 barrier？",
+          "concept": "barrier 推导",
+          "coveredSignals": ["barrier", "状态转换", "资源状态", "读写依赖"],
+          "tags": ["followup", "barrier"]
+        },
+        {
+          "question": "为什么资源 aliasing 能成立？",
+          "concept": "资源生命周期与 aliasing",
+          "coveredSignals": ["aliasing", "生命周期", "临时资源复用", "复用同一块内存"],
+          "tags": ["followup", "aliasing"]
+        }
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "domain": "unity-performance",
+      "questionType": "performance",
+      "difficulty": "mid",
+      "fields": {
+        "Front": "Unity 中定位卡顿时，为什么要先区分 Main Thread、Render Thread 和 GPU 哪一侧是瓶颈？",
+        "Back": "因为三类瓶颈的优化方向完全不同。Main Thread 常见是脚本、GC、资源加载；Render Thread 常见是 draw call、状态切换、渲染命令组织；GPU 常见是过度绘制、带宽、着色复杂度和后处理。先分清瓶颈归属，才能避免无效优化。"
+      },
+      "tags": ["unity", "performance", "interview"],
+      "followups": [
+        {
+          "question": "如果 Profiler 里经常看到 GC.Alloc，你会优先查哪几类代码路径？",
+          "concept": "Unity GC 来源定位",
+          "coveredSignals": ["GC.Alloc", "装箱", "字符串拼接", "临时 List", "LINQ", "堆分配"],
+          "tags": ["followup", "unity", "gc"]
+        }
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "domain": "cpp",
+      "questionType": "mechanism",
+      "difficulty": "mid",
+      "fields": {
+        "Front": "什么情况下你会优先使用 move semantics？它解决的核心问题是什么？",
+        "Back": "move semantics 适合在对象生命周期可以转移而不需要保留原值时使用，尤其是持有堆内存、句柄或大块资源的类型。它解决的是避免不必要深拷贝，降低临时对象和容器扩缩容时的资源复制成本。"
+      },
+      "tags": ["cpp", "move-semantics", "interview"]
+    },
+    {
+      "deckName": "C# Interview",
+      "domain": "csharp",
+      "questionType": "tradeoff",
+      "difficulty": "mid",
+      "fields": {
+        "Front": "C# 里 struct 和 class 的核心差异是什么？什么时候选 struct 更合适？",
+        "Back": "class 是引用类型，通常分配在托管堆上；struct 是值类型，复制语义不同，常用于小型、不可变、逻辑上表示单个值的数据。适合用 struct 的前提通常是体积小、复制成本可控、不会频繁装箱，也不需要复杂继承层级。"
+      },
+      "tags": ["csharp", "value-type", "interview"]
+    }
+  ]
+}

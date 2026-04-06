@@ -1,0 +1,19 @@
+{
+  "candidates": [
+    {
+      "id": "7031d31f-f077-4ba9-b0c9-2b6543236049",
+      "status": "approved",
+      "deckName": "Graphics Engine Interview",
+      "front": "为什么 frame graph 能自动推导资源 barrier？",
+      "back": "因为 frame graph 显式知道每个 pass 对资源的读写关系和执行顺序，所以可以在资源访问模式变化时自动插入所需的状态转换与同步。",
+      "tags": [
+        "graphics-engine",
+        "frame-graph",
+        "followup"
+      ],
+      "sourceCardId": "87456c48-fda1-42e7-bb26-dce328d6efba",
+      "sourceType": "ai-generated",
+      "reason": "主问题回答后暴露出对 barrier 推导机制需要单独强化。"
+    }
+  ]
+}
