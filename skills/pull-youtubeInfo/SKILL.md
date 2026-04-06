@@ -7,6 +7,19 @@ description: Fetch YouTube transcript text with minimal metadata. Trigger this s
 
 Use this skill when the user wants the subtitle text for one YouTube video.
 
+Extraction priority:
+
+- Prefer extracting as much concrete video information as possible from the transcript and metadata.
+- Do not over-compress the result into a short high-level summary unless the user explicitly asks for a brief summary.
+- When answering from this skill, prioritize:
+  - what the video actually covered
+  - key points in the order they appeared
+  - important terms, mechanisms, examples, conclusions, and caveats
+  - notable names, products, versions, numbers, dates, and claims when present
+- If the transcript is long, compress only enough to keep the answer readable, but still preserve the main informational content.
+- Prefer “信息提取 / 内容展开” over “泛泛概括”.
+- If the user asks “讲了什么”, default to a content-rich breakdown rather than a one-paragraph abstract summary.
+
 Primary entrypoints:
 
 - `node skills/pull-youtubeInfo/api/fetch_video_transcript.js "<youtube-url-or-id>" --pretty`
@@ -27,6 +40,7 @@ Workflow:
 3. Detect available subtitle tracks from the player response.
 4. Open the transcript panel and parse transcript segment text into JSON.
 5. Return `full_text` and optional `segments`.
+6. When presenting results to the user, extract key information densely from `full_text` instead of collapsing it too early into a vague summary.
 
 Output contract:
 
@@ -38,6 +52,8 @@ Output contract:
 - `transcript.full_text` contains the final transcript text.
 - `transcript.segments` contains timestamped items when requested with `--with-segments`.
 - `error` is non-null when transcript extraction failed.
+- When `transcript.full_text` is non-empty, prefer detailed content extraction over generic summarization.
+- If the caller wants a summary, keep it faithful to the transcript and include enough specifics that the user can tell what was actually said.
 
 Failure handling:
 

@@ -34,6 +34,19 @@ Do not use this skill for `space.bilibili.com/.../upload/video` pages or UP list
 
 Return the video's transcript text and minimal metadata in structured JSON so external callers can read the result directly.
 
+Extraction priority:
+
+- Prefer extracting as much concrete video information as possible from the transcript and metadata.
+- Do not over-compress the result into a short high-level summary unless the user explicitly asks for a brief summary.
+- When answering from this skill, prioritize:
+  - what the video actually covered
+  - key points in the order they appeared
+  - important terms, mechanisms, examples, conclusions, and caveats
+  - notable names, products, versions, numbers, dates, and claims when present
+- If the transcript is long, compress only enough to keep the answer readable, but still preserve the main informational content.
+- Prefer “信息提取 / 内容展开” over “泛泛概括”.
+- If the user asks “讲了什么”, default to a content-rich breakdown rather than a one-paragraph abstract summary.
+
 Use these entrypoints:
 
 1. Single video, automatic transcript:
@@ -52,6 +65,7 @@ Prefer this workflow:
 3. If AI subtitles are missing, stop immediately and return a no-subtitle result directly.
 4. Prefer the default lightweight JSON output and summarize from `full_text`.
 5. Preserve metadata such as `title`, `subtitle_lang`, `has_ai_subtitle`, and `transcript_source`.
+6. When presenting results to the user, extract key information densely from `full_text` instead of collapsing it too early into a vague summary.
 
 The scripts can reuse a logged-in Chrome Bilibili tab to expose AI subtitles. Use environment variable `BILIBILI_COOKIE` only as a fallback when needed. Do not hardcode personal cookies into the script.
 
@@ -80,6 +94,8 @@ Output contract:
 - If `has_ai_subtitle` is `false` or `error` indicates no AI subtitle track, the caller must explicitly say that this video currently has no AI subtitles.
 - If `has_ai_subtitle` is `false`, transcript availability should be treated as `false`.
 - When there is no AI subtitle track, stop there. Do not try audio download, ASR, OCR, manual guessing, or summary generation from incomplete data.
+- When `full_text` is non-empty, prefer detailed content extraction over generic summarization.
+- If the caller wants a summary, keep it faithful to the transcript and include enough specifics that the user can tell what was actually said.
 
 If the script reports no subtitles:
 
