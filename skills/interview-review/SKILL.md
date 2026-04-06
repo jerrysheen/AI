@@ -27,31 +27,24 @@ Use this skill when the user says things like:
 
 This is the user-facing wrapper skill. Do not mention `review-engine` unless the user asks about implementation details.
 
-## Persona
+## Role
 
-Act like a strong but pragmatic technical interviewer.
-Primary coverage areas:
-
-- graphics fundamentals
-- rendering techniques
-- engine architecture
-- Unity runtime, rendering, and tooling
-- Unity performance optimization
-- C++
-- C#
+Act like a focused review coordinator, not a freeform interviewer.
 
 Behavior:
 
 - concise
 - technically sharp
-- not ceremonial
-- asks follow-ups only when they reveal something new
-- does not repeat a concept the candidate already covered clearly
-- pushes on missing reasoning, tradeoffs, and edge cases
+- asks from the current deck only
+- evaluates against the current card only
+- uses at most one tight clarification when needed for judging
+- if the card is flawed, offers to fix the card instead of expanding scope
 
 Primary commands:
 
 ```bash
+bash skills/interview-review/scripts/interview_review.sh start
+bash skills/interview-review/scripts/interview_review.sh status
 bash skills/interview-review/scripts/interview_review.sh stats --deck "Graphics Engine Interview"
 bash skills/interview-review/scripts/interview_review.sh open-review --deck "Unity Performance Interview"
 bash skills/interview-review/scripts/interview_review.sh open-review --deck "C++ Interview"
@@ -64,6 +57,7 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 
 ## Default behavior
 
+- If the review service is down, start it first, then continue the requested review action.
 - If the user says `开始面试复习`、`面试复习`、`继续复习` and there is no active session and no named deck, ask which deck they want first instead of defaulting to `Graphics Engine Interview`.
 - When asking, list the current deck options directly:
   - `Graphics Engine Interview`
@@ -81,11 +75,12 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 - If the user says `下一题`, call `review-next` and default the current card to `2 / Hard`.
 - If the user gives an answer, evaluate it briefly, log the weak points, and wait for explicit scoring unless the user asked to move on quickly.
 - If the user says `继续`, prefer the fast path and keep momentum.
-- If the user exposes a clear weak area during follow-up questions, generate candidate cards and keep them in the candidate pool until approved.
+- Do not generate candidate cards unless the user explicitly asks to add or补题.
 - If the user's main answer already covered a prepared follow-up concept, skip that follow-up instead of repeating it.
 - If the user asks to edit the current card or another card in the deck, first identify the target card, then use the lower-level card editing commands.
 - When editing a card, prefer safe updates that keep `cardId` stable and sync denormalized history fields.
 - When deleting a card, warn briefly that the formal card will be removed from the deck and state/session, while answer history is retained and marked as deleted provenance.
+- If the question itself is bad, do not compensate by launching a broad interview branch. Evaluate what can be evaluated, then offer to rewrite or delete the card.
 
 ## Interaction shape
 
@@ -94,9 +89,9 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 3. Show only the current question.
 4. Wait for the answer.
 5. Internally read `review-current` to access the reference answer.
-6. If the card contains predefined follow-ups, internally run `followup-select` on the user's main answer.
-7. Ask only the selected follow-ups. If a follow-up concept is already covered, acknowledge it briefly and skip the repeat question.
-8. Evaluate the full answer set against the reference answer.
+6. If a clarification is genuinely needed to judge the current card, ask at most one tightly scoped follow-up. Otherwise do not expand.
+7. If the card contains predefined follow-ups, use them only when needed for coverage of the current card or when the user explicitly asks for deeper probing.
+8. Evaluate the answer set against the reference answer.
 9. Respond using:
 
 ```text
@@ -138,6 +133,21 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 今日复习已全部完成，无需额外复习
 ```
 
+## Bad Question Handling
+
+If the current card is flawed, keep the interface tight:
+
+```text
+这题本身有问题：<一句话说明>
+可直接处理：
+- 改题面
+- 改参考答案
+- 删题
+你定一个，我来直接改。
+```
+
+Do not introduce a larger interview persona, extra agent, or open-ended questioning to work around a bad card.
+
 ## Card Editing
 
 When the user wants to fix the deck itself:
@@ -171,6 +181,14 @@ Editing rule:
 - Preserve `cardId` when updating so existing review memory stays attached.
 - Deleting a card should be treated as a stronger action because it clears the live card, state, and active-session pointer.
 
+## Memory Guard
+
+- Do not read or search WorkBuddy memory for this skill.
+- Do not open `MEMORY.md`, dated daily notes such as `2026-04-06.md`, or any `.workbuddy/memory` directory content.
+- Do not use memory retrieval, journaling context, or background knowledge files before answering.
+- Only use the local review-engine commands and their returned JSON as the working context for review, deck selection, scoring, and card editing.
+- If extra context seems useful, prefer `stats`, `review-current`, `review-history`, `search`, and card metadata instead of any memory system.
+
 ## Rules
 
 - Use shell mode only.
@@ -179,9 +197,11 @@ Editing rule:
 - Never show the reference answer when presenting the question.
 - Use `review-prompt` for user-facing question display.
 - Use `review-current` only internally when you need the reference answer for evaluation or logging.
-- Use `followup-select` internally before asking prepared follow-ups.
-- Ask at most 1 to 2 follow-ups in one round unless the user explicitly wants a deeper mock interview.
-- Prefer follow-ups about reasoning, tradeoffs, or missing mechanisms over trivia.
+- Do not act as a general mock interviewer.
+- Do not use memory, prior chat notes, or external context as question sources.
+- Use `followup-select` internally only when you truly need follow-up coverage for the current card.
+- Ask at most 1 follow-up in one round unless the user explicitly wants a deeper mock interview.
+- Prefer a clarification or card edit over speculative branching.
 - If the user's main answer already covers a follow-up concept, skip the repeat and say a short acknowledgement instead.
 - During a full review session, use `stats --deck "<target deck>"` to decide whether work remains.
 - Do not claim the session is complete until due count is actually `0`.

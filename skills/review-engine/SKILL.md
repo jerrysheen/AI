@@ -9,6 +9,8 @@ Use this skill for the local self-hosted review engine. It replaces the old Anki
 
 Primary entrypoint:
 
+- `bash skills/review-engine/scripts/review_engine.sh start`
+- `bash skills/review-engine/scripts/review_engine.sh status`
 - `bash skills/review-engine/scripts/review_engine.sh health`
 - `bash skills/review-engine/scripts/review_engine.sh decks`
 - `bash skills/review-engine/scripts/review_engine.sh stats --deck "Graphics Engine Interview"`
@@ -29,6 +31,8 @@ Default base URL:
 Routine commands:
 
 ```bash
+bash skills/review-engine/scripts/review_engine.sh start
+bash skills/review-engine/scripts/review_engine.sh status
 bash skills/review-engine/scripts/review_engine.sh decks
 bash skills/review-engine/scripts/review_engine.sh stats
 bash skills/review-engine/scripts/review_engine.sh open-review --deck "Graphics Engine Interview"
@@ -49,6 +53,11 @@ Deck selection rule:
   - `C++ Interview`
   - `C# Interview`
   - `Unity Performance Interview`
+
+Service rule:
+
+- If `health` fails with connection refused, call `start` before any review command.
+- Do not invent a startup path outside this repository when the server is down.
 
 ## Review Flow
 
@@ -95,6 +104,14 @@ bash skills/review-engine/scripts/review_engine.sh review-next
 
 `review-next` defaults to `2 / Hard` and immediately returns the next card.
 
+## Question Source Guard
+
+- All user-facing questions must come from the active deck card returned by `review-prompt` or `review-current`.
+- Do not invent, paraphrase, merge, or extend a question before the user answers.
+- Do not source questions from WorkBuddy memory, daily notes, prior chats, or any background context file.
+- Do not switch into a broader "mock interview" mode unless the user explicitly asks for that.
+- Ask at most one tightly scoped clarification in a round, and only if it is required to judge the user's answer against the current card.
+
 ## Follow-up Modes
 
 Two follow-up modes are supported:
@@ -111,9 +128,11 @@ bash skills/review-engine/scripts/review_engine.sh followup-select \
 ```
 
 Only ask the follow-ups in `selected`. If a concept already appears in the main answer, it should land in `covered` and be skipped or only acknowledged briefly.
+Do not ask follow-ups just to "play interviewer". Use them only when they are needed to judge coverage of the current card or when the user explicitly wants deeper probing.
 
 2. AI-generated candidate cards
-If the conversation exposes a stable missing concept, generate one or more candidate cards and write them into the candidate pool. Do not auto-promote them into the main deck until they are approved.
+If the user explicitly asks to add a missing concept into the deck, generate one or more candidate cards and write them into the candidate pool. Do not auto-promote them into the main deck until they are approved.
+Do not generate candidate cards by default during ordinary review.
 
 Log an interview session with follow-up QA and optional candidate cards:
 
@@ -156,10 +175,39 @@ Recommended follow-up schema inside card JSON:
 
 Use `coveredSignals` or `whenMissingAny` so follow-up selection can skip concepts that the user already explained in the first answer.
 
+## Question Quality Handling
+
+- If the current question is ambiguous, technically wrong, too long, duplicated, or poorly scoped, say so directly after evaluation.
+- In that case, prefer offering a deck edit path over compensating with extra follow-ups or freeform interviewer behavior.
+- Allowed edit actions:
+  - rewrite the current question
+  - rewrite the reference answer
+  - retag the card
+  - delete the card if it should not exist
+- When proposing an edit, keep the prompt tight:
+
+```text
+这题本身有问题：<一句话说明>
+可直接处理：
+- 改题面
+- 改参考答案
+- 删题
+你定一个，我来直接改。
+```
+
+## Memory Guard
+
+- Do not read or search WorkBuddy memory for this skill.
+- Do not open `MEMORY.md`, dated daily notes such as `2026-04-06.md`, or any `.workbuddy/memory` directory content.
+- Do not use memory retrieval, journaling context, or background knowledge files before answering.
+- Only use the local review-engine commands and their returned JSON as the working context for review, deck selection, scoring, and card editing.
+- If extra context seems useful, prefer `stats`, `review-current`, `review-history`, `search`, and card metadata instead of any memory system.
+
 ## Rules
 
 - Use shell mode only.
 - Do not use the old `anki-gateway` skill.
+- Do not turn this skill into a freeform interviewer or agent coordinator.
 - Do not auto-score unless the user explicitly asks for that behavior.
 - Do not skip `review-log-current` after giving answer feedback.
 - Keep `weakPoints` stable across attempts so the same weakness accumulates.

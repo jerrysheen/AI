@@ -1,11 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 BASE_URL="${AI_REVIEW_ENGINE_URL:-http://127.0.0.1:8776}"
+SHARED_DATA_ROOT="${AI_SHARED_DATA_DIR:-${REPO_ROOT}/.ai-data}"
+RUNTIME_DIR="${SHARED_DATA_ROOT}/review-engine/runs"
+PID_FILE="${RUNTIME_DIR}/server.pid"
+LOG_FILE="${RUNTIME_DIR}/server.log"
 
 usage() {
   cat <<'EOF' >&2
 Usage:
+  skills/review-engine/scripts/review_engine.sh start
+  skills/review-engine/scripts/review_engine.sh status
   skills/review-engine/scripts/review_engine.sh health
   skills/review-engine/scripts/review_engine.sh decks
   skills/review-engine/scripts/review_engine.sh stats [--deck "Graphics Engine Interview"]
@@ -27,6 +35,55 @@ Usage:
   skills/review-engine/scripts/review_engine.sh delete --card-id id
   skills/review-engine/scripts/review_engine.sh add-json --file /path/to/cards.json
 EOF
+}
+
+service_running() {
+  curl -sS --max-time 2 "${BASE_URL}/health" >/dev/null 2>&1
+}
+
+start_service() {
+  mkdir -p "${RUNTIME_DIR}"
+  if service_running; then
+    echo "{\"ok\":true,\"status\":\"already-running\",\"url\":\"${BASE_URL}\"}"
+    return 0
+  fi
+
+  local launcher=("${REPO_ROOT}/scripts/start_review_engine.sh")
+  if command -v setsid >/dev/null 2>&1; then
+    setsid "${launcher[@]}" >"${LOG_FILE}" 2>&1 < /dev/null &
+  else
+    nohup "${launcher[@]}" >"${LOG_FILE}" 2>&1 < /dev/null &
+  fi
+  local pid=$!
+  echo "${pid}" >"${PID_FILE}"
+
+  for _ in $(seq 1 40); do
+    if service_running; then
+      echo "{\"ok\":true,\"status\":\"started\",\"pid\":${pid},\"url\":\"${BASE_URL}\",\"logFile\":\"${LOG_FILE}\"}"
+      return 0
+    fi
+    sleep 0.25
+  done
+
+  echo "Review engine failed to start. See log: ${LOG_FILE}" >&2
+  return 1
+}
+
+print_status() {
+  if service_running; then
+    if [[ -f "${PID_FILE}" ]]; then
+      echo "{\"ok\":true,\"status\":\"running\",\"pid\":$(cat "${PID_FILE}"),\"url\":\"${BASE_URL}\",\"logFile\":\"${LOG_FILE}\"}"
+    else
+      echo "{\"ok\":true,\"status\":\"running\",\"url\":\"${BASE_URL}\"}"
+    fi
+    return 0
+  fi
+
+  if [[ -f "${PID_FILE}" ]]; then
+    echo "{\"ok\":false,\"status\":\"stopped\",\"lastPid\":$(cat "${PID_FILE}"),\"url\":\"${BASE_URL}\",\"logFile\":\"${LOG_FILE}\"}"
+  else
+    echo "{\"ok\":false,\"status\":\"stopped\",\"url\":\"${BASE_URL}\",\"logFile\":\"${LOG_FILE}\"}"
+  fi
 }
 
 json_post() {
@@ -99,6 +156,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$command" in
+  start)
+    start_service
+    ;;
+  status)
+    print_status
+    ;;
   health)
     curl -sS --max-time 30 "${BASE_URL}/health"
     ;;

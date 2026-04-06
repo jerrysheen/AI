@@ -1422,7 +1422,7 @@
       "id": "02f91ea6-66e1-4c5a-9b86-721eec35c924",
       "deckName": "Graphics Engine Interview",
       "front": "near/far plane 太极端会带来什么问题？",
-      "back": "near 太小、far 太大都会恶化深度缓冲精度，容易导致 z-fighting 和阴影、深度比较类问题更明显。",
+      "back": "near 太小、far 太大都会恶化深度缓冲精度，容易导致 z-fighting 和阴影、深度比较类问题更明显。\n\n提示：\n- precision problem → z-fighting（两个面深度相近时交替显示）\n- 深度值在投影空间非线性分布，near越近精度越高，far越大far附近精度越差\n- reverse-Z / 对数深度是常见解决方案",
       "tags": [
         "cluster-coordinate-space",
         "deck-graphics",
@@ -1891,23 +1891,6 @@
         "level-basic",
         "topic-rendering-basics",
         "transparency"
-      ],
-      "followups": []
-    },
-    {
-      "id": "0078b330-d013-47e1-ab3d-f6ad2ca2b417",
-      "deckName": "Graphics Engine Interview",
-      "front": "为什么前向渲染在多光源场景下压力更大？",
-      "back": "因为前向渲染通常在绘制每个物体时直接计算它受哪些光影响，光源越多，同一像素或物体上的光照计算就越容易重复。",
-      "tags": [
-        "cluster-render-path-basic",
-        "deck-graphics",
-        "forward-rendering",
-        "graphics-engine",
-        "layer-1-foundation",
-        "level-basic",
-        "lighting",
-        "topic-rendering-basics"
       ],
       "followups": []
     },
@@ -3374,6 +3357,75 @@
         "level-mid",
         "scene-system",
         "topic-resource-system"
+      ],
+      "followups": []
+    },
+    {
+      "id": "dd17cd89-1711-45b0-ac75-0068b3d21632",
+      "deckName": "Graphics Engine Interview",
+      "front": "MSAA、FXAA、SMAA、TAA 的原理是什么？各自的开销和适用场景是什么？MSAA 和 SSAA 的核心区别是什么？",
+      "back": "MSAA：在每个 sub-sample 上做覆盖测试但不重复执行 fragment shader，省着色计算但不省带宽，最后 Resolve 合成颜色。\\nSSAA：每个 sub-sample 都完整执行 fragment shader，效果最好但开销最大。\\n\\nFXAA：后处理方式，遍历像素检测亮度梯度，超过阈值判定为边缘，在边缘处做颜色混合——本质是模糊，不是锐化。\\nSMAA：后处理，识别边缘几何形状（线、L、U 等）再针对性混合，效果好于 FXAA，开销也更高。\\nTAA：时域方法，利用 motion vector 做历史帧 reprojection，用深度/亮度判断历史数据可信度后混合。需记录历史帧，有 ghosting 风险（依赖有效判断）。\\n\\n开销：MSAA 增显存和带宽；FXAA/SMAA 后处理额外 pass；TAA 额外 motion vector + 历史帧缓冲。\\n场景：MSAA 适合主机/PC 帧缓冲少时；FXAA 适合移动端快速处理；TAA 适合高质量实时渲染。",
+      "tags": [
+        "抗锯齿",
+        "MSAA",
+        "TAA",
+        "FXAA",
+        "SMAA"
+      ],
+      "followups": []
+    },
+    {
+      "id": "699dceaf-66de-41cb-8c29-44cfb9752713",
+      "deckName": "Graphics Engine Interview",
+      "front": "Vertex Shader 输出到 Fragment Shader 的数据是怎么传递的？光栅化插值方式有哪些，各有什么区别？",
+      "back": "传递方式：顶点着色器输出的 attribute/varying 在光栅化阶段由光栅器插值，生成每个 fragment 的值。\\n\\n三种插值限定符：\\n- flat（平坦）：不做插值，直接使用顶点数据，字面值复制到每个片元。常用于 flat shading、颜色、ID 等。\\n- noperspective（非透视校正）：线性插值，不做透视校正。性能比默认快，但在有深度透视的远距离物体会失真。\\n- 默认 smooth：透视校正插值，远处被拉伸的线性距离会正确还原。默认行为。\\n\\n追问：为什么需要 flat shading？—— 因为有些数据（颜色 ID）天然不该被插值，插值会导致错误的视觉效果或逻辑错误。",
+      "tags": [
+        "着色器",
+        "插值",
+        "光栅化",
+        "GLSL",
+        "HLSL"
+      ],
+      "followups": []
+    },
+    {
+      "id": "5f9fe19a-6b27-4552-bbfc-d8b31b7cedb6",
+      "deckName": "Graphics Engine Interview",
+      "front": "HLSL、GLSL、MSL 各自的特性和适用平台是什么？Shader 跨平台是怎么实现的？",
+      "back": "HLSL（High Level Shading Language）：微软主导，适用于 Direct3D（PC/Xbox），Windows 平台。语法风格接近 C，主流引擎广泛使用。\\n\\nGLSL（OpenGL Shading Language）：Khronos 主导，适用于 OpenGL / Vulkan。GLSL 原生支持 Vulkan（通过 SPIR-V），但 OpenGL 端 GLSL 语法在不同版本间有差异。\\n\\nMSL（Metal Shading Language）：Apple 主导，适用于 Metal（iOS/macOS）。苹果自有生态，无跨平台需求，语法接近 C++14。\\n\\n跨平台方案：\\n1. 中间语言：GLSL → SPIR-V → HLSL（如 google/spirv-cross）\\n2. 引擎层抽象：Unreal 的 USF / Unity 的 ShaderLab 预处理后生成目标平台代码\\n3. 第三方跨平台库：hlslcc、shaderc 等\\n4. 自研转译工具：引擎自己维护一套 Shader DSL，输出到各平台",
+      "tags": [
+        "着色器",
+        "GLSL",
+        "HLSL",
+        "Metal",
+        "跨平台"
+      ],
+      "followups": []
+    },
+    {
+      "id": "503f1888-96fd-4544-8688-09c043618139",
+      "deckName": "Graphics Engine Interview",
+      "front": "Mipmap 是什么？它解决了什么问题？原理是什么？实际应用中有哪些需要注意的点？",
+      "back": "解决问题：远处物体纹理采样不足（纹理像素比屏幕像素还多），导致闪烁（aliasing）和走样。\\n\\n原理：预生成一系列 1/2、1/4、1/8... 尺寸的纹理图，共 log₂(maxDim) 层。GPU 根据像素覆盖面积自动选择对应层级，避免远处纹理走样。\\n\\n注意点/踩坑：\\n1. Mipmap 层切换时会有明显的层级跳跃感（mipmap banding），可用各项异性过滤（Anisotropic Filtering）缓解。\\n2. UV 边界处 mipmap 过度采样：需要 wrap mode 为 CLAMP_TO_EDGE，避免边缘黑边。\\n3. 不恰当的 Mipmap 生成方式（如非线性缩放）会导致纹理退化。\\n4. UI 纹理等不应该有 mipmap（2D 渲染通常渲染到 1x 屏幕），反而浪费显存。\\n5. Texture streaming 系统根据相机距离动态加载/卸载各层级 mipmap，平衡显存和画质。",
+      "tags": [
+        "纹理",
+        "Mipmap",
+        "采样",
+        "贴图"
+      ],
+      "followups": []
+    },
+    {
+      "id": "d92d1886-589c-4ded-baf1-f07347c7bfa7",
+      "deckName": "Graphics Engine Interview",
+      "front": "Object Space Normal Map 和 Tangent Space Normal Map 的区别是什么？为什么 Normal Map 通常用 Tangent Space 存储？TBN 矩阵是怎么计算的？",
+      "back": "Object Space（模型空间）：法线方向相对于模型自身坐标系存储。优点是直观，缺点是无法 uv 展开时无缝拼接，多个物体合并时需要重新烘焙。\\n\\nTangent Space（切线空间）：法线存储在 UV 坐标系的切线空间中，法线贴图 RGB=(0,0,1) 代表平面（无偏移），(0,0,0)~(0,0,2) 之间存储各方向的法线扰动。\\n\\n为什么用 Tangent Space：\\n1. 可复用：不同模型只要 UV 展开正确就能通用\\n2. 贴合表面：法线方向天然是相对表面的偏移\\n3. 支持高效压缩\\n\\nTBN 矩阵计算：\\n- N：从顶点法线插值得到\\n- T = dP/du（UV 坐标 u 方向的偏导，即切线方向）\\n- B = dP/dv（UV 坐标 v 方向的副切线）\\n- Gram-Schmidt 正交化：T = normalize(T - N·(N·T))，B = normalize(N × T)\\n- 顶点在顶点着色器里输出 TBN，片段着色器用 TBN 矩阵将 Tangent Space 法线转到世界空间或视图空间",
+      "tags": [
+        "纹理",
+        "NormalMap",
+        "切线空间",
+        "TBN",
+        "蒙皮"
       ],
       "followups": []
     }
