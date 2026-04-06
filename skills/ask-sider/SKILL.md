@@ -32,17 +32,19 @@ Do not use this skill when:
 
 ## Entry Points
 
-- PowerShell: [ask-sider.ps1](/F:/AI/skills/ask-sider/scripts/ask-sider.ps1)
-- Node implementation: [ask-sider.js](/F:/AI/skills/ask-sider/scripts/ask-sider.js)
-- One-time login bootstrap: [init-sider-profile.ps1](/F:/AI/skills/ask-sider/scripts/init-sider-profile.ps1)
-- Config: [sider-chat.json](/F:/AI/skills/ask-sider/config/sider-chat.json)
-- Usage notes: [README.md](/F:/AI/skills/ask-sider/docs/README.md)
+- macOS/Linux shell: [ask-sider.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.sh)
+- PowerShell: [ask-sider.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.ps1)
+- Node implementation: [ask-sider.js](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.js)
+- One-time login bootstrap: [init-sider-profile.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.sh)
+- Windows bootstrap: [init-sider-profile.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.ps1)
+- Config: [sider-chat.json](/Users/jerry/Desktop/AI/skills/ask-sider/config/sider-chat.json)
+- Usage notes: [README.md](/Users/jerry/Desktop/AI/skills/ask-sider/docs/README.md)
 
 ## Procedure
 
 1. Treat the user request as one plain-text prompt.
-2. Use [ask-sider.ps1](/F:/AI/skills/ask-sider/scripts/ask-sider.ps1) as the default entrypoint.
-3. If the dedicated Chrome profile is not initialized, run [init-sider-profile.ps1](/F:/AI/skills/ask-sider/scripts/init-sider-profile.ps1) once and let the user complete login in that browser window.
+2. On macOS/Linux, use [ask-sider.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.sh). On Windows, use [ask-sider.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.ps1).
+3. If the dedicated Chrome profile is not initialized, run [init-sider-profile.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.sh) on macOS/Linux or [init-sider-profile.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.ps1) on Windows, then let the user complete login in that browser window.
 4. Reuse the dedicated Chrome profile configured in [sider-chat.json](/F:/AI/skills/ask-sider/config/sider-chat.json).
 5. Reuse an existing Sider chat tab when present.
 6. Send the prompt through the web UI.
@@ -54,7 +56,7 @@ Do not use this skill when:
 
 - Callers must use this skill serially per Chrome profile.
 - Do not run multiple `ASK Sider` invocations in parallel against the same Sider session.
-- Prefer the PowerShell wrapper unless a caller explicitly needs the Node entrypoint.
+- Prefer the platform shell wrapper over invoking `ask-sider.js` directly.
 - If the browser session is unavailable, initialize it first instead of silently switching to another tool or API.
 - If `status` is `send_not_confirmed`, retrying the send is safe.
 - If `status` is `reply_not_observed`, do not resend the prompt. Try a recovery read first.
@@ -65,12 +67,12 @@ Do not use this skill when:
 
 ## Examples
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps1 "请只回复 OK"
+```bash
+./skills/ask-sider/scripts/ask-sider.sh "请只回复 OK"
 ```
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps1 "请只回复 OK" -AsJson
+```bash
+./skills/ask-sider/scripts/ask-sider.sh "请只回复 OK" --as-json
 ```
 
 ## Repository Layout

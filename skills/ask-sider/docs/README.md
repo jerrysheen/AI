@@ -5,17 +5,20 @@ This wrapper sends a message to the logged-in Sider web app by talking directly 
 ## Files
 
 - `config/sider-chat.json`: site and browser behavior.
-- `scripts/init-sider-profile.ps1`: one-time dedicated profile launcher.
-- `scripts/ask-sider.js`: zero-dependency Node script that drives Chrome through the DevTools Protocol.
-- `scripts/ask-sider.ps1`: normal entrypoint script.
+- `scripts/runtime_shim.js`: resolves shared runtime defaults and cross-platform Chrome paths.
+- `scripts/init-sider-profile.sh`: one-time dedicated profile launcher for macOS/Linux.
+- `scripts/init-sider-profile.ps1`: one-time dedicated profile launcher for Windows.
+- `scripts/ask-sider.js`: Node script that drives Chrome through the DevTools Protocol.
+- `scripts/ask-sider.sh`: normal entrypoint on macOS/Linux.
+- `scripts/ask-sider.ps1`: normal entrypoint on Windows.
 - `schemas/sider-reply.schema.json`: output contract for JSON mode.
 
 ## One-Time Setup
 
 Run this once to create and open the dedicated automation Chrome profile:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\init-sider-profile.ps1
+```bash
+./skills/ask-sider/scripts/init-sider-profile.sh
 ```
 
 Then in that Chrome window:
@@ -24,38 +27,40 @@ Then in that Chrome window:
 2. Confirm `https://sider.ai/zh-CN/chat` opens normally.
 3. Close the browser when you are done.
 
-The login state will stay in `F:\AI\.chrome-sider-profile`.
+The login state will stay in the profile resolved from `AI_CHROME_PROFILE_DIR`, which defaults to `.chrome-sider-profile` under the repository root.
 
 ## Daily Usage
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps1 "帮我总结今天的工作计划"
+```bash
+./skills/ask-sider/scripts/ask-sider.sh "帮我总结今天的工作计划"
 ```
 
 Print structured JSON instead of plain reply text:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps1 "帮我总结今天的工作计划" -AsJson
+```bash
+./skills/ask-sider/scripts/ask-sider.sh "帮我总结今天的工作计划" --as-json
 ```
 
 Skip browser cleanup if you do not want the script to close existing browsers:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\skills\ask-sider\scripts\ask-sider.ps1 "帮我总结今天的工作计划" -SkipBrowserCleanup
+```bash
+./skills/ask-sider/scripts/ask-sider.sh "帮我总结今天的工作计划" --skip-browser-cleanup
 ```
 
 ## Behavior
 
-1. Optionally kills common browser processes.
-2. Starts one dedicated Chrome with `F:\AI\.chrome-sider-profile`.
-3. Enables remote debugging on port `9222`.
-4. Runs `scripts/ask-sider.js`.
-5. The Node script reuses an existing Sider chat tab when available, sends the message, confirms whether the page accepted the send, waits for a reply, and returns structured output.
+1. Resolves Chrome path, profile dir, and debug port from shared runtime config or `.env`.
+2. Starts one dedicated Chrome with the resolved profile directory when the debug port is not already available.
+3. Enables remote debugging on the configured port.
+4. Installs the local `ws` dependency on first run if needed.
+5. Runs `scripts/ask-sider.js`.
+6. The Node script reuses an existing Sider chat tab when available, sends the message, confirms whether the page accepted the send, waits for a reply, and returns structured output.
 
 ## Notes
 
 - This flow does not use `codex exec`.
-- It also does not rely on your default Chrome profile.
+- It does not rely on your default Chrome profile.
+- On macOS, the default Chrome binary path is `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome` unless `AI_CHROME_PATH` overrides it.
 - The default output is only the assistant reply text. Use `-AsJson` for the full payload.
 - The helper uses DOM heuristics to find the chat box and extract the latest answer. If Sider changes its page structure, update `scripts/ask-sider.js`.
 - This flow is designed for serial use per profile. Do not run multiple `ask-sider` calls in parallel against the same logged-in Sider session.

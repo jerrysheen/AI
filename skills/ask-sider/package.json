@@ -1,0 +1,9 @@
+{
+  "name": "ask-sider",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local Sider browser automation helper",
+  "dependencies": {
+    "ws": "^8.18.3"
+  }
+}

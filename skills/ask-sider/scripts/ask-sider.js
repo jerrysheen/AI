@@ -1,5 +1,20 @@
 ﻿const fs = require('node:fs');
 const path = require('node:path');
+const {resolveSiderConfig} = require('./runtime_shim');
+
+if (typeof fetch !== 'function') {
+  throw new Error('Global fetch is not available. Use Node 18+.');
+}
+
+if (typeof WebSocket === 'undefined') {
+  try {
+    global.WebSocket = require('ws');
+  } catch {
+    throw new Error(
+      'WebSocket is not defined. Run npm install --prefix skills/ask-sider or use scripts/ask-sider.sh.',
+    );
+  }
+}
 
 const MAIN_SELECTOR = 'main';
 const INPUT_SELECTORS = [
@@ -663,8 +678,7 @@ async function main() {
   }
 
   const configPath = path.resolve(args.config);
-  const configText = fs.readFileSync(configPath, 'utf8').replace(/^\uFEFF/, '');
-  const config = JSON.parse(configText);
+  const config = resolveSiderConfig(configPath);
   const question = args.question;
   const baseUrl = `http://127.0.0.1:${config.chrome.remote_debug_port}`;
   const responseIdleTimeoutMs = Number(config.site.response_idle_timeout_ms || 30000);
