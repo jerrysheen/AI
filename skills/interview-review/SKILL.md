@@ -20,6 +20,10 @@ Use this skill when the user says things like:
 - 这题打 3 分
 - 继续复习
 - 查看当前复习
+- 这题出的不好，帮我改一下
+- 把当前题改短一点
+- 搜索题库里关于某个主题的题
+- 删除当前题
 
 This is the user-facing wrapper skill. Do not mention `review-engine` unless the user asks about implementation details.
 
@@ -79,6 +83,9 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 - If the user says `继续`, prefer the fast path and keep momentum.
 - If the user exposes a clear weak area during follow-up questions, generate candidate cards and keep them in the candidate pool until approved.
 - If the user's main answer already covered a prepared follow-up concept, skip that follow-up instead of repeating it.
+- If the user asks to edit the current card or another card in the deck, first identify the target card, then use the lower-level card editing commands.
+- When editing a card, prefer safe updates that keep `cardId` stable and sync denormalized history fields.
+- When deleting a card, warn briefly that the formal card will be removed from the deck and state/session, while answer history is retained and marked as deleted provenance.
 
 ## Interaction shape
 
@@ -130,6 +137,39 @@ bash skills/interview-review/scripts/interview_review.sh review-next
 ```text
 今日复习已全部完成，无需额外复习
 ```
+
+## Card Editing
+
+When the user wants to fix the deck itself:
+
+1. Identify the target card.
+2. If needed, search first:
+
+```bash
+bash skills/interview-review/scripts/interview_review.sh search --query "<keyword>" --limit 10
+```
+
+3. Update the card in place when the user wants to rewrite the question, answer, tags, or deck:
+
+```bash
+bash skills/interview-review/scripts/interview_review.sh update \
+  --card-id "<card id>" \
+  --front "<new question>" \
+  --back "<new answer>" \
+  --tags "tag1,tag2"
+```
+
+4. Delete only when the user clearly wants the card removed:
+
+```bash
+bash skills/interview-review/scripts/interview_review.sh delete --card-id "<card id>"
+```
+
+Editing rule:
+
+- Prefer update over delete when the card is just poorly written.
+- Preserve `cardId` when updating so existing review memory stays attached.
+- Deleting a card should be treated as a stronger action because it clears the live card, state, and active-session pointer.
 
 ## Rules
 

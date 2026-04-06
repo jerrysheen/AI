@@ -23,7 +23,8 @@ Usage:
   skills/review-engine/scripts/review_engine.sh candidate-approve --candidate-ids "id1,id2" [--deck "Graphics Engine Interview"]
   skills/review-engine/scripts/review_engine.sh search --query "draw call" [--limit 5]
   skills/review-engine/scripts/review_engine.sh add --deck "Graphics Engine Interview" --front "Question" --back "Answer" [--tags "a,b"]
-  skills/review-engine/scripts/review_engine.sh update --card-id id [--front "New"] [--back "New"] [--tags "a,b"]
+  skills/review-engine/scripts/review_engine.sh update --card-id id [--deck "New Deck"] [--front "New"] [--back "New"] [--tags "a,b"]
+  skills/review-engine/scripts/review_engine.sh delete --card-id id
   skills/review-engine/scripts/review_engine.sh add-json --file /path/to/cards.json
 EOF
 }
@@ -55,6 +56,7 @@ limit="20"
 front=""
 back=""
 tags=""
+tags_set="0"
 card_id=""
 ease=""
 file=""
@@ -77,7 +79,7 @@ while [[ $# -gt 0 ]]; do
     --limit) limit="${2:-}"; shift 2 ;;
     --front) front="${2:-}"; shift 2 ;;
     --back) back="${2:-}"; shift 2 ;;
-    --tags) tags="${2:-}"; shift 2 ;;
+    --tags) tags="${2:-}"; tags_set="1"; shift 2 ;;
     --card-id) card_id="${2:-}"; shift 2 ;;
     --ease) ease="${2:-}"; shift 2 ;;
     --file) file="${2:-}"; shift 2 ;;
@@ -305,21 +307,27 @@ PY
     ;;
   update)
     [[ -n "$card_id" ]] || { echo "Missing --card-id" >&2; exit 1; }
-    python3 - <<'PY' "$BASE_URL" "$card_id" "$front" "$back" "$tags"
+    python3 - <<'PY' "$BASE_URL" "$card_id" "$deck" "$front" "$back" "$tags" "$tags_set"
 import json, subprocess, sys
-base_url, card_id, front, back, tags = sys.argv[1:]
+base_url, card_id, deck, front, back, tags, tags_set = sys.argv[1:]
 payload = {}
+if deck:
+    payload["deckName"] = deck
 if front:
     payload["front"] = front
 if back:
     payload["back"] = back
-if tags or tags == "":
+if tags_set == "1":
     payload["tags"] = [tag.strip() for tag in tags.split(",") if tag.strip()]
 subprocess.run(
     ["curl", "-sS", "--max-time", "30", f"{base_url}/cards/{card_id}", "-X", "PATCH", "-H", "Content-Type: application/json", "-d", json.dumps(payload, ensure_ascii=False)],
     check=True,
 )
 PY
+    ;;
+  delete)
+    [[ -n "$card_id" ]] || { echo "Missing --card-id" >&2; exit 1; }
+    curl -sS --max-time 30 "${BASE_URL}/cards/${card_id}" -X DELETE
     ;;
   add-json)
     [[ -n "$file" ]] || { echo "Missing --file" >&2; exit 1; }

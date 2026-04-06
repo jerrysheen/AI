@@ -9,6 +9,7 @@ from .history import (
     append_history_event,
     count_review_answers_today,
     read_history_events,
+    rewrite_card_history_snapshot,
     set_confirmed_ease,
     summarize_weak_points,
 )
@@ -26,9 +27,11 @@ from .store import (
     list_cards,
     list_decks,
     read_interview_sessions,
+    rewrite_interview_sessions_for_card,
     search_cards,
     set_card_state,
     set_session,
+    delete_card,
     update_card,
 )
 
@@ -253,6 +256,13 @@ class ReviewEngineHandler(BaseHTTPRequestHandler):
             return
         if parsed.path.startswith("/cards/"):
             self.handle_update_card(parsed.path, body)
+            return
+        self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Not found"})
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        parsed = urlparse(self.path)
+        if parsed.path.startswith("/cards/"):
+            self.handle_delete_card(parsed.path)
             return
         self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Not found"})
 
@@ -543,16 +553,92 @@ class ReviewEngineHandler(BaseHTTPRequestHandler):
 
     def handle_update_card(self, path: str, body: Dict[str, Any]) -> None:
         card_id = path.rsplit("/", 1)[-1].strip()
+        sync_history = bool(body.get("syncHistory", True))
+        followups = body.get("followups")
+        if followups is not None and not isinstance(followups, list):
+            self.write_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "followups must be an array"})
+            return
         updated = update_card(
             card_id,
+            deck_name=str(body.get("deckName")).strip() if body.get("deckName") is not None else None,
             front=body.get("front"),
             back=body.get("back"),
             tags=body.get("tags"),
+            followups=followups,
         )
         if updated is None:
             self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Card not found"})
             return
-        self.write_json(HTTPStatus.OK, {"ok": True, "card": compact_card(updated)})
+        history_updates = 0
+        session_updates = 0
+        if sync_history:
+            history_updates = rewrite_card_history_snapshot(
+                card_id,
+                deck_name=str(updated.get("deckName", "")).strip(),
+                question=str(updated.get("front", "")).strip(),
+                answer=str(updated.get("back", "")).strip(),
+            )
+            session_updates = rewrite_interview_sessions_for_card(
+                card_id,
+                deck_name=str(updated.get("deckName", "")).strip(),
+                question=str(updated.get("front", "")).strip(),
+                reference_answer=str(updated.get("back", "")).strip(),
+            )
+        self.write_json(
+            HTTPStatus.OK,
+            {
+                "ok": True,
+                "card": compact_card(updated),
+                "historySynced": sync_history,
+                "historyEventsUpdated": history_updates,
+                "interviewSessionsUpdated": session_updates,
+            },
+        )
+
+    def handle_delete_card(self, path: str) -> None:
+        card_id = path.rsplit("/", 1)[-1].strip()
+        deleted = delete_card(card_id)
+        if deleted is None:
+            self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Card not found"})
+            return
+        history_updates = rewrite_card_history_snapshot(
+            card_id,
+            deck_name=str(deleted.get("deckName", "")).strip(),
+            question=str(deleted.get("front", "")).strip(),
+            answer=str(deleted.get("back", "")).strip(),
+            deleted=True,
+        )
+        session_updates = rewrite_interview_sessions_for_card(
+            card_id,
+            deck_name=str(deleted.get("deckName", "")).strip(),
+            question=str(deleted.get("front", "")).strip(),
+            reference_answer=str(deleted.get("back", "")).strip(),
+            deleted=True,
+        )
+        append_history_event(
+            {
+                "eventType": "card_deleted",
+                "cardId": card_id,
+                "deckName": str(deleted.get("deckName", "")).strip(),
+                "question": str(deleted.get("front", "")).strip(),
+                "answer": str(deleted.get("back", "")).strip(),
+            }
+        )
+        self.write_json(
+            HTTPStatus.OK,
+            {
+                "ok": True,
+                "deletedCardId": card_id,
+                "deletedCard": {
+                    "deckName": str(deleted.get("deckName", "")).strip(),
+                    "question": str(deleted.get("front", "")).strip(),
+                    "answer": str(deleted.get("back", "")).strip(),
+                    "tags": deleted.get("tags", []),
+                },
+                "historyEventsMarkedDeleted": history_updates,
+                "interviewSessionsMarkedDeleted": session_updates,
+            },
+        )
 
     def read_json_body(self) -> Optional[Dict[str, Any]]:
         length = self.headers.get("Content-Length")

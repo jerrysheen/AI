@@ -171,9 +171,11 @@ def import_notes(notes: List[Dict[str, Any]]) -> List[str]:
 
 def update_card(
     card_id: str,
+    deck_name: Optional[str] = None,
     front: Optional[str] = None,
     back: Optional[str] = None,
     tags: Optional[List[str]] = None,
+    followups: Optional[List[Dict[str, Any]]] = None,
 ) -> Optional[Dict[str, Any]]:
     payload = load_cards_payload()
     cards = payload.get("cards", [])
@@ -181,16 +183,87 @@ def update_card(
     for card in cards:
         if str(card.get("id")) != card_id:
             continue
+        if deck_name is not None:
+            card["deckName"] = deck_name
         if front is not None:
             card["front"] = front
         if back is not None:
             card["back"] = back
         if tags is not None:
             card["tags"] = tags
+        if followups is not None:
+            card["followups"] = followups
         updated = card
         break
     if updated is not None:
         save_cards_payload(payload)
+    return updated
+
+
+def delete_card(card_id: str) -> Optional[Dict[str, Any]]:
+    payload = load_cards_payload()
+    cards = payload.get("cards", [])
+    deleted: Optional[Dict[str, Any]] = None
+    remaining: List[Dict[str, Any]] = []
+    for card in cards:
+        if str(card.get("id")) == card_id:
+            deleted = card
+            continue
+        remaining.append(card)
+    if deleted is None:
+        return None
+    payload["cards"] = remaining
+    save_cards_payload(payload)
+
+    state_payload = load_state_payload()
+    state_payload.setdefault("states", {}).pop(card_id, None)
+    session = state_payload.get("session") or {}
+    if str(session.get("currentCardId", "")).strip() == card_id:
+        state_payload["session"] = {
+            "activeDeck": str(session.get("activeDeck", "")).strip(),
+            "currentCardId": "",
+        }
+    save_state_payload(state_payload)
+    return deleted
+
+
+def rewrite_interview_sessions_for_card(
+    card_id: str,
+    *,
+    deck_name: str = "",
+    question: str = "",
+    reference_answer: str = "",
+    deleted: bool = False,
+) -> int:
+    path = interview_sessions_file_path()
+    if not path.exists():
+        return 0
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    updated = 0
+    for index, line in enumerate(lines):
+        raw = line.strip()
+        if not raw:
+            continue
+        try:
+            item = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if str(item.get("cardId", "")).strip() != card_id:
+            continue
+        if deck_name:
+            item["deckName"] = deck_name
+        if question:
+            item["question"] = question
+        if reference_answer:
+            item["referenceAnswer"] = reference_answer
+        if deleted:
+            item["cardDeleted"] = True
+        lines[index] = json.dumps(item, ensure_ascii=False)
+        updated += 1
+
+    if updated:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return updated
 
 

@@ -109,3 +109,43 @@ def count_review_answers_today(deck_name: str = "") -> int:
             continue
         total += 1
     return total
+
+
+def rewrite_card_history_snapshot(
+    card_id: str,
+    *,
+    deck_name: str = "",
+    question: str = "",
+    answer: str = "",
+    deleted: bool = False,
+) -> int:
+    path = history_file_path()
+    if not path.exists():
+        return 0
+
+    lines = path.read_text(encoding="utf-8").splitlines()
+    updated = 0
+    for index, line in enumerate(lines):
+        raw = line.strip()
+        if not raw:
+            continue
+        try:
+            item = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        if str(item.get("cardId", "")).strip() != card_id:
+            continue
+        if deck_name:
+            item["deckName"] = deck_name
+        if question:
+            item["question"] = question
+        if answer and "answer" in item:
+            item["answer"] = answer
+        if deleted:
+            item["cardDeleted"] = True
+        lines[index] = json.dumps(item, ensure_ascii=False)
+        updated += 1
+
+    if updated:
+        path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return updated

@@ -17,6 +17,8 @@ Primary entrypoint:
 - `bash skills/review-engine/scripts/review_engine.sh review-next`
 - `bash skills/review-engine/scripts/review_engine.sh interview-log ...`
 - `bash skills/review-engine/scripts/review_engine.sh candidate-list --status pending`
+- `bash skills/review-engine/scripts/review_engine.sh update --card-id "<id>" --front "New Question"`
+- `bash skills/review-engine/scripts/review_engine.sh delete --card-id "<id>"`
 
 ## Contract
 
@@ -186,3 +188,26 @@ Batch import:
 ```bash
 bash skills/review-engine/scripts/review_engine.sh add-json --file ./data/review-engine/examples/graphics-engine-interview.sample.json
 ```
+
+Update:
+
+```bash
+bash skills/review-engine/scripts/review_engine.sh update \
+  --card-id "<id>" \
+  --deck "C++ Interview" \
+  --front "New Question" \
+  --back "New Answer" \
+  --tags "cpp,layer-1-foundation"
+```
+
+Delete:
+
+```bash
+bash skills/review-engine/scripts/review_engine.sh delete --card-id "<id>"
+```
+
+Editing contract:
+
+- `update` keeps the same `cardId`, so review scheduling and weak-point memory remain attached.
+- `update` also syncs denormalized fields stored in review history and interview session logs by default.
+- `delete` removes the live card and its scheduling state, clears the active session pointer if needed, and marks matching history/session entries as deleted provenance instead of erasing them.
