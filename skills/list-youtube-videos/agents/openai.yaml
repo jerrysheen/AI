@@ -1,0 +1,4 @@
+interface:
+  display_name: "List YouTube Videos"
+  short_description: "List channel videos in a date range"
+  default_prompt: "Use $list-youtube-videos to list a YouTube channel's recent uploads within a date range."

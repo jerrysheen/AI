@@ -1,0 +1,4 @@
+interface:
+  display_name: "Pull YouTube Info"
+  short_description: "Fetch YouTube subtitles and transcript text"
+  default_prompt: "Use $pull-youtubeInfo to fetch one YouTube video transcript and summarize the content."

@@ -6,7 +6,7 @@ const { getBilibiliRunsDir, getChromeDebugPort } = require("./runtime_shim");
 const { upsertContentCache } = require("./content_cache_shim");
 
 const { fetchBilibiliSubtitle } = require("./fetch_bilibili_subtitle");
-const { listUpVideos } = require("./list_bilibili_up_videos");
+const { listUpVideos } = require("../../list-bilibili-up-videos/scripts/list_bilibili_up_videos");
 
 function formatRunId(date = new Date()) {
   return date.toISOString().replace(/[:]/g, "-").replace(/\.\d{3}Z$/, "Z");
