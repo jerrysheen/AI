@@ -80,14 +80,6 @@
       "dueAt": "2026-04-09T09:24:20.540022+00:00",
       "lastReviewedAt": "2026-04-06T09:24:20.540022+00:00"
     },
-    "114c0e3b-02e1-488d-9c3e-4ff034bdb7ab": {
-      "reps": 1,
-      "lapses": 0,
-      "easeFactor": 2.45,
-      "intervalDays": 0.006944,
-      "dueAt": "2026-04-06T09:48:19.529330+00:00",
-      "lastReviewedAt": "2026-04-06T09:38:19.529330+00:00"
-    },
     "29db9582-b89a-4c96-b1a3-e3dd77854669": {
       "reps": 1,
       "lapses": 0,
@@ -95,10 +87,1327 @@
       "intervalDays": 0.006944,
       "dueAt": "2026-04-06T09:48:19.570395+00:00",
       "lastReviewedAt": "2026-04-06T09:38:19.570395+00:00"
+    },
+    "9a38642e-bc0a-4abc-8bb6-be0543aaa8ca": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a604bf0c-c8f1-4f21-89c9-83b90780d776": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6819e44a-d683-47a3-a684-68367c4e2304": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0f7c7230-bddc-4a13-b729-5b8dc94b0c7d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f3cb3a97-a1bc-4294-a0ab-c093d09e7e56": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ede8fb49-f98c-4e99-bc6d-5c65482a38e7": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f635eec2-7967-47c8-92ad-7f2881935fbd": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9f2b4880-ceda-4b81-85c0-b97ddfa98ead": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "804aac0a-6327-42dd-b1de-20602fdb6b9a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "57a4ceab-3c5a-4205-9036-48147e3acfd6": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "4656f227-e7d6-44ce-9ce5-d6b694ac6915": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d84755cf-8371-4ea2-8d5b-13a752fed04a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "3d8bbe49-535c-4494-9331-d93fec582e8d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7bcc71ad-201c-450f-8e19-20dc6bf0efea": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "711c10d1-b822-4845-bb2b-e2e5aa3d5bc4": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "8b517954-023b-4021-8d09-a1ef98c9f91b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d209494c-dc9b-465d-a187-7e95a26fffe3": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ea6ff78e-0b8b-42e9-a070-77fb0b6cac29": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "8f31eea6-9b56-4581-bd34-727d01683047": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "dd6f4612-c2b8-438e-be13-988a761235ba": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a875a6e7-ebf1-45fb-ab04-e04621d1fb1d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d68571ed-dc74-4684-82e8-09827f7b2eeb": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "4aec757d-2481-43a6-8987-e331240d348d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "338de6af-bfb7-45ab-88d9-619d663b24fe": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f6b0e900-2b09-41a1-b698-d8e95d646190": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "bfbfe5fd-f258-49ae-8073-2a99951f6f36": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "733b50e7-a1cb-4ec6-89d4-fab2d3443686": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c3929537-5631-47e8-962a-f4597697304c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e4ef2e1b-6b12-4fdc-8e9c-31ed77d35747": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e7090e46-9a93-453e-a55a-7bac322e485d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "82f948ee-565f-4be5-8b5f-a516a6df5440": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1874368b-c4de-4552-84d1-1aa6dd87a44a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b9915567-3cc9-417d-b187-3d2f10248455": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a274eaa0-f831-4d13-9dd0-0124785e889c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "4cd79082-fb57-4066-887b-d231bdd154c9": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1a019c05-720f-4ddf-bb79-d1a2288dfd42": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "05b346b7-ddfb-4709-806e-91238c697b0b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "42cc013c-8266-485f-be5c-b45c189552e8": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f8bed17d-2a9d-44b7-a7b3-363e892f07bc": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "18e031f1-eac8-4204-a935-ed00db450e53": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c2c73800-c88a-4472-b82a-22ad00059464": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "43c9da9b-2d71-4b23-8644-6f55fab575e6": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "75f56f02-3e7d-44c1-ae25-ed1130864ec4": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e61c0aa7-3346-42f9-bc92-92a3795c274f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1ed651ca-1e60-4df3-9997-fb578862a0de": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f635add4-8a4c-4324-a9e4-5c4cc2d7c6a0": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "dc829e64-e46a-479f-b186-beb59c612b1a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "01bdca3b-7a45-4cf7-a987-349070f31ad4": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ae4c3c63-5682-4f17-82ab-0f5375d1344a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "2fbb541b-ce30-4b13-8ae4-514b0c1d7981": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "35a8312f-f59f-4edc-97db-ea056c980ec1": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e63c7eb2-9578-40d0-be0a-ecec42c7b6e6": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "cba98d83-f531-4ddc-b576-26703f7c7905": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7affe8e0-4e9b-48b8-b61e-db6e24901f1c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9f6c3d4e-1eba-4613-ac92-4c305510e3bd": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7be3239d-18ec-4609-a538-cc89b588a48c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0738e659-1876-4bb7-b570-165e40c0cf35": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b81ea4ce-4e3c-454c-8ddc-99f407419225": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "cfab484c-1f8c-47d6-b642-1e49adfd026e": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f323b4c4-45f7-4f34-a515-49fb4f633274": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "12563a2a-c9d9-45ae-9bc6-b89feed6a9f9": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "2765b8ba-b29e-44b1-a4d9-9fcc22906896": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "00bd8304-e1b2-4b8b-8b9b-7ec5d96ef4d8": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6868572e-8616-4928-8ace-471743965d93": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "09785fa0-970b-40d7-b0d3-0773cf3ee982": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6aa33d58-fcab-4bb4-8ac9-62f42dba94fc": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e90baf0b-1f24-4696-b8d3-cca2d823ffdb": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "58ceb404-9171-4607-9832-7296155fb23b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "88fc60cd-42bd-4701-b3b1-e708b3df9842": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e5129113-1e55-4d5d-b014-f805ccb99374": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "110e359b-9a85-4f8d-8d70-286a48ff4ddb": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "3d549c28-f9f5-4d7c-b995-5ba203bae49b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "383c9452-dd28-41c3-adb6-d9245b193c2b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "02f91ea6-66e1-4c5a-9b86-721eec35c924": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c7b5c825-00cd-4ef1-86bd-8d09fad07c5d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b22758ab-e7c2-46fb-8bb3-19ec32710823": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "efcb9e57-fd76-4d2f-9892-380c0ed262d9": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "49c18978-0372-4284-b1dd-84acea30b850": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "088d605e-78af-4a48-8f38-2cd343a07e86": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b3d6d535-3e0a-439e-9764-ca810d70e34f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c9145602-5590-4cb5-b61f-f1e883ec8bb5": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "fecab9aa-9ba9-4d86-bb94-ab23a0bb4a19": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ddcb0db4-48bc-4d10-bef2-f9a922cb2c3b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c82ea037-e412-4864-afb9-6ca059b4cdd5": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9673bd78-770f-4412-80c4-457e9f9d49d2": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "71800500-c837-4d26-8047-355f610687a2": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "8fa3dcf6-ed98-48a5-8bbc-24dff37eb9f2": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f35edb4d-a25e-48f2-b6d1-d291b2707eea": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "585e71cd-9cb3-4ecb-a82a-ce2754dddd8c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "39b5b3b9-8364-4adb-90cf-b17719572693": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6a844330-56b4-44cb-92e6-ec49283bcb81": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "8213323d-a789-447d-80e8-4dd60e92e27c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9db2b1af-a6bb-47e0-a5b9-03e7ba0d07b0": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "dac729bb-cc38-4fd5-af9f-a90f5d19c384": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "adecdf0e-f863-4cb1-ac49-4ea51d0bcb9c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0e347468-cf8d-436e-9553-94d58a5a776a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ae026b62-6ece-423c-9362-37100e19aa03": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "5b72d4ee-4695-48d6-81c8-f89527138f20": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e0b5f27e-c149-47ec-90a5-c61842dd9ad8": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c9f0e6c7-08f8-4028-8813-014bc212ea3a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9395538a-72f2-4a0e-a170-c24130b6f587": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0078b330-d013-47e1-ab3d-f6ad2ca2b417": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "dd56c3cb-c194-438b-8d5c-8a38a2764503": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "34363427-192f-4a8d-909b-564f0bc7bf36": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c8d8df7b-eed0-4cea-a328-6f8a121df543": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d2c1ba16-2974-4cb4-9fc0-c51f933979d2": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7e380b08-13fa-4a0d-aa60-457d35ffa142": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6b84161c-f874-4e41-b0d6-1b1813f4c379": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "35a93169-844f-42cf-8fc7-68feb910b38a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f451a773-959f-4888-94d0-b6002cb2dd00": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1290016b-b06d-40ec-81cb-53521fcacf99": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ee75cc7d-4391-4ace-bcf5-a845bdde0389": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "5a51dec3-da05-41a2-9036-744f4a44e3ba": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "87f9b02c-4789-48b6-93a5-e9e4ea8cf5a8": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "fd3928ef-6f30-42bb-be63-1e1926c16e0b": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "560892f9-22f4-43b3-90b1-4b44eb7a3dd1": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "acdef785-4a43-4f4a-9c66-fba4ce32e17a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1d261f76-b30a-4d59-b578-5f15c2da7c2c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "66a157f7-b1c9-451b-9ac7-86611eeff772": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "cabfe7f1-9353-4bdf-a980-cdf12abbb226": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "348f242a-65d7-4ab5-8099-99935b277868": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1038bb54-cb5e-472c-bb7f-668b6def9a16": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d3adf5df-5379-4bc1-9fed-1c93b4481b4c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ef515c1e-a28f-4bf8-a4e9-25ea4d7d6e99": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "657a6e80-321b-48d0-9e81-461257b89ded": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "922c941e-78ed-4c61-9b3f-148ee440c867": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "05912ab2-d59b-4ab5-bc9b-29223c59d4d5": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a1f04993-3bdd-407e-869d-6e05b5d06820": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "55ee09f0-1ac7-496a-8b99-8e08882c0a6e": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "330b995f-26a8-4e09-8387-74906d233408": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "60c2842f-d3b1-464f-8d34-f9bfcdaf4fc1": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "fb96b5f6-7f0a-4947-95a8-b8695e9d4f0f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c591f312-29a9-4a78-8c90-167d47c1cae1": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a904fb0d-637e-4ebc-99ed-31ac0e4fe64c": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "945334b0-10ff-4de1-a54d-9d42f0e36110": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "90a3b44e-0e3b-4765-ac99-40e3adb6e862": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "096d9402-beb7-4ab6-b0d0-c876f4350dc3": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d4293fa3-7a0e-4ae9-b731-497d047c5784": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "75a79c8b-5da3-4259-a0ca-029d23a13401": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "d3e93efb-4182-4bff-bfef-464a0c9a5de6": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "da6bf7f6-9514-492c-b68d-28031f567090": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "facd444e-ed81-4c65-8510-43c832f4db5a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7603011d-3239-469e-aaa0-779bafb5caa6": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "60de118c-f588-4aba-82ce-074a61b01daf": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "3f7e19fc-71d3-4cc0-bc8a-962e406d03e3": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "433a90b8-60c4-4e8c-a64f-879cb3b2957f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7badf688-f4a2-4e93-bbb3-80d8532058cd": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "a8baed8d-1236-45b7-b20e-58c72d3bdd04": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "2fd04f5c-c494-4291-bfa0-9d20bc468b8a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f20a13da-230d-4ff0-b8db-38d08a18860a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "8984a2ae-2bc1-4812-a5ce-479925d4d9b5": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "3bf90a75-249b-40d7-ab5c-69a7abb3825f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f5d84ad5-6710-4a51-baee-37e0fd69483d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "9e9b8459-421f-42da-8f86-a07a5b26f16e": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "949b0a2d-f163-40a5-acf7-bf15557965ec": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "4345e979-d91d-455c-8a37-b7c7f6e3c4a0": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6ae87698-22ce-4095-a686-58c7cebfa786": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6e75dffc-a5f0-44e9-b37c-90d879363b43": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6cfa1403-ed6c-488c-91ae-4e829ffe38cc": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0a39c06a-b6b8-450d-9acd-ea9ffc961603": {
+      "reps": 1,
+      "lapses": 0,
+      "easeFactor": 2.45,
+      "intervalDays": 0.006944,
+      "dueAt": "2026-04-06T11:49:13.709831+00:00",
+      "lastReviewedAt": "2026-04-06T11:39:13.709831+00:00"
+    },
+    "3bddbbdb-ac6f-47d1-8e6a-9d8f22b42064": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b3944aa9-d164-43c8-8ef8-2d5472b0ea65": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "82bb1d5e-4982-421f-9d92-5550a7de755f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "b01acb87-d2e6-4851-bf51-252b5c99b5f3": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "6d29c5a5-3de5-4040-9c6e-08e17fe9a645": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f19d2956-0791-41e3-98ce-bff0cd238002": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c7aba006-ce91-4e88-8c75-f3ec41c852aa": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "7151fcb8-20bf-4f2b-928c-a00f9277a52f": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "82ad55f9-d17b-4fbc-b419-f13a73e8abad": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e561a3e9-35e3-4532-bb04-1983b9555835": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "5c9161f0-4bdc-483b-a253-4b862b1abe8a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "babaca1b-7d5c-4f36-851b-03df0f3b11bb": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e170f4bd-67b7-4d7f-83bb-54bfa273082a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "70ea7c20-59cc-4e2e-9a47-86bcb8ec347a": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "76a15725-4bdb-470a-96f5-5dc321fa21de": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "ed84c068-5d1e-4367-86b3-fa65d5e2c48d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "e822458e-2e00-43ec-8eb0-8c307c690342": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "1139b6bb-686c-4577-a464-3c531c58ea19": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "fa6fb6b5-89a7-4a4b-8ee4-2cc3e6dfd768": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f8cd4f73-a9f2-4206-8154-b1c96ba352f0": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "cb2a0700-3e1e-4162-8724-ddd28a7f669d": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "f756961e-6558-41b8-9f96-ac74a2706566": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "c2e3c6e6-cf3e-4422-a0f2-f42c043f9764": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "0d99ab6a-a5c2-461e-ba0b-a30b86d90097": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "3e9a8a1b-8314-49d1-91a1-0870c2c87782": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "62168cf1-d95d-4566-93f6-260322232391": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "451b2729-45fa-459a-9aa0-3dafd7778c74": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
+    },
+    "adf5f0aa-9791-4a42-85ab-3ec0a54ec5a3": {
+      "dueAt": "2026-04-06T11:08:43.306527Z",
+      "intervalDays": 0,
+      "easeFactor": 2.5,
+      "reviewCount": 0,
+      "lastReviewedAt": ""
     }
   },
   "session": {
-    "activeDeck": "Graphics Engine Interview",
-    "currentCardId": ""
+    "activeDeck": "C# Interview",
+    "currentCardId": "3bddbbdb-ac6f-47d1-8e6a-9d8f22b42064"
   }
 }

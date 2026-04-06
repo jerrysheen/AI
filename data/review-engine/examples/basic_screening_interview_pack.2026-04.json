@@ -1,0 +1,3204 @@
+{
+  "notes": [
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`const` 有哪些常见用法？`const int*`、`int* const`、`const int* const` 分别是什么意思？",
+        "Back": "const 可以修饰对象、参数、成员函数和返回值，表示不可通过该路径修改。`const int*` 是指向常量的指针，`int* const` 是常量指针，`const int* const` 两者都不可变。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "pointer",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`static` 在局部变量、全局变量、类成员变量、类成员函数中分别是什么意思？",
+        "Back": "局部 static 延长生命周期到整个程序；文件作用域 static 限制符号只在当前编译单元可见；类静态成员属于类本身而不是对象；静态成员函数没有 this 指针，只能访问静态成员。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "storage-duration",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`inline` 的作用是什么？它一定会被内联吗？",
+        "Back": "inline 主要用于允许函数在多个编译单元中定义并建议编译器做内联展开。它不保证一定被内联，最终是否展开由编译器根据优化策略决定。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "inline",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`#define` 和 `const` 或 `constexpr` 的区别是什么？",
+        "Back": "宏是预处理文本替换，不做类型检查也不受作用域约束；const 是有类型的只读对象；constexpr 进一步要求编译期可求值。现代 C++ 中常量优先用 const 或 constexpr。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "constexpr",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "macro",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`typedef` 和 `using` 的区别是什么？",
+        "Back": "两者都能起别名，但 using 语法更直观，也更适合模板别名。功能重叠时现代 C++ 通常更偏向 using。"
+      },
+      "tags": [
+        "alias",
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`nullptr` 和 `NULL` 的区别是什么？",
+        "Back": "nullptr 是专门的空指针字面量，类型安全，能正确参与重载决议；NULL 通常只是 0 或 0 宏，可能引发整型和指针重载歧义。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "pointer",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`extern` 的作用是什么？",
+        "Back": "extern 用来声明某个变量或函数在别处定义，告诉编译器这里只是引用它。常见于跨源文件访问全局符号。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "linkage",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`volatile` 是干什么的？它能保证线程安全吗？",
+        "Back": "volatile 告诉编译器该对象可能在程序可见路径外变化，避免某些优化省略读写。它不能提供原子性、可见性顺序或互斥，因此不能保证线程安全。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp",
+        "volatile"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`sizeof` 是运行时算的还是编译时算的？",
+        "Back": "对普通已知类型和对象表达式，sizeof 通常在编译期求值，结果是类型所占字节数。它不会对表达式求值本身。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "sizeof",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是野指针？什么是悬空指针？",
+        "Back": "野指针是未初始化就被使用的指针；悬空指针是原本指向的对象已释放或失效，但指针还保留旧地址。两者都会导致未定义行为。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "pointer",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "指针和引用的区别是什么？",
+        "Back": "指针可以为空、可重新指向别处，需要显式解引用；引用必须初始化，语义上像别名，通常不能改绑。实现上引用也可能占地址，但语言约束更强。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "pointer",
+        "reference",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么引用必须初始化，而指针不用？",
+        "Back": "因为引用语义上就是已有对象的别名，必须一开始就绑定到一个有效对象；指针只是保存地址的变量，允许先为空或未指向有效对象。"
+      },
+      "tags": [
+        "cluster-cpp-basic",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "pointer",
+        "reference",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`new/delete` 和 `malloc/free` 的区别是什么？",
+        "Back": "malloc/free 只负责原始内存分配和释放，不会调用构造析构；new/delete 除了分配释放，还会调用对象的构造和析构，并返回正确类型指针。"
+      },
+      "tags": [
+        "allocation",
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`new[]` 和 `delete[]` 为什么要配对？",
+        "Back": "因为数组形式分配时运行时通常需要记录元素个数，delete[] 才能逐个调用析构。若和 delete 混用，析构次数和释放逻辑都可能错误。"
+      },
+      "tags": [
+        "allocation",
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "栈内存和堆内存的区别是什么？",
+        "Back": "栈内存由编译器或运行时自动管理，分配释放快，适合生命周期清晰的小对象；堆内存手动或通过分配器管理，更灵活但开销和碎片风险更高。"
+      },
+      "tags": [
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "stack-heap",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "函数返回局部变量的引用为什么危险？",
+        "Back": "因为局部变量在函数返回后生命周期结束，引用会指向失效对象，形成悬空引用。之后任何访问都是未定义行为。"
+      },
+      "tags": [
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "lifetime",
+        "reference",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "内存泄漏是什么？常见原因有哪些？",
+        "Back": "内存泄漏是分配的内存不再可达却没有释放。常见原因包括异常路径漏释放、所有权不清、循环引用和早返回时忘记清理。"
+      },
+      "tags": [
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "leak",
+        "level-basic",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是内存对齐？为什么需要内存对齐？",
+        "Back": "内存对齐是让对象地址按特定字节边界存放，以满足硬件访问要求并提高访存效率。未对齐访问可能更慢，某些平台甚至直接出错。"
+      },
+      "tags": [
+        "alignment",
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么结构体成员顺序会影响 `sizeof` 结果？",
+        "Back": "因为编译器会为满足对齐要求在成员之间和尾部插入 padding。成员顺序不同，填充字节数量也会不同，从而影响总大小。"
+      },
+      "tags": [
+        "alignment",
+        "cluster-cpp-memory",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "重载、重写、隐藏的区别是什么？",
+        "Back": "重载是同一作用域内同名函数参数列表不同；重写是子类覆盖父类虚函数；隐藏是子类定义了同名成员，把父类同名成员遮住，即使参数不同也会发生。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "oop",
+        "polymorphism",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是虚函数？虚函数表大概是什么概念？",
+        "Back": "虚函数让基类接口在运行时根据对象真实类型分派到不同实现。编译器通常通过对象内的虚表指针和一张虚函数表完成动态分发。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp",
+        "virtual-function",
+        "vtable"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么析构函数通常要写成虚函数？",
+        "Back": "如果类打算作为基类被多态删除，析构必须是虚的，否则通过父类指针删除子类对象时只会调用父类析构，导致资源泄漏或未完整销毁。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "destructor",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp",
+        "virtual-function"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "纯虚函数是什么？抽象类是什么？",
+        "Back": "纯虚函数是声明但不给默认实现、形式为 `=0` 的虚函数。含有纯虚函数的类是抽象类，不能直接实例化，只能作为接口或基类使用。"
+      },
+      "tags": [
+        "abstract-class",
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp",
+        "virtual-function"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "构造函数能不能是虚函数？为什么？",
+        "Back": "不能。构造期间对象的真实派生部分还没完成建立，虚分派机制本身依赖对象已经构造好，因此构造函数不能做成虚函数。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "constructor",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-cpp",
+        "virtual-function"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么父类指针删除子类对象时，如果析构不虚会出问题？",
+        "Back": "因为 delete 基类指针时只会按基类静态类型调用析构，子类析构不会执行。子类持有的资源就无法正确释放。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "destructor",
+        "layer-1-foundation",
+        "level-basic",
+        "polymorphism",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "public / protected / private 继承的区别是什么？",
+        "Back": "它们主要影响父类成员在子类接口中的可见性变化。public 继承表达 is-a，protected 和 private 更偏实现复用，会降低外部可见性。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "cpp",
+        "deck-cpp",
+        "inheritance",
+        "layer-1-foundation",
+        "level-basic",
+        "oop",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "组合和继承分别适合什么场景？",
+        "Back": "继承适合明确的 is-a 关系和多态接口；组合适合 has-a 关系和功能拼装。工程上通常优先组合，因为耦合更低、替换更灵活。"
+      },
+      "tags": [
+        "cluster-cpp-oop",
+        "composition",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "oop",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "拷贝构造函数什么时候调用？",
+        "Back": "在用同类型对象初始化新对象、按值传参、按值返回且未被优化掉时都会调用拷贝构造。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "copy-control",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "赋值运算符重载什么时候调用？",
+        "Back": "当一个已经存在的对象被另一个同类型对象赋值时调用赋值运算符，而不是创建新对象时。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "copy-control",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "operator-overload",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "拷贝构造和赋值运算符重载的区别是什么？",
+        "Back": "拷贝构造发生在创建新对象时，赋值发生在对象已存在之后。两者处理的生命周期阶段不同，因此资源管理逻辑也常不同。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "copy-control",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是浅拷贝？什么是深拷贝？",
+        "Back": "浅拷贝只复制成员值，若成员里有指针，多个对象可能共享同一资源；深拷贝会复制资源本体，保证各对象拥有独立副本。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "copy-control",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-management",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么自己管理资源的类通常要写拷贝构造、拷贝赋值和析构？",
+        "Back": "因为默认生成的版本通常只做逐成员浅拷贝，无法正确表达资源所有权。自定义这三者才能避免重复释放、泄漏和悬挂指针。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-management",
+        "rule-of-three",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是移动构造函数？它解决什么问题？",
+        "Back": "移动构造允许从将要销毁的临时对象中转移资源所有权，而不是做昂贵深拷贝。它主要解决容器扩容、返回临时值和资源包装类型的性能问题。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "move-semantics",
+        "resource-management",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`std::move` 做了什么？它真的“移动”了吗？",
+        "Back": "std::move 本质上只是把表达式转换成右值引用，允许后续匹配移动语义。真正是否发生资源转移，取决于目标类型是否实现了移动构造或移动赋值。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "move-semantics",
+        "rvalue",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "左值、右值、右值引用分别是什么？",
+        "Back": "左值通常有持久身份和可取地址，右值多是临时结果；右值引用是能绑定到右值的引用类型，用来表达资源可被转移的对象。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "move-semantics",
+        "topic-cpp",
+        "value-category"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么情况下会发生对象切片（object slicing）？",
+        "Back": "当派生类对象按值赋给基类对象或按值传递给接收基类的接口时，会只保留基类部分，派生类特有数据被切掉。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "object-slicing",
+        "polymorphism",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`vector` 的底层原理是什么？为什么尾插通常快？",
+        "Back": "vector 底层是连续动态数组，支持随机访问和缓存友好。尾插通常是摊还 O(1)，因为大多数时候只是把元素写到末尾，只有扩容时才会整体搬迁。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "stl",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`vector` 扩容时会发生什么？",
+        "Back": "扩容时通常会申请更大的连续内存，把原有元素拷贝或移动过去，再释放旧内存。过程中迭代器、引用和指针一般都会失效。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "iterator",
+        "layer-1-foundation",
+        "level-basic",
+        "stl",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`vector` 和 `list` 的区别是什么？什么时候别乱选 `list`？",
+        "Back": "vector 连续存储、随机访问快、缓存友好；list 节点分散、插删某位置本身便宜但额外指针开销和缓存命中差。大多数工程场景别因为“插入删除 O(1)”就随手选 list。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "list",
+        "stl",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`map` 和 `unordered_map` 的区别是什么？",
+        "Back": "map 通常基于平衡树，有序，查找插入删除是 O(log n)；unordered_map 基于哈希表，平均 O(1)，但无序且受哈希冲突和 rehash 影响。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "map",
+        "stl",
+        "topic-cpp",
+        "unordered-map"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`deque` 和 `vector` 的区别是什么？",
+        "Back": "vector 强调连续内存和最高访问局部性；deque 用分段连续块实现，头尾插入都更稳定，但内存布局和缓存友好性通常不如 vector。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "deque",
+        "layer-1-foundation",
+        "level-basic",
+        "stl",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`emplace_back` 和 `push_back` 的区别是什么？",
+        "Back": "push_back 需要先有一个对象再放入容器；emplace_back 直接在容器尾部原地构造对象，可能减少一次临时对象构造或移动。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "emplace",
+        "layer-1-foundation",
+        "level-basic",
+        "stl",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "迭代器失效常见发生在哪些容器操作中？",
+        "Back": "常见于 vector 扩容、erase 后位置之后元素移动、unordered_map rehash，以及某些容器插删导致节点或桶重排。面试里要结合具体容器回答，不能一概而论。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "iterator",
+        "layer-1-foundation",
+        "level-basic",
+        "stl",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么 `shared_ptr` 会有循环引用问题？",
+        "Back": "因为引用计数依赖强引用归零才释放，如果两个对象彼此持有 shared_ptr，它们计数永远不为 0，就都释放不了。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "shared-ptr",
+        "smart-pointer",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`weak_ptr` 是怎么解决循环引用的？",
+        "Back": "weak_ptr 不增加强引用计数，只是观察对象是否还活着。把环中的某一边改成 weak_ptr 后，真正拥有者释放时计数就能降到 0。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "smart-pointer",
+        "topic-cpp",
+        "weak-ptr"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`auto` 的推导规则你了解哪些？",
+        "Back": "auto 会根据初始化表达式推导类型，但通常会忽略顶层 const 和引用；若想保留引用或 const，需要写成 `auto&`、`const auto&` 等形式。"
+      },
+      "tags": [
+        "auto",
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`decltype` 的作用是什么？",
+        "Back": "decltype 用来获取表达式的精确类型，特别适合模板、返回类型推导和保留引用性。它比 auto 更偏“观察类型”而不是“创建变量”。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "decltype",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`lambda` 本质上是什么？",
+        "Back": "lambda 本质上是编译器生成的匿名函数对象，捕获的变量会变成该对象的成员。它不是普通函数指针，除非无捕获时才能转换成函数指针。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "lambda",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "值捕获和引用捕获的区别是什么？",
+        "Back": "值捕获会把外部变量拷贝进 lambda 对象，后续外部修改不影响副本；引用捕获直接绑定原变量，避免拷贝但要求被引用对象在 lambda 使用期间仍然有效。"
+      },
+      "tags": [
+        "capture",
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "lambda",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`std::function` 有什么代价？",
+        "Back": "std::function 提供统一可调用封装，但会引入类型擦除、间接调用和有时的堆分配成本。热路径里要注意它比模板内联调用更重。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "std-function",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`constexpr` 和 `const` 的区别是什么？",
+        "Back": "const 表示只读，不一定编译期可求值；constexpr 要求在满足条件时可在编译期求值，因此更适合常量表达式和编译期计算。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "constexpr",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "modern-cpp",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是互斥锁？什么是死锁？",
+        "Back": "互斥锁用于保证同一时刻只有一个线程进入临界区；死锁是多个线程互相等待对方释放资源，导致谁都无法继续执行。"
+      },
+      "tags": [
+        "cluster-cpp-threading",
+        "cpp",
+        "deadlock",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "mutex",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "死锁产生的四个必要条件是什么？",
+        "Back": "互斥、请求并保持、不可剥夺、循环等待。破坏其中任一条件都能避免死锁。"
+      },
+      "tags": [
+        "cluster-cpp-threading",
+        "cpp",
+        "deadlock",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是原子操作？",
+        "Back": "原子操作是不可被中途打断的最小操作单元，对并发访问同一变量时能保证单次读改写的完整性。它解决的是单个对象上的竞争，不等于替代所有锁。"
+      },
+      "tags": [
+        "atomic",
+        "cluster-cpp-threading",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`mutex` 和 `atomic` 的区别是什么？",
+        "Back": "mutex 用于保护一段临界区和多个相关状态；atomic 更适合单个变量上的无锁同步。atomic 更轻量，但表达能力远弱于锁。"
+      },
+      "tags": [
+        "atomic",
+        "cluster-cpp-threading",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "mutex",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是条件变量？典型用法是什么？",
+        "Back": "条件变量用于让线程在某个条件未满足时睡眠等待，条件满足后再被唤醒。典型用法是生产者消费者模型中等待队列非空或非满。"
+      },
+      "tags": [
+        "cluster-cpp-threading",
+        "condition-variable",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么“线程越多不一定越快”？",
+        "Back": "因为线程会带来调度、同步、缓存失效和上下文切换开销。超过硬件并行度或任务粒度太细时，线程越多反而越慢。"
+      },
+      "tags": [
+        "cluster-cpp-threading",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "performance",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么是竞态条件？",
+        "Back": "竞态条件是结果依赖多个线程执行先后顺序，而程序又没有正确同步。它会导致偶现 bug 和不稳定结果。"
+      },
+      "tags": [
+        "cluster-cpp-threading",
+        "cpp",
+        "deck-cpp",
+        "layer-1-foundation",
+        "level-basic",
+        "multithreading",
+        "race-condition",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "顶点着色器的输入和输出通常是什么？",
+        "Back": "输入通常是顶点属性，如位置、法线、UV、颜色等；输出通常是变换后的裁剪空间位置以及要插值传给后续阶段的数据。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics",
+        "vertex-shader"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "像素着色器是对什么进行计算的？",
+        "Back": "像素着色器通常对光栅化后生成的片元进行计算，输出颜色、深度或其他 render target 数据。它更偏每像素着色，而不是处理顶点。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "pixel-shader",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是图元装配？",
+        "Back": "图元装配是把顶点按拓扑规则组织成点、线、三角形等图元，供后续裁剪和光栅化使用。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "primitive-assembly",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "光栅化做了什么？",
+        "Back": "光栅化把几何图元转换成屏幕上的片元，并计算插值后的属性，如深度、UV、颜色和法线等。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "rasterization",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "深度测试发生在什么阶段？它解决什么问题？",
+        "Back": "深度测试发生在片元处理相关阶段，用来比较当前片元和深度缓冲中的值，决定哪个片元更靠近相机。它解决遮挡关系和正确可见性。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "depth-test",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "模板测试是干什么的？",
+        "Back": "模板测试基于模板缓冲里的值决定片元是否通过，常用于描边、遮罩、镜面区域控制和多步渲染效果。"
+      },
+      "tags": [
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "stencil-test",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "混合（Blend）是什么？一般用于什么场景？",
+        "Back": "混合是在片元输出和目标 render target 现有颜色之间按规则合成结果，常用于透明、粒子、UI 和某些后处理累加效果。"
+      },
+      "tags": [
+        "blend",
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 NDC 坐标？",
+        "Back": "NDC 是归一化设备坐标，顶点经过透视除法后通常落在一个标准立方体范围内，后续再映射到屏幕坐标。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "ndc",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "模型空间、世界空间、观察空间、裁剪空间、屏幕空间分别是什么？",
+        "Back": "模型空间是物体自身局部坐标，世界空间是放入场景后的坐标，观察空间以相机为原点，裁剪空间是投影变换后的空间，屏幕空间是最终映射到像素平面的坐标。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "顶点从模型空间到屏幕空间一般经历哪些矩阵变换？",
+        "Back": "通常先乘模型矩阵到世界空间，再乘观察矩阵到相机空间，再乘投影矩阵到裁剪空间，经过透视除法和视口变换得到屏幕空间。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "mvp",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 MVP 矩阵？",
+        "Back": "MVP 通常指模型、观察、投影三个矩阵的组合，用来把顶点从模型空间变换到裁剪空间。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "mvp",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么法线变换通常不能直接乘模型矩阵？",
+        "Back": "因为模型矩阵里若含非均匀缩放，直接相乘会破坏法线与表面的垂直关系。法线通常需要用模型矩阵左上 3x3 的逆转置来变换。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "matrix",
+        "normal",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么情况下要用模型矩阵的逆转置矩阵变换法线？",
+        "Back": "当模型矩阵包含非均匀缩放或剪切时，需要用逆转置矩阵保持法线方向正确。若只是纯旋转或均匀缩放，直接用旋转部分通常也能成立。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "matrix",
+        "normal",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "透视投影和正交投影的区别是什么？",
+        "Back": "透视投影会产生近大远小效果，更符合人眼观察；正交投影不随距离缩放，适合 UI、编辑器视图和某些策略类或 CAD 场景。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "projection",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "FOV 变大画面会发生什么变化？",
+        "Back": "FOV 变大会看到更宽视野，透视畸变更明显，物体会显得更远更小；FOV 变小则像“拉近镜头”。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "fov",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "projection",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "near/far plane 太极端会带来什么问题？",
+        "Back": "near 太小、far 太大都会恶化深度缓冲精度，容易导致 z-fighting 和阴影、深度比较类问题更明显。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "depth",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "projection",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么深度精度通常在 near 处更密集？",
+        "Back": "因为透视投影后的深度分布是非线性的，离相机越近的区域分得越细，远处精度更稀。"
+      },
+      "tags": [
+        "cluster-coordinate-space",
+        "deck-graphics",
+        "depth",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "projection",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "纹理采样时，双线性过滤做了什么？",
+        "Back": "双线性过滤会在同一 mip 层内取周围 4 个 texel 做二维插值，让采样结果比点采样更平滑。"
+      },
+      "tags": [
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "sampling",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "三线性过滤比双线性多了什么？",
+        "Back": "三线性过滤除了在单层内做双线性插值，还会在相邻两个 mip 层之间再插一次值，减少层级切换时的突变。"
+      },
+      "tags": [
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "sampling",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是各向异性过滤？它主要改善哪类问题？",
+        "Back": "各向异性过滤会沿纹理在屏幕上的拉伸方向取更多样本，主要改善斜视角地面、道路等表面的模糊和闪烁。"
+      },
+      "tags": [
+        "anisotropic",
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "纹理坐标超过 `[0,1]` 怎么办？常见寻址模式有哪些？",
+        "Back": "超过范围时由寻址模式决定，如 repeat、clamp、mirror、border。它们分别对应重复、夹取、镜像和平铺外边框等行为。"
+      },
+      "tags": [
+        "addressing",
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么会出现纹理走样？",
+        "Back": "因为屏幕像素频率和纹理细节频率不匹配，采样不足会让高频细节错误折叠到低频结果里，表现为闪烁、锯齿和摩尔纹。"
+      },
+      "tags": [
+        "aliasing",
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 aliasing？",
+        "Back": "aliasing 是高频信号在采样不足时被错误表示成低频信号的现象。在图形里常表现为锯齿、闪烁和纹理细节抖动。"
+      },
+      "tags": [
+        "aliasing",
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "sampling",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "sRGB 纹理和线性纹理的区别是什么？",
+        "Back": "sRGB 纹理存的是经过 gamma 编码后的颜色，采样时通常会自动转到线性空间做光照计算；线性纹理则直接按线性数值解释，常用于法线、金属度、粗糙度等非颜色数据。"
+      },
+      "tags": [
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "srgb",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 cubemap？常见用途有哪些？",
+        "Back": "cubemap 是由六个方向面组成的立方体纹理，常用于天空盒、环境反射、环境采样和点光源阴影。"
+      },
+      "tags": [
+        "cluster-texture-sampling",
+        "cubemap",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "texture",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "漫反射的物理直觉是什么？",
+        "Back": "漫反射描述粗糙表面把入射光向多个方向散射的效果，因此从大多数观察角度看都比较稳定，不像镜面高光那样强依赖视角。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "diffuse",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Lambert 光照模型公式是什么？",
+        "Back": "Lambert 漫反射核心是 `max(dot(N, L), 0)`，表示法线方向与光线方向夹角越小，单位面积接收到的光越多。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "lambert",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "高光反射大概表示什么现象？",
+        "Back": "高光表示表面对光源的镜面反射成分，通常在视线接近反射方向时更明显。它体现材质的光滑程度和镜面特性。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "specular",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Phong 和 Blinn-Phong 的区别是什么？",
+        "Back": "Phong 直接比较反射方向和视线方向，Blinn-Phong 使用半程向量和法线点积。Blinn-Phong 通常更稳定，也更适合实时计算。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "phong",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "环境光为什么通常不真实，但项目里还会用？",
+        "Back": "简单环境光把全局间接光粗暴近似成一个常量项，不真实但便宜、稳定，能快速避免画面完全死黑。"
+      },
+      "tags": [
+        "ambient",
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "点光源、方向光、聚光灯的区别是什么？",
+        "Back": "点光源从一个位置向四周发光，有距离衰减；方向光近似无限远，只有方向没有位置；聚光灯在一点发射并限制在一个锥形范围内。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "light-type",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "光照计算里为什么经常要单位化法线和光线方向？",
+        "Back": "因为点积公式默认比较的是方向夹角，若向量长度不为 1，结果会混入长度影响，导致光照强度错误。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "normal",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是衰减？点光源为什么通常要有衰减？",
+        "Back": "衰减表示光照强度随距离增加而减弱。点光源若没有衰减，会在整个场景中不合理地保持强度，既不真实也更浪费计算。"
+      },
+      "tags": [
+        "attenuation",
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "半程向量（half vector）是什么？",
+        "Back": "半程向量是光线方向和视线方向归一化后相加再归一化得到的方向，用于近似镜面高光计算。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "half-vector",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么背面通常不应该有漫反射贡献？",
+        "Back": "因为当法线和光线夹角超过 90 度时，表面不朝向光源，单位面积接受不到正向入射能量，所以漫反射通常取 `max(dot(N, L), 0)`。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "lambert",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "阴影贴图的基本思路是什么？",
+        "Back": "先从光源视角渲染场景深度，得到“离光最近表面”的深度图；正式渲染时把当前点投到光源空间，与阴影图深度比较判断是否被遮挡。"
+      },
+      "tags": [
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "shadow",
+        "shadow-map",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么阴影贴图会有锯齿？",
+        "Back": "因为阴影边界最终落在有限分辨率的深度纹理上，再映射到屏幕时会出现采样不足和边缘块状感。"
+      },
+      "tags": [
+        "aliasing",
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "`Bias` 是为了解决什么问题？",
+        "Back": "Bias 主要用来缓解阴影比较时的自遮挡误差，也就是 Shadow Acne。它通过给深度比较加一点偏移，避免本该亮的表面被误判为在阴影里。"
+      },
+      "tags": [
+        "bias",
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么方向光常用级联阴影？",
+        "Back": "因为方向光往往要覆盖很大范围，一个阴影贴图难以同时兼顾近处和远处精度。级联阴影把视锥分段，近处给更高分辨率，远处用较粗精度。"
+      },
+      "tags": [
+        "cluster-shadow-basic",
+        "csm",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "点光源阴影为什么常用 cubemap？",
+        "Back": "因为点光源向所有方向发光，需要记录从光源位置朝六个主方向看到的深度，cubemap 天然适合表示这六个方向。"
+      },
+      "tags": [
+        "cluster-shadow-basic",
+        "cubemap",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "PCF 是什么？它改善了什么？",
+        "Back": "PCF 是 percentage-closer filtering，会对阴影比较结果做邻域采样和平均，改善硬边和锯齿，让阴影边界更平滑。"
+      },
+      "tags": [
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "pcf",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "阴影分辨率提高一定更好吗？为什么？",
+        "Back": "不一定。分辨率提高会增加显存、带宽和渲染成本，若投影分布不合理或过滤和 bias 没调好，单纯加分辨率也不能根治问题。"
+      },
+      "tags": [
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "performance",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么延迟渲染不擅长透明物体？",
+        "Back": "因为延迟渲染依赖先写满 G-buffer 再统一做光照，而透明物体需要按顺序混合多层结果，难以直接塞进同一套 G-buffer 流程。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "deferred-rendering",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics",
+        "transparency"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么前向渲染在多光源场景下压力更大？",
+        "Back": "因为前向渲染通常在绘制每个物体时直接计算它受哪些光影响，光源越多，同一像素或物体上的光照计算就越容易重复。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "forward-rendering",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 Forward+？",
+        "Back": "Forward+ 是在前向渲染基础上先做屏幕分块或聚类的光源筛选，再让每个像素只遍历局部光源列表，以降低多光源开销。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "forward-plus",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lighting",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么延迟渲染为什么更吃显存和带宽？",
+        "Back": "因为它需要把法线、颜色、材质参数、深度等多种中间结果写入和读取 G-buffer，多次大分辨率读写会显著增加显存占用和带宽压力。"
+      },
+      "tags": [
+        "bandwidth",
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "deferred-rendering",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "MSAA 在前向和延迟里体验为什么不一样？",
+        "Back": "前向渲染里每个样本的着色和覆盖关系更直接，MSAA 集成通常更自然；延迟渲染里 G-buffer 和多样本材质属性处理更复杂，所以成本和实现难度都更高。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "deferred-rendering",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "msaa",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么透明物体容易 overdraw 高？",
+        "Back": "因为透明通常不能像不透明那样依赖深度写入提前挡掉后面的像素，很多层片元都会真的执行着色并参与混合。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "overdraw",
+        "topic-profiling",
+        "transparency"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 early-z？它什么时候会失效？",
+        "Back": "early-z 是在像素着色之前尽早做深度测试，提前丢弃被遮挡片元以减少像素着色开销。若 shader 使用 discard、修改深度或某些依赖顺序的操作，early-z 可能失效或受限。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "depth-test",
+        "early-z",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "CPU 和 GPU 在渲染中分别负责什么？",
+        "Back": "CPU 更擅长场景更新、资源管理、命令组织和调度，GPU 更擅长大规模并行执行顶点、光栅化、像素着色和图像生成。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "cpu-gpu",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "vertex buffer 和 index buffer 分别存什么？",
+        "Back": "vertex buffer 存顶点属性数据，如位置、法线、UV；index buffer 存索引，用来指定顶点如何复用并组成图元。"
+      },
+      "tags": [
+        "buffer",
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么要使用 index buffer？",
+        "Back": "因为很多三角形会共享顶点，使用索引可以减少顶点数据重复存储和顶点着色器重复执行。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "index-buffer",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "constant buffer / uniform buffer 的用途是什么？",
+        "Back": "它们用于向 shader 提供小块、结构化的常量数据，如矩阵、光照参数、材质参数和相机信息。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "constant-buffer",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是状态切换？为什么状态切换多会影响性能？",
+        "Back": "状态切换是修改 pipeline 相关状态，如 shader、纹理、混合、深度模板和 PSO。切换过多会增加 CPU 组织和驱动开销，也会破坏 GPU 批处理效率。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "state-change",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 pipeline state object（PSO）？",
+        "Back": "PSO 是把一组会一起影响管线行为的固定状态预先打包成对象，便于现代显式 API 更高效、更可预测地提交渲染命令。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "pso",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 command buffer / command list？",
+        "Back": "它们是预先记录 GPU 将要执行的命令序列，记录和提交分离有助于多线程命令生成和降低驱动即时开销。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "command-buffer",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 render target？",
+        "Back": "render target 是当前渲染输出要写入的颜色缓冲资源，可以是屏幕后台缓冲，也可以是离屏纹理。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "render-target",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 depth buffer？",
+        "Back": "depth buffer 是存储每个像素当前最近深度值的缓冲，用于深度测试，决定哪个片元可见。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "depth-buffer",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么是 swapchain？",
+        "Back": "swapchain 是一组按顺序轮换显示的后台缓冲，用于在渲染和显示之间交换画面。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "swapchain",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "VSync 开启后为什么帧率可能锁到 60/30？",
+        "Back": "因为显示器通常按固定刷新率显示，若一帧没赶上当前刷新周期，就可能要等下一个周期，导致帧率从 60 掉到 30 这类阶梯值。"
+      },
+      "tags": [
+        "cluster-gpu-api-basic",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-rendering-basics",
+        "vsync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 GPU 资源上传不能随便覆盖正在使用的数据？",
+        "Back": "因为 CPU 写入和 GPU 读取往往是异步并行的，若覆盖了 GPU 仍在访问的数据，就会造成数据竞争和错误渲染结果。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "gpu-api",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-upload",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "游戏引擎和游戏逻辑代码的边界一般怎么划分？",
+        "Back": "引擎更偏通用能力，如渲染、资源、物理、音频和运行时框架；游戏逻辑更偏具体玩法规则、关卡行为和项目内容。边界的核心是通用性和可复用性。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个场景系统通常需要管理哪些核心数据？",
+        "Back": "通常包括对象层级、Transform、可见性相关数据、组件注册、资源引用和场景加载卸载状态。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "scene-system",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "组件系统的核心价值是什么？",
+        "Back": "组件系统把对象能力拆成可组合单元，降低继承层级耦合，让功能扩展和编辑器组织更灵活。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "component-system",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么很多引擎喜欢把 Transform 单独当成很核心的模块？",
+        "Back": "因为几乎所有对象系统、渲染、物理、动画和层级关系都依赖变换数据，它更新频繁且影响面广，是典型的基础公共数据。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering",
+        "transform"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "父子节点变换更新时，为什么更新顺序很重要？",
+        "Back": "因为子节点世界变换依赖父节点最新结果。若顺序错了，子节点会基于旧父变换计算，得到错误世界矩阵。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering",
+        "transform"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "资源系统通常为什么要做缓存？",
+        "Back": "因为同一资源可能被多个对象重复使用，缓存能避免重复加载、重复解析和重复创建 GPU 资源，同时统一生命周期管理。"
+      },
+      "tags": [
+        "cache",
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么同一个纹理资源不能每次用到都重新加载？",
+        "Back": "这样会重复产生磁盘 IO、解析和 GPU 上传开销，还可能让多个对象持有重复副本，浪费大量内存和时间。"
+      },
+      "tags": [
+        "cache",
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "句柄（handle）相比直接裸指针，有什么工程优势？",
+        "Back": "句柄能隔离真实对象地址，便于做资源重载、延迟创建、失效检测和跨线程或跨模块访问控制，比裸指针更稳定。"
+      },
+      "tags": [
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "handle",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么异步加载系统常常需要“加载中”“已加载”“失效”这几类状态？",
+        "Back": "因为异步流程天然跨时间和线程，同一资源在不同阶段可用性不同。显式状态能避免调用方把“开始加载”和“已经可安全使用”混为一谈。"
+      },
+      "tags": [
+        "async-loading",
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么对象销毁往往不适合“立刻 delete”？",
+        "Back": "因为对象可能仍被其他系统遍历、渲染线程引用或事件回调持有。立刻删除容易产生悬空引用和遍历期间修改容器的问题。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "延迟销毁（deferred destroy）通常是为了解决什么问题？",
+        "Back": "它主要解决跨系统引用、遍历稳定性和线程时序问题，把真正释放推迟到安全点统一处理。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "对象池适合什么类型的对象？",
+        "Back": "适合数量多、创建销毁频繁、类型固定且生命周期模式相似的对象，如子弹、粒子、特效实例和临时命令对象。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "object-pool",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么事件系统容易引发生命周期问题？",
+        "Back": "因为发布者和订阅者往往跨模块、跨时序存在，若未及时退订或对象已销毁，回调很容易访问失效对象。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "event-system",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "游戏一帧里一般先更新逻辑还是先渲染？为什么？",
+        "Back": "通常先更新逻辑，再基于更新后的世界状态组织并提交渲染。这样渲染看到的是这一帧逻辑计算后的稳定快照。"
+      },
+      "tags": [
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "engine-basic",
+        "frame-loop",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-runtime"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么很多引擎会把“提交渲染命令”和“真正执行渲染”分线程？",
+        "Back": "因为逻辑线程和渲染命令组织可以并行，拆线程能减少主线程阻塞，并让 CPU 和 GPU 更好流水化。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "render-thread",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "帧同步资源为什么常常要做双缓冲或三缓冲？",
+        "Back": "因为 CPU 写和 GPU 读经常跨帧并行，双缓冲或三缓冲能避免同一份数据在还没用完时就被下一帧覆盖。"
+      },
+      "tags": [
+        "buffering",
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么引擎里要重视数据局部性？",
+        "Back": "因为缓存命中和连续访存对性能影响很大。局部性好时 CPU 和 GPU 都能更高效利用缓存和带宽。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "data-locality",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "AoS 和 SoA 分别是什么？在引擎里各自适合什么？",
+        "Back": "AoS 是“数组里每个元素是完整对象”，更适合对象语义和低频访问；SoA 是“每个字段单独成数组”，更适合批量计算、SIMD 和缓存友好的高频系统。"
+      },
+      "tags": [
+        "aos-soa",
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么时候一个模块该拆，什么时候不该过度抽象？",
+        "Back": "当职责混乱、改动互相牵连、复用边界清晰时该拆；当问题规模还小、变化模式不明确时，过早抽象只会增加复杂度。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engine-basic",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "modularity",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么叫“引擎代码工程化能力”？",
+        "Back": "指的不只是代码能跑，还包括边界清晰、可调试、可测试、可扩展、可监控，以及团队协作下长期维护成本可控。"
+      },
+      "tags": [
+        "cluster-engine-basic",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "maintainability",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么降分辨率有助于判断是不是 GPU 瓶颈？",
+        "Back": "因为降分辨率会明显降低像素着色、后处理和带宽压力。若帧时间明显改善，瓶颈更可能在 GPU 像素相关路径。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "resolution-scaling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "SetPass 高通常意味着什么问题？",
+        "Back": "通常意味着材质、shader 或渲染状态切换过多，CPU 组织成本和驱动开销偏高。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "setpass",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "三角形很多一定是瓶颈吗？为什么不一定？",
+        "Back": "不一定。若 GPU 主要卡在像素、带宽、后处理或同步，三角形多未必是主因；还要看顶点着色成本、屏幕覆盖率和真实 profiler 结果。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "geometry",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 UI、粒子、透明特效容易成为 overdraw 重灾区？",
+        "Back": "因为它们通常层数多、覆盖面积大、透明度高，很多片元即使最后不可见也会真的执行着色和混合。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "overdraw",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么情况下是带宽瓶颈？",
+        "Back": "当大量纹理采样、G-buffer 读写、后处理或高分辨率渲染导致显存读写压力过大时，系统可能受带宽限制。常见特征是降分辨率或减少读写后收益明显。"
+      },
+      "tags": [
+        "bandwidth",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么情况下是着色器 ALU 瓶颈？",
+        "Back": "当 shader 里数学计算特别重、分支复杂或每像素执行大量函数，而纹理和带宽并不是主导时，可能是 ALU 瓶颈。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "shader",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "profiler 看性能时为什么不能只看平均帧率？",
+        "Back": "因为平均值会掩盖尖刺和波动。用户感知往往更受最慢帧、抖动和连续卡顿影响。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "frametime",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 1% low / 帧时间抖动也很重要？",
+        "Back": "因为它们更能反映卡顿和最差体验。即使平均 FPS 很高，只要慢帧很多，玩家仍会明显感觉不流畅。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "frametime",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "卡顿和“平均 FPS 不高”是同一个问题吗？",
+        "Back": "不是。平均 FPS 不高说明整体吞吐不足，卡顿更强调局部慢帧和时间不稳定，两者可能同时出现，也可能只出现其一。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "frametime",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么资源加载容易造成卡顿？",
+        "Back": "因为加载不仅有磁盘 IO，还可能包含解压、反序列化、GPU 上传、主线程实例化和依赖资源挂接，这些步骤任何一个卡主线程都可能掉帧。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "loading",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么频繁 GC 会引发卡顿？",
+        "Back": "因为垃圾回收会暂停或打断正常执行，回收越频繁、对象越多，越容易在帧内形成明显时间尖刺。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "gc",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "批处理为什么能减少 CPU 开销？",
+        "Back": "因为它把多个原本分散的绘制合并成更少的提交和状态切换，降低 CPU 命令组织与驱动调用成本。"
+      },
+      "tags": [
+        "batching",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "实例化为什么适合大量重复物体？",
+        "Back": "因为大量相同 mesh 和材质的物体可以共享同一份几何和大部分状态，只传每实例差异数据，从而减少提交开销。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "instancing",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "LOD 为什么有用？",
+        "Back": "因为远处物体屏幕占比小，不需要维持近距离几何复杂度。LOD 能显著降低顶点、像素和带宽成本。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "lod",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么减少状态切换能优化性能？",
+        "Back": "因为状态切换会增加 CPU 提交成本，也会破坏 GPU 批次连续性。按状态聚类能让流水线更稳定。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-1-foundation",
+        "level-basic",
+        "profiling",
+        "state-change",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`class` 和 `struct` 的区别是什么？",
+        "Back": "class 是引用类型，通常分配在托管堆上；struct 是值类型，常按值复制，常见于栈上或作为其他对象的一部分存储。"
+      },
+      "tags": [
+        "class-vs-struct",
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "值类型和引用类型的区别是什么？",
+        "Back": "值类型变量直接保存数据本体，赋值时通常复制值；引用类型变量保存对象引用，赋值时复制的是引用地址。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "reference-type",
+        "topic-csharp",
+        "value-type"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "装箱和拆箱是什么？",
+        "Back": "装箱是把值类型包装成 object 或接口引用，拆箱则是再取回原值类型。装箱通常会产生堆分配。"
+      },
+      "tags": [
+        "boxing",
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "为什么装箱会带来性能问题？",
+        "Back": "因为它会创建额外对象、增加 GC 压力，并带来类型转换成本。高频路径里的隐式装箱尤其值得警惕。"
+      },
+      "tags": [
+        "boxing",
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "layer-1-foundation",
+        "level-basic",
+        "performance",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`string` 为什么是不可变的？",
+        "Back": "不可变可以让字符串共享、安全地作为键和常量使用，也简化运行时和多线程语义。代价是频繁拼接会产生新对象。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "string",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`List<T>` 和数组的区别是什么？",
+        "Back": "数组长度固定、内存连续，适合已知大小数据；List<T> 是可自动扩容的动态数组，使用更方便但有容量管理开销。"
+      },
+      "tags": [
+        "array",
+        "cluster-csharp-basic",
+        "collection",
+        "csharp",
+        "deck-csharp",
+        "layer-1-foundation",
+        "level-basic",
+        "list",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`Dictionary` 的底层大致是什么？",
+        "Back": "通常是哈希表，通过 key 的哈希值定位桶，再在桶中查找元素，因此平均查找插入接近 O(1)。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "collection",
+        "csharp",
+        "deck-csharp",
+        "dictionary",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`ref` 和 `out` 的区别是什么？",
+        "Back": "ref 要求调用前变量已初始化，表示按引用传入并可读可写；out 不要求调用前初始化，强调被调用者必须在返回前赋值。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "language-basic",
+        "layer-1-foundation",
+        "level-basic",
+        "ref-out",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`interface` 和 `abstract class` 的区别是什么？",
+        "Back": "interface 更偏能力契约，不携带实例状态；abstract class 可以有字段、默认实现和受保护成员。前者更灵活，后者更适合共享部分实现。"
+      },
+      "tags": [
+        "abstract-class",
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "interface",
+        "layer-1-foundation",
+        "level-basic",
+        "oop",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "委托和事件是什么关系？",
+        "Back": "事件通常建立在委托之上，事件限制了外部只能订阅和退订，而不能直接从外部触发调用列表。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "delegate",
+        "event",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "`async/await` 的基本作用是什么？",
+        "Back": "它用于把异步操作写成接近同步的代码结构，方便在不阻塞当前线程的情况下等待 IO 或后台任务完成。"
+      },
+      "tags": [
+        "async-await",
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "layer-1-foundation",
+        "level-basic",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "C# 垃圾回收为什么会造成卡顿？",
+        "Back": "因为 GC 在回收时需要扫描和处理对象图，可能暂停托管线程或带来明显执行中断。分配越频繁、对象越多，越容易形成尖刺。"
+      },
+      "tags": [
+        "cluster-csharp-basic",
+        "csharp",
+        "deck-csharp",
+        "gc",
+        "layer-1-foundation",
+        "level-basic",
+        "performance",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Unity 中 `Update`、`LateUpdate`、`FixedUpdate` 的区别是什么？",
+        "Back": "Update 每帧调用，适合普通逻辑；LateUpdate 在本帧大多数 Update 后调用，适合跟随或收尾；FixedUpdate 按固定时间步执行，常用于物理。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "topic-unity",
+        "unity-performance",
+        "update-loop"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "`Awake`、`OnEnable`、`Start` 的调用时机区别是什么？",
+        "Back": "Awake 在对象加载时初始化，常先于其他脚本；OnEnable 在组件启用时调用；Start 通常在第一次 Update 前调用，适合依赖其他对象已完成 Awake 的初始化逻辑。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "layer-1-foundation",
+        "level-basic",
+        "lifecycle",
+        "mono-behaviour",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "`GetComponent` 为什么不建议高频调用？",
+        "Back": "因为它需要在对象组件列表中查找匹配项，频繁调用会形成不必要的 CPU 开销。常见做法是缓存结果。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "getcomponent",
+        "layer-1-foundation",
+        "level-basic",
+        "performance",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Unity 中 `Instantiate` 和对象池的取舍是什么？",
+        "Back": "Instantiate 使用简单，适合低频创建；对象池适合高频复用对象，能显著降低创建销毁和 GC 压力。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "instantiate",
+        "layer-1-foundation",
+        "level-basic",
+        "object-pool",
+        "performance",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "为什么频繁创建和销毁 GameObject 会有性能问题？",
+        "Back": "因为它会触发托管和原生对象创建、组件初始化、层级和场景注册、销毁回收等一整套开销，还容易增加 GC 压力。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "gameobject",
+        "layer-1-foundation",
+        "level-basic",
+        "performance",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "什么是 GC.Alloc？在 Unity Profiler 里看到它通常说明什么？",
+        "Back": "GC.Alloc 表示这一段执行产生了托管堆分配。在 Profiler 里看到它，通常意味着该路径可能在持续制造 GC 压力，需要检查是否有临时对象分配。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "deck-unity",
+        "gc",
+        "layer-1-foundation",
+        "level-basic",
+        "profiler",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "为什么协程不是线程？",
+        "Back": "因为协程仍由 Unity 主线程调度，只是在特定时机挂起和恢复执行，不会并行占用另一个 CPU 线程。"
+      },
+      "tags": [
+        "cluster-unity-basic",
+        "coroutine",
+        "deck-unity",
+        "layer-1-foundation",
+        "level-basic",
+        "threading",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`vector` 扩容为什么会导致迭代器失效？",
+        "Back": "因为扩容通常会搬迁到新的连续内存，原来的元素地址都变了，指向旧地址的迭代器、引用和指针自然失效。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "iterator",
+        "layer-2-followup",
+        "level-mid",
+        "topic-cpp",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么 `unordered_map` 平均 O(1)，但并不一定总比 `map` 快？",
+        "Back": "因为常数项、哈希冲突、rehash、内存分散和缓存局部性都会影响真实性能。数据规模、访问模式和 key 类型不同，结果可能完全不同。"
+      },
+      "tags": [
+        "cluster-cpp-stl",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "level-mid",
+        "map",
+        "performance",
+        "topic-cpp",
+        "unordered-map"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么 `shared_ptr` 比裸指针安全，但也更重？",
+        "Back": "它通过引用计数表达共享所有权，减少手动释放错误，但也带来控制块、原子计数和额外生命周期复杂度。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "level-mid",
+        "ownership",
+        "shared-ptr",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "`std::move` 后对象还能不能用？",
+        "Back": "通常还能处于“有效但值未指定”的状态，可以析构、重新赋值或调用满足前置条件的成员，但不能假设它还保持原值。"
+      },
+      "tags": [
+        "cluster-cpp-modern",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "level-mid",
+        "move-semantics",
+        "rvalue",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么情况下编译器会做返回值优化（RVO）？",
+        "Back": "当函数直接返回局部对象且满足优化条件时，编译器可以直接在目标位置构造返回值，省掉一次拷贝或移动。现代 C++ 某些场景下还会有强制省略拷贝。"
+      },
+      "tags": [
+        "cluster-cpp-copy",
+        "copy-control",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "level-mid",
+        "rvo",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么法线要归一化？",
+        "Back": "因为光照里的点积比较的是方向夹角，法线长度若不为 1，会把长度误差带入光照结果。"
+      },
+      "tags": [
+        "cluster-lighting-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "lighting",
+        "normal",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么透明排序一般从后往前？",
+        "Back": "因为常规 alpha 混合依赖目标缓冲里已有颜色，先画远处再画近处，结果才更接近真实叠加。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "sorting",
+        "topic-rendering-basics",
+        "transparency"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么不透明物体通常从前往后更有利？",
+        "Back": "因为前面的物体先写入深度后，后面的被遮挡片元更容易在 early-z 阶段提前剔除，减少像素着色开销。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "early-z",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "opaque",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 alpha test / discard 可能影响 early-z？",
+        "Back": "因为 shader 中 discard 会让 GPU 难以在着色前完全确定片元最终是否保留，很多硬件或路径下会限制 early-z 的提前剔除能力。"
+      },
+      "tags": [
+        "alpha-test",
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "early-z",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 Mipmap 能减少闪烁而不是单纯提性能？",
+        "Back": "因为它本质上是在用更匹配当前屏幕频率的低分辨率预过滤纹理参与采样，减少高频纹理细节在远处被错误采样后产生的闪烁。"
+      },
+      "tags": [
+        "aliasing",
+        "cluster-texture-sampling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "mipmap",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 deferred 不好处理 MSAA？",
+        "Back": "因为 deferred 需要在 G-buffer 中保存多种中间属性，多样本下这些属性的存储、解析和后续光照都更复杂且成本更高。"
+      },
+      "tags": [
+        "cluster-render-path-basic",
+        "deck-graphics",
+        "deferred-rendering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "msaa",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么阴影 bias 太大会 Peter Panning，太小会 Acne？",
+        "Back": "bias 太小时自遮挡误差还在，容易出现 Shadow Acne；bias 太大又会把阴影比较整体推开，导致阴影和物体脱离，形成 Peter Panning。"
+      },
+      "tags": [
+        "bias",
+        "cluster-shadow-basic",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么渲染线程不直接读场景里的实时数据？",
+        "Back": "因为逻辑线程可能正在修改这些数据，直接读会引发竞争、时序不一致和难复现 bug。渲染线程更适合读稳定快照或 RenderProxy。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "data-snapshot",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-thread",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 FrameContext 要避免跨帧复写？",
+        "Back": "因为上一帧对应的数据和命令可能还在被 GPU 使用。若下一帧直接覆盖，就会产生 CPU 写和 GPU 读的冲突。"
+      },
+      "tags": [
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "frame-context",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "sync",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么异步加载完成后不能直接在任意线程改场景对象？",
+        "Back": "因为场景对象通常只允许在特定线程和特定阶段修改。任意线程直接改会破坏线程安全、对象生命周期和遍历稳定性。"
+      },
+      "tags": [
+        "async-loading",
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "scene-system",
+        "topic-resource-system"
+      ]
+    }
+  ]
+}

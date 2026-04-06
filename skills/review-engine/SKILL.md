@@ -10,6 +10,7 @@ Use this skill for the local self-hosted review engine. It replaces the old Anki
 Primary entrypoint:
 
 - `bash skills/review-engine/scripts/review_engine.sh health`
+- `bash skills/review-engine/scripts/review_engine.sh decks`
 - `bash skills/review-engine/scripts/review_engine.sh stats --deck "Graphics Engine Interview"`
 - `bash skills/review-engine/scripts/review_engine.sh open-review --deck "Graphics Engine Interview"`
 - `bash skills/review-engine/scripts/review_engine.sh review-prompt`
@@ -29,10 +30,23 @@ Routine commands:
 bash skills/review-engine/scripts/review_engine.sh decks
 bash skills/review-engine/scripts/review_engine.sh stats
 bash skills/review-engine/scripts/review_engine.sh open-review --deck "Graphics Engine Interview"
+bash skills/review-engine/scripts/review_engine.sh open-review --deck "C++ Interview"
+bash skills/review-engine/scripts/review_engine.sh open-review --deck "C# Interview"
+bash skills/review-engine/scripts/review_engine.sh open-review --deck "Unity Performance Interview"
 bash skills/review-engine/scripts/review_engine.sh review-prompt
 bash skills/review-engine/scripts/review_engine.sh review-next
 bash skills/review-engine/scripts/review_engine.sh candidate-list --status pending
 ```
+
+Deck selection rule:
+
+- Do not assume `Graphics Engine Interview` unless the user explicitly asked for graphics / rendering / engine questions.
+- If the user did not specify a deck, call `decks` or infer from clear wording and ask them which deck they want before opening review.
+- Current canonical decks are:
+  - `Graphics Engine Interview`
+  - `C++ Interview`
+  - `C# Interview`
+  - `Unity Performance Interview`
 
 ## Review Flow
 

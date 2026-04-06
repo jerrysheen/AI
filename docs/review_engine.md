@@ -38,3 +38,15 @@ Core endpoints:
 - `POST /cards`
 - `POST /cards/batch`
 - `PATCH /cards/:id`
+
+Current review decks:
+
+- `Graphics Engine Interview`
+- `C++ Interview`
+- `C# Interview`
+- `Unity Performance Interview`
+
+Recommended UX behavior:
+
+- If the user says `anki复习` / `开始复习` without naming a deck, ask which deck they want first.
+- Do not default to `Graphics Engine Interview` unless the user explicitly asked for graphics / rendering / engine review.

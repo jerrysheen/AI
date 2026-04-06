@@ -1,0 +1,2102 @@
+{
+  "notes": [
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你会如何设计一个现代游戏引擎的一帧执行流程？主线程、逻辑线程、渲染线程、JobSystem、GPU 提交之间如何划分边界？",
+        "Back": "核心是把状态生成、命令生成和命令执行解耦。主线程负责高层调度与输入，JobSystem 并行做动画/剔除/批构建，渲染线程汇总 RenderProxy 和命令列表，GPU 异步执行前一帧或前几帧提交的工作，线程边界以数据快照和 FrameContext 为准而不是共享可变状态。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "engine-architecture",
+        "frame-loop",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "topic-multithreading",
+        "topic-runtime"
+      ],
+      "followups": [
+        {
+          "question": "主线程和渲染线程的边界如果切得太粗或太细，各自会出现什么问题？",
+          "concept": "线程边界权衡",
+          "coveredSignals": [
+            "边界",
+            "主线程",
+            "渲染线程",
+            "职责",
+            "粒度"
+          ],
+          "tags": [
+            "followup",
+            "architecture"
+          ]
+        },
+        {
+          "question": "为什么这种设计通常依赖多帧 in-flight，而不是单帧串行跑完？",
+          "concept": "多帧并行",
+          "coveredSignals": [
+            "多帧",
+            "in-flight",
+            "并行",
+            "GPU 等待",
+            "流水线"
+          ],
+          "tags": [
+            "followup",
+            "synchronization"
+          ]
+        }
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "FrameContext 应该保存哪些数据？哪些资源应该按 FrameContext 管，哪些不应该？",
+        "Back": "FrameContext 适合保存本帧命令分配器、临时上传内存、瞬态资源句柄、同步点和只对当前 in-flight 帧有效的数据快照。不该放长期资源、全局缓存、跨帧生命周期对象和与帧序号无关的持久状态，否则会放大内存并增加复用难度。"
+      },
+      "tags": [
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "frame-context",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "resource-lifetime",
+        "topic-runtime"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么现代引擎通常避免在 EndFrame 做 WaitForGPU？如果不等 GPU，你怎么判断 FrameContext 可以复用？",
+        "Back": "EndFrame 等 GPU 会把 CPU/GPU 流水线串行化，吞吐和帧稳定性都会变差。更好的做法是给每个 FrameContext 绑定 fence 值，只有当对应 fence 完成后才复用它管理的命令分配器、上传页和瞬态资源。"
+      },
+      "tags": [
+        "cluster-frame-lifecycle",
+        "deck-graphics",
+        "frame-context",
+        "gpu-sync",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "topic-runtime"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "设计一个线程安全但低开销的渲染命令提交流程，你会选按 drawcall 推送还是按 pass/chunk 推送？为什么？",
+        "Back": "通常更偏向按 pass 或 chunk 汇聚后再提交，因为它能降低队列竞争、减少细粒度锁与原子操作，并保留排序与批处理空间。按 drawcall 逐条推送实现简单，但高并发下调度和拼装开销会反过来吞掉收益。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "cluster-render-pipeline",
+        "command-submission",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-thread",
+        "topic-multithreading",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何理解前端引擎层和后端 RenderAPI 层的职责边界？什么东西不该泄漏到上层？",
+        "Back": "前端关心可见对象、材质语义、渲染策略和资源使用意图，后端关心命令编码、资源状态、队列提交和平台差异。显式状态枚举、平台专有句柄和零散 barrier 细节不该泄漏到上层，否则业务会被 API 细节绑死。"
+      },
+      "tags": [
+        "abstraction",
+        "cluster-render-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-api",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你会怎么设计一个可扩展的 RenderPipeline，使其既支持 Forward/Deferred，又支持后续插入新 pass？",
+        "Back": "核心是把 pass 描述成声明输入输出、执行函数和排序约束的节点，让管线用配置或注册表组装，而不是把流程写死在一段大函数里。这样 Forward、Deferred 只是不同 pass 组合，新增功能通过新增节点和依赖关系接入。"
+      },
+      "tags": [
+        "cluster-render-pipeline",
+        "deck-graphics",
+        "frame-graph",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-pipeline",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "场景系统、对象系统、组件系统、资源系统之间最容易互相耦合的点在哪？你会怎么拆？",
+        "Back": "最容易耦合在生命周期、引用关系和加载时机上，比如对象直接持有资源实体并在组件里做同步加载。拆法是让对象持有轻量句柄和运行时快照，资源系统独立负责加载/驻留/回收，场景系统只描述关系而不直接承担资源管理。"
+      },
+      "tags": [
+        "cluster-assets",
+        "deck-graphics",
+        "ecs",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "GameObject 或 Entity 的运行时组织更适合 OOP 还是 Data-Oriented？在传统项目里如何渐进式改造？",
+        "Back": "面向对象更利于表达和编辑器开发，Data-Oriented 更利于批处理、缓存命中和并行更新。实际项目通常是界面和高层仍保留对象语义，把高频系统如 Transform、渲染、动画数据逐步抽成 SoA 和批量更新路径。"
+      },
+      "tags": [
+        "data-oriented",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "runtime"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "引擎层如何处理编辑器态和运行时态的差异，避免代码和数据结构完全分裂？",
+        "Back": "做法是保持核心运行时数据结构尽量一致，在外围加编辑器专用元数据、反射信息和事务层，而不是复制一套独立 runtime。编辑器看到的是可编辑视图，运行时拿的是裁剪后的可执行快照。"
+      },
+      "tags": [
+        "deck-graphics",
+        "editor",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "runtime"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何设计一个可热更新资源、但不热更新逻辑的引擎架构？哪些资源适合热重载，哪些不适合？",
+        "Back": "资源系统要把资源对象和使用者解耦，让 shader、纹理、材质、配置表通过版本化句柄和替换点热切换。序列化布局、网络协议、脚本状态机这类直接影响执行状态的一般不适合直接热重载，否则一致性和回滚都很难保证。"
+      },
+      "tags": [
+        "deck-graphics",
+        "graphics-engine",
+        "hot-reload",
+        "layer-2-followup",
+        "level-mid",
+        "resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "大地图或开放世界引擎中，场景 streaming 的核心问题有哪些？除了 IO，还有哪些隐性成本？",
+        "Back": "除了磁盘和解压，真正难点还包括依赖解析、资源建 GPU 资源、主线程挂接、剔除结构更新、物理导航重建和内存峰值控制。很多卡顿不是 IO 慢，而是资源到了以后在 CPU 和 GPU 上的落地成本过高。"
+      },
+      "tags": [
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "open-world",
+        "streaming",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个引擎模块怎样才算可维护？你会从哪些维度评价一个现有模块设计得好不好？",
+        "Back": "我会看边界是否清晰、数据流是否单向、生命周期是否可预测、调试与 profiling 是否方便，以及改一个点会不会引发连锁回归。可维护不是代码看起来优雅，而是功能扩展、定位问题和性能回归治理都不需要拆雷。"
+      },
+      "tags": [
+        "cluster-debugging-maintenance",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "maintainability",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "现代引擎里为什么越来越多采用 GPU-Driven Rendering？它到底减少了 CPU 的什么成本？",
+        "Back": "它主要减少 CPU 侧的可见列表构建、batch 拆分、状态组织和海量 draw 提交成本，把这部分转成 GPU 更擅长的并行筛选与间接绘制。它不是让 GPU 更快画，而是让 CPU 少做大量细碎的组织工作。"
+      },
+      "tags": [
+        "cluster-indirect-draw",
+        "deck-graphics",
+        "gpu-driven",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "rendering",
+        "topic-gpu-driven"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "GPU-Driven 渲染下，CPU 可见列表和 GPU 可见列表的职责如何划分？",
+        "Back": "CPU 更适合做粗粒度 streaming、系统级启停和大范围剔除，GPU 更适合在最终绘制前做细粒度实例可见性、LOD 和 batch compaction。两者不是替代关系，而是分层剔除，避免把所有责任压到任一侧。"
+      },
+      "tags": [
+        "cluster-indirect-draw",
+        "culling",
+        "deck-graphics",
+        "gpu-driven",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "topic-gpu-driven"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "如果你要设计一套 indirect draw 渲染架构，指令缓冲、可见性缓冲、batch 数据、material 数据分别怎么组织？",
+        "Back": "常见做法是把稳定的 mesh 或 batch 元数据放常驻 GPU Buffer，把每帧变化的可见实例索引和 indirect argument 放瞬态 Buffer，把材质参数拆成全局表和按材质块索引。关键是让 culling 输出能直接驱动 draw，而不是再回 CPU 重新整理一遍。"
+      },
+      "tags": [
+        "cluster-indirect-draw",
+        "deck-graphics",
+        "gpu-driven",
+        "graphics-engine",
+        "indirect-draw",
+        "layer-3-senior",
+        "level-senior",
+        "topic-gpu-driven"
+      ],
+      "followups": [
+        {
+          "question": "更新频率不同的数据为什么要拆到不同 buffer，而不是一股脑塞进同一个结构？",
+          "concept": "数据分层与更新频率",
+          "coveredSignals": [
+            "更新频率",
+            "拆分",
+            "buffer",
+            "缓存",
+            "带宽"
+          ],
+          "tags": [
+            "followup",
+            "data-layout"
+          ]
+        },
+        {
+          "question": "如果 indirect 参数由 compute 写、graphics 读，中间至少要注意哪类同步？",
+          "concept": "compute 到 draw 同步",
+          "coveredSignals": [
+            "barrier",
+            "UAV",
+            "同步",
+            "hazard",
+            "queue"
+          ],
+          "tags": [
+            "followup",
+            "barrier"
+          ]
+        }
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "ExecuteIndirect 或 MultiDrawIndirect 的核心价值是什么？它不能解决什么问题？",
+        "Back": "它的价值是让 GPU 直接消费批量绘制参数，减少 CPU 逐条提交 draw 的成本。它不能自动解决材质排序、资源绑定设计、可见性生成和 shader 过重这类上游问题。"
+      },
+      "tags": [
+        "cluster-indirect-draw",
+        "deck-graphics",
+        "graphics-engine",
+        "indirect-draw",
+        "layer-3-senior",
+        "level-senior",
+        "rendering",
+        "topic-gpu-driven"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么只做了 GPU Culling 不等于已经做成 GPU-Driven？",
+        "Back": "因为如果 culling 结果还要回 CPU 重新组织 draw、重新分批或重新绑定资源，CPU 端最重的提交流程并没有被拿掉。真正的 GPU-Driven 是可见性、参数生成和提交链条尽量留在 GPU 侧闭环。"
+      },
+      "tags": [
+        "cluster-indirect-draw",
+        "culling",
+        "deck-graphics",
+        "gpu-driven",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "topic-gpu-driven"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何设计 RenderProxy？它和 SceneObject、RenderObject、DrawItem 分别解决什么问题？",
+        "Back": "SceneObject 表示游戏或场景语义，RenderProxy 是跨线程传输的渲染快照，RenderObject 是渲染域内可排序和可剔除的实体，DrawItem 则是最终可提交的最小绘制单元。这样做能把游戏状态变化和渲染提交解耦。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-render-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-proxy",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "渲染队列排序时，你会按什么维度排序？PSO、材质、mesh、距离、透明优先级之间怎么权衡？",
+        "Back": "不透明通常优先压状态切换，所以会先按 pass 和 PSO，再按材质或 mesh 聚类；透明更看重正确混合和视觉结果，通常按距离或显式优先级排序。没有单一最优排序，关键是按 pass 目标区分权重。"
+      },
+      "tags": [
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-queue",
+        "sorting"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "什么情况下你会选择 Forward+ 或 Clustered Lighting，而不是传统 Deferred？",
+        "Back": "当项目需要更好的透明支持、MSAA、较低 G-buffer 带宽，或平台对 MRT 成本敏感时，Forward+ 和 Clustered 更合适。它们本质上是在保留前向材质灵活性的同时，把多光源遍历限制在局部空间。"
+      },
+      "tags": [
+        "deck-graphics",
+        "forward-plus",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "lighting"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何理解 RenderPass、Subpass、FrameGraph 三者的关系？它们分别解决什么层级的问题？",
+        "Back": "RenderPass 或 Subpass 更接近具体图形 API 的执行和附件生命周期优化，FrameGraph 更高一层，负责全帧范围的依赖、资源生命周期和 pass 编排。前者偏平台执行单元，后者偏引擎调度模型。"
+      },
+      "tags": [
+        "cluster-frame-graph",
+        "cluster-render-pipeline",
+        "deck-graphics",
+        "frame-graph",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-pass",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一套渲染架构怎样支持平台差异，而不把平台判断写满业务代码？",
+        "Back": "做法是把平台差异集中在能力描述、资源布局映射、后端命令编码和 feature fallback 上，由上层依赖统一语义接口和 capability query。业务只表达需要什么，不直接判断是 D3D12、Vulkan 还是 Metal 的具体分支。"
+      },
+      "tags": [
+        "cross-platform",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-api"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么透明物体一直是实时渲染架构里的难点？你会如何分层解决？",
+        "Back": "透明同时涉及排序、混合、深度正确性和高 overdraw，既影响画质也影响性能。工程上通常分层处理：先区分简单透明与复杂半透明，再用近似排序、深度预处理、粒子专用路径或必要时的 OIT 方案。"
+      },
+      "tags": [
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "rendering",
+        "transparency"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "当一个项目 pass 越来越多，渲染器最容易失控的地方是什么？你会如何约束？",
+        "Back": "最容易失控的是依赖关系、资源别名、状态泄漏和临时贴图暴涨。要靠 pass 声明式输入输出、统一资源命名、预算约束和可视化依赖图，把新增 pass 从自由发挥变成受控接入。"
+      },
+      "tags": [
+        "cluster-render-pipeline",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-pipeline",
+        "topic-render-architecture"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "D3D12 或 Vulkan 中资源状态存在的意义是什么？为什么显式 API 要把 barrier 暴露给开发者？",
+        "Back": "资源状态本质上是在告诉驱动当前资源将被如何访问，从而保证缓存、压缩格式和执行顺序正确。显式 API 把 barrier 交给开发者，是为了换取可预测性能和更少驱动猜测，但代价是正确性与复杂度也转移到了引擎侧。"
+      },
+      "tags": [
+        "barrier",
+        "cluster-resource-sync",
+        "d3d12",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Transition barrier、UAV barrier、aliasing barrier 的区别是什么？各自解决什么问题？",
+        "Back": "Transition 处理资源访问状态切换，UAV barrier 保证无序读写之间的可见性与顺序，aliasing barrier 保证同一块物理内存被不同资源重新解释时不会发生脏数据冲突。它们解决的是不同层级的 hazard，不是同一种东西的不同写法。"
+      },
+      "tags": [
+        "barrier",
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "resource-state",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "资源 hazard 的本质是什么？它为什么不只是状态对了就行？",
+        "Back": "hazard 的本质是两个访问在时间和可见性上存在冲突，比如写后读、写后写或跨队列未完成。状态只是访问意图的一部分，真正正确还依赖执行顺序、缓存刷新、队列 ownership 和资源生命周期。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "hazard",
+        "layer-3-senior",
+        "level-senior",
+        "synchronization",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何设计一个上传系统来处理动态 buffer、纹理上传和异步 streaming？",
+        "Back": "我会分层成 CPU staging、上传页分配器、copy 命令批、完成 fence 和资源可见性切换。小而高频的数据走持久映射 ring 或 page，大纹理和 streaming 资源走异步 copy，再由 fence 和状态切换把它们接入 graphics 队列。"
+      },
+      "tags": [
+        "cluster-assets",
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "streaming",
+        "topic-resource-system",
+        "topic-sync",
+        "upload-system"
+      ],
+      "followups": [
+        {
+          "question": "为什么按整帧回收 upload 内存会限制并发和内存利用率？",
+          "concept": "region 粒度复用",
+          "coveredSignals": [
+            "整帧回收",
+            "并发",
+            "region",
+            "page",
+            "复用"
+          ],
+          "tags": [
+            "followup",
+            "memory-reuse"
+          ]
+        },
+        {
+          "question": "如果 copy queue 和 graphics queue 分离，上传系统至少要记录哪些同步元数据？",
+          "concept": "跨队列同步元数据",
+          "coveredSignals": [
+            "copy queue",
+            "graphics queue",
+            "fence",
+            "queue",
+            "同步"
+          ],
+          "tags": [
+            "followup",
+            "queue-sync"
+          ]
+        }
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "全局大 Buffer 和 per-frame Buffer 各自的优缺点是什么？什么资源适合做成全局池化？",
+        "Back": "全局大 Buffer 适合高复用和稳定地址的数据，减少碎片和重复创建；per-frame Buffer 简单安全，适合短生命周期数据，但容易浪费内存。稳定的几何、材质表、GPU scene 数据适合池化，瞬态参数和临时上传更适合分帧管理。"
+      },
+      "tags": [
+        "buffer",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "memory-management"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何设计一个 page-fence 或 region-fence 机制，来实现局部内存可复用而不是整帧等完再复用？",
+        "Back": "关键是让每个分配页或区间记录最后一次被某个队列使用的 fence 值，回收时只检查该局部 fence 是否完成。这样复用粒度与真实使用范围绑定，而不是和整个 FrameContext 粗暴绑定。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "fence",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "memory-reuse",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Copy Queue、Compute Queue、Graphics Queue 分开后，真正难的不是会不会用，而是什么？",
+        "Back": "真正难的是跨队列资源 ownership、完成时机、回收时机和调度收益是否真的大于同步成本。很多项目会用出更多 queue 却没有更多并行，因为依赖链和资源同步没有设计好。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "multi-queue",
+        "synchronization",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "异步拷贝纹理时，CPU 侧和 GPU 侧分别要保证哪些同步关系？",
+        "Back": "CPU 侧要保证 staging 内存和源数据在 copy 提交前不被覆盖，GPU 侧要保证 copy 完成且资源完成状态切换后 graphics 才能读取。若跨队列，还要显式串联 fence 或 semaphore，不能只靠提交顺序想当然。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "queue-sync",
+        "texture-streaming",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "资源 aliasing 为什么能节省显存？什么情况下 aliasing 是危险的？",
+        "Back": "aliasing 利用的是两个资源生命周期不重叠，可以共享同一段物理内存，从而减少峰值显存。危险点在于生命周期判断错误、残留数据未清理、跨队列仍在读写或资源视图不兼容。"
+      },
+      "tags": [
+        "aliasing",
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-3-senior",
+        "level-senior",
+        "memory-management",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个引擎里最容易出现隐式同步的地方有哪些？你怎么排查？",
+        "Back": "常见在 readback、Map/Unmap、资源创建销毁、swapchain present、驱动内部 flush 和跨线程共享资源访问。排查要结合 CPU timeline、GPU capture、队列空泡和 fence 等待点，而不是只看某个 pass 的 GPU 时间。"
+      },
+      "tags": [
+        "cluster-resource-sync",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "profiling",
+        "synchronization",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "视锥裁剪、遮挡裁剪、Portal、PVS、Hi-Z Occlusion、Software Occlusion 各自适合什么场景？",
+        "Back": "视锥裁剪是通用基础，Portal 和 PVS 更适合强分区室内场景，Hi-Z 适合现代 GPU 上的大规模动态遮挡，Software Occlusion 适合 CPU 仍有余量且想更早剔除 draw 的场景。选择取决于场景拓扑、动态性和工程预算。"
+      },
+      "tags": [
+        "cluster-culling",
+        "culling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "topic-visibility",
+        "visibility"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Hi-Z 遮挡裁剪的核心原理是什么？为什么它适合 GPU 上做？",
+        "Back": "它先构建层级深度金字塔，再用对象包围体与较粗层级深度快速比较，判断是否被已有深度完全遮挡。这个过程并行度高、访存模式规则，天然适合 GPU 批量处理。"
+      },
+      "tags": [
+        "cluster-culling",
+        "deck-graphics",
+        "graphics-engine",
+        "hiz",
+        "layer-2-followup",
+        "level-mid",
+        "occlusion-culling",
+        "topic-visibility"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么遮挡裁剪总会有保守性和错误剔除风险的权衡？",
+        "Back": "越保守越不容易误杀，但会留下更多本可剔除的对象；越激进越省 draw，但包围体近似、深度延迟和动态遮挡变化都可能导致错误剔除。工程上通常优先保证不误杀，再接受一部分漏剔除。"
+      },
+      "tags": [
+        "cluster-culling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "occlusion-culling",
+        "topic-visibility",
+        "tradeoff"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "如果一个场景实例特别多，你会优先优化视锥裁剪、遮挡裁剪还是 batch 构建？为什么？",
+        "Back": "要看当前瓶颈在提交还是着色，但很多时候会先看 batch 构建和提交流程，因为实例很多时 CPU 组织成本常先爆。若 GPU overdraw 明显，再投入更细的遮挡裁剪才更划算。"
+      },
+      "tags": [
+        "batching",
+        "cluster-culling",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "profiling",
+        "topic-profiling",
+        "topic-visibility"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "GPU Culling 输出可见列表后，为什么后续 draw 阶段的数据访问模式仍然很关键？",
+        "Back": "因为如果可见列表是随机索引，后续取 mesh、material、transform 时仍会造成缓存不命中和波前发散。GPU-Driven 的收益不只来自剔除，还来自让后续读取与绘制组织保持连续和可预测。"
+      },
+      "tags": [
+        "data-layout",
+        "deck-graphics",
+        "gpu-driven",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "LOD、HLOD、Impostor、Meshlet 各自适合解决什么层级的问题？",
+        "Back": "LOD 解决单对象距离衰减，HLOD 解决远距离群组复杂度，Impostor 解决极远处的近似表示，Meshlet 更偏几何组织和 GPU 细粒度剔除。它们作用层级不同，通常是叠加关系而不是互斥关系。"
+      },
+      "tags": [
+        "cluster-culling",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "lod",
+        "meshlet",
+        "topic-visibility"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "大地图里，为什么对象数量多不一定比对象更新频繁更可怕？",
+        "Back": "静态对象多主要吃内存和一次性构建，更新频繁则会持续触发 transform、剔除、batch、上传和缓存失效，成本会沿整条流水线扩散。真正可怕的是高更新率让系统失去批处理和缓存稳定性。"
+      },
+      "tags": [
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "open-world",
+        "performance"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个成熟引擎如何平衡剔除精度、构建成本、缓存命中和工程复杂度？",
+        "Back": "做法通常是分层剔除和分档精度：先用便宜的粗剔除吃掉大头，再把昂贵方法留给高价值场景。成熟方案不会追求理论最优，而是追求收益稳定、行为可解释和调试成本可控。"
+      },
+      "tags": [
+        "culling",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "PBR 中为什么强调能量守恒？不满足能量守恒会在画面上表现出什么问题？",
+        "Back": "能量守恒保证材质反射和漫反射总能量不凭空增大，从而让不同光照环境下的表现更稳定。不满足时高光和底色会同时过强，材质会显得发灰、发飘或不真实。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "lighting",
+        "pbr",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么法线贴图在切线空间下更常见？MikkTSpace 解决了什么问题？",
+        "Back": "切线空间法线贴图可复用到不同模型姿态和实例，存储也更紧凑。MikkTSpace 解决的是 DCC 和引擎切线基不一致导致的接缝和高光错误，让烘焙与运行时解释保持一致。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "normal-map",
+        "pbr",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "IBL 中 diffuse irradiance 和 specular prefilter 各自代表什么？",
+        "Back": "diffuse irradiance 表示环境光经过低频积分后的漫反射贡献，specular prefilter 表示不同粗糙度下环境镜面反射的近似结果。前者偏低频能量，后者偏视角相关的高频高光。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "ibl",
+        "layer-2-followup",
+        "level-mid",
+        "pbr",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "BRDF 中 NDF、Geometry Term、Fresnel 分别在表达什么物理意义？",
+        "Back": "NDF 描述微表面法线分布，Geometry Term 描述微表面间的自遮挡和遮蔽，Fresnel 描述入射角变化下反射比例的变化。三者一起决定高光形状、强度和角度响应。"
+      },
+      "tags": [
+        "brdf",
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "pbr",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 roughness 越高，镜面反射越宽但不一定越弱？",
+        "Back": "roughness 主要改变能量分布而不是简单削弱总能量，高光会从尖锐峰值扩展成更宽的分布。看起来峰值亮度下降，但积分意义上的镜面能量不一定减少那么多。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "pbr",
+        "roughness",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "阴影锯齿、Peter Panning、Shadow Acne、漏光分别是什么原因导致的？",
+        "Back": "阴影锯齿通常来自阴影图分辨率和投影采样不足，Peter Panning 常由 bias 过大导致阴影脱离物体，Shadow Acne 是深度精度和自遮挡误差，漏光则常来自厚度近似不足、过滤或偏移处理不当。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "debugging",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shadow",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么点光源阴影成本高？有哪些常见优化思路？",
+        "Back": "点光源需要覆盖六个方向，阴影图渲染和采样成本都高。常见优化是限制阴影距离、降低更新频率、用 atlas 或 cube array 管理、对静态部分做缓存，或在美术允许下改用近似方案。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "performance",
+        "shadow",
+        "topic-profiling",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "TAA 为什么既能提升稳定性，也会带来拖影和鬼影？问题根源在哪？",
+        "Back": "TAA 利用历史帧累积降低闪烁和走样，但一旦运动向量、遮挡关系或历史拒绝策略不准，旧帧信息就会错误残留。它的副作用本质上是时间域重建对历史数据的依赖带来的。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "postprocess",
+        "taa",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "HDR 渲染管线里，Tone Mapping、Bloom、Exposure 各自应该处在什么位置？为什么？",
+        "Back": "Exposure 和 Bloom 通常在 HDR 空间工作，Tone Mapping 放在把 HDR 映射到显示范围的后段。这样 Bloom 才能基于真实高亮范围扩散，最终再统一压到 LDR 或显示设备可接受的亮度域。"
+      },
+      "tags": [
+        "cluster-lighting-shading",
+        "cluster-pipeline",
+        "deck-graphics",
+        "graphics-engine",
+        "hdr",
+        "layer-2-followup",
+        "level-mid",
+        "postprocess",
+        "topic-rendering-basics"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "当你接手一个卡顿项目时，第一步为什么通常不是开始优化，而是建立性能归因框架？",
+        "Back": "因为没有归因框架就会把症状当原因，容易在错误层面上做局部优化。先明确 CPU、GPU、同步、带宽、内存和 pacing 各自的证据链，后续每一刀才知道该砍哪。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "methodology",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "CPU bound、GPU bound、sync bound、bandwidth bound 的区分逻辑是什么？分别有哪些典型现象？",
+        "Back": "CPU bound 常表现为主线程或渲染线程时间主导，GPU bound 是 GPU frame 时间主导且降画质有效，sync bound 体现为等待 fence、present 或 readback，bandwidth bound 常在分辨率或读写量下降后明显改善。关键是结合实验和 timeline，不是只看单个平均值。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "performance",
+        "profiling",
+        "topic-profiling"
+      ],
+      "followups": [
+        {
+          "question": "如果降分辨率后帧率几乎不变，但 GPU 时间也不高，你下一步先查什么？",
+          "concept": "同步或 pacing 排查",
+          "coveredSignals": [
+            "降分辨率",
+            "GPU 时间",
+            "同步",
+            "pacing",
+            "present"
+          ],
+          "tags": [
+            "followup",
+            "debugging"
+          ]
+        }
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么降分辨率测试是判断 GPU 瓶颈的经典手段？什么情况下它会误导你？",
+        "Back": "分辨率直接影响像素着色、带宽和后处理，因此降分辨率能快速验证是否是像素或带宽主导。它会在 CPU 提交、几何、同步、固定成本 pass 或动态分辨率链路复杂时误导你，因为这些成本不随分辨率线性变化。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "profiling",
+        "resolution-scaling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "DrawCall 高、SetPass 高、三角形高、Overdraw 高，这四类问题背后的瓶颈逻辑分别是什么？",
+        "Back": "DrawCall 高多半压 CPU 提交，SetPass 高说明状态切换和 shader 绑定碎，三角形高更偏顶点或几何处理压力，Overdraw 高则常是像素和带宽浪费。数字表象相似，但真正的瓶颈路径完全不同。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "profiling",
+        "rendering",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么有时 GPU 时间不高，但帧率依然很差？可能有哪些同步或 pacing 问题？",
+        "Back": "因为帧率不只受忙碌时长影响，还受等待和节奏影响，比如 present 阻塞、CPU 等 GPU、读回、帧队列塞满或线程调度抖动。此时平均 GPU 时间看起来不高，但流水线已经被等待点切碎了。"
+      },
+      "tags": [
+        "cluster-performance",
+        "cluster-resource-sync",
+        "deck-graphics",
+        "frame-pacing",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "synchronization",
+        "topic-profiling",
+        "topic-sync"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何判断一个优化值不值得做？从收益、稳定性、复杂度、回归风险上怎么权衡？",
+        "Back": "我会看收益是否出现在主路径、是否对核心机型稳定生效、实现和维护成本是否可控，以及是否会引入长尾 bug。资深优化不是追求局部 2%，而是追求可持续且可验证的高杠杆改动。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "optimization",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "面对线上性能问题，你会如何构建自动采样、分类归因和回归监控的体系？",
+        "Back": "核心是统一采样口径、关键阶段埋点、按机型和场景分桶，再把 CPU、GPU、内存、加载和掉帧原因映射到稳定分类。这样优化不是靠个人记忆，而是能持续发现回归并验证修复是否真正生效。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "performance-monitoring",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "移动端优化和 PC 或主机优化最大的思路差异是什么？为什么移动端更怕带宽和热？",
+        "Back": "移动端更受功耗、热降频、共享内存带宽和 tile 架构约束影响，峰值性能不能长时间稳定维持。PC 或主机常更看重绝对吞吐，移动端则更强调持续帧时间、带宽压缩和发热可控。"
+      },
+      "tags": [
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "mobile",
+        "optimization",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个渲染优化结论，怎样才能证明不是测量误差或者测试场景偶然性？",
+        "Back": "要固定测试场景、机型、预热流程和采样窗口，并同时看均值、分位数和波动范围。真正可靠的优化结论应能在多次回归和相邻场景中稳定复现，而不是只在一次 capture 里好看。"
+      },
+      "tags": [
+        "benchmark",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "profiling",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "游戏引擎里为什么很难做到完全并行？哪些阶段天然存在顺序依赖？",
+        "Back": "因为一帧里很多阶段本来就有生产消费关系，比如输入影响逻辑、逻辑影响动画和变换、可见性依赖更新后的空间数据、渲染提交依赖稳定快照。并行能做的是把可独立的批量工作拆开，而不是假装依赖不存在。"
+      },
+      "tags": [
+        "deck-graphics",
+        "graphics-engine",
+        "job-system",
+        "layer-2-followup",
+        "level-mid",
+        "multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "JobSystem 最适合处理哪类任务？什么任务不适合硬塞进 JobSystem？",
+        "Back": "最适合数据并行、批量且无长时间阻塞的任务，如动画采样、剔除、批构建和粒子更新。不适合频繁等待 IO、强顺序依赖、需要大对象共享可变状态或任务粒度极细的工作。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "deck-graphics",
+        "graphics-engine",
+        "job-system",
+        "layer-2-followup",
+        "level-mid",
+        "multithreading",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么 lock contention 在引擎里特别容易被低估？它通常藏在哪些模块里？",
+        "Back": "因为锁争用往往不会稳定体现在函数自耗时里，而是以线程空转和尾延迟的形式出现。常见藏在日志、资源字典、事件分发、任务队列、对象注册表和渲染命令收集这类看似无害的共享中心。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "lock-contention",
+        "multithreading",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "生产者消费者模型在引擎中有哪些典型应用？SCSP、MPSC、MPMC 队列分别适合什么场景？",
+        "Back": "典型应用包括主线程到渲染线程命令传递、资源加载完成通知和任务调度。SCSP 最便宜适合固定一对一，MPSC 适合多 worker 汇总到单消费端，MPMC 最通用但实现和开销也最大。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "multithreading",
+        "queue",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么把所有事情都扔到线程里不等于高性能？线程切换和任务粒度的坑在哪？",
+        "Back": "线程本身不能消除工作量，只能改变调度方式。任务太细会让调度、同步和缓存失效成本超过计算收益，任务太粗又会造成尾部拖慢和负载不均。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "multithreading",
+        "performance",
+        "topic-multithreading",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你如何设计一个 Transform 更新系统，既保证父子层级正确，又尽量并行？",
+        "Back": "常见做法是按层级或拓扑排序分批推进，让父节点结果先稳定，再并行更新同层子节点；同时拆分脏标记和世界矩阵写回，避免全树重算。这样既能保证正确性，也能把并行度放在宽层级上。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "deck-graphics",
+        "graphics-engine",
+        "job-system",
+        "layer-2-followup",
+        "level-mid",
+        "topic-multithreading",
+        "transform"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "双缓冲数据结构为什么常用于并发系统？它本质是在换什么？",
+        "Back": "双缓冲把读写冲突转换成缓冲区交换，用更多内存换更少锁和更稳定的读取视图。它本质上是在用时序隔离替代共享可变状态。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "concurrency",
+        "deck-graphics",
+        "double-buffering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Render Thread 从 Main Thread 接命令时，哪些数据应该复制，哪些应该只传句柄？",
+        "Back": "高频变化且需要跨线程稳定快照的数据应复制或序列化，比如变换、常量参数和排序键；重量级且生命周期稳定的资源通常传句柄，比如 mesh、texture、shader。原则是跨线程不要依赖会被原线程继续修改的可变对象。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "data-ownership",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "render-thread",
+        "topic-multithreading"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "资源系统和对象系统为什么最好解耦？否则会出现什么典型灾难？",
+        "Back": "因为资源和对象的生命周期、复用方式和加载时机完全不同。若强耦合，常见灾难是对象销毁导致资源误释放、同步加载穿透到运行时、循环依赖和 streaming 无法独立治理。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "resource-system",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你会如何设计 AssetHandle 或 ResourceHandle？它应该是强引用、弱引用还是 ID 映射？",
+        "Back": "通常对外暴露稳定 ID 或轻量句柄，对内由资源系统做引用计数或驻留管理。高层逻辑更适合弱语义句柄，避免把资源活性和对象生命周期绑死；真正的强引用应集中在少数明确拥有者。"
+      },
+      "tags": [
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "ownership",
+        "resource-handle",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "异步加载系统里，加载完成回调为什么容易把架构搞乱？你会如何约束 callback 生命周期？",
+        "Back": "因为回调会把控制流打散到任意线程和任意时机，特别容易引用失效对象或在错误线程改状态。更稳的做法是把完成事件投递回受控阶段，或者用 future/command 队列在主线程统一消费。"
+      },
+      "tags": [
+        "architecture",
+        "async-loading",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "为什么资源 streaming 真正难的不是 IO，而是资源何时可见、何时可用、何时可回收？",
+        "Back": "因为 IO 完成只代表字节到了，不代表 CPU 解析、GPU 创建、依赖资源就绪和场景挂接都完成。streaming 本质上是生命周期编排问题，IO 只是其中最早的一步。"
+      },
+      "tags": [
+        "cluster-assets",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "resource-lifetime",
+        "streaming",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "大型项目里，资源依赖图为什么会越来越复杂？你如何避免循环依赖和错误加载顺序？",
+        "Back": "因为 prefab、材质、shader、蓝图和关卡彼此引用，项目越大越容易形成隐式依赖网。治理方法是做显式依赖声明、分层规则、构建期校验和资源分包边界，尽量把问题前移到构建而不是运行时。"
+      },
+      "tags": [
+        "asset-pipeline",
+        "cluster-assets",
+        "deck-graphics",
+        "dependency-graph",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "材质实例、材质模板、shader 变体之间怎样组织，才能兼顾性能和可维护性？",
+        "Back": "模板定义固定语义和特性集合，实例只覆盖参数，变体只保留真正影响编译产物的开关。这样可以让大多数变化停留在数据层，而不是把每个材质差异都变成一个新 shader。"
+      },
+      "tags": [
+        "cluster-assets",
+        "cluster-cpp-core",
+        "cluster-debugging-maintenance",
+        "cluster-performance",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "material-system",
+        "shader-variant",
+        "topic-cpp",
+        "topic-engineering",
+        "topic-profiling",
+        "topic-resource-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "你会如何设计一套类似 ShaderLab 的 shader 描述系统，使它既能跨平台编译，又能驱动材质系统？",
+        "Back": "核心是把 pass、宏开关、资源槽位、渲染状态和参数反射统一描述成中间格式，再映射到不同后端编译器和平台布局。这样材质系统依赖的是稳定语义而不是某个具体语言的源码细节。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "material-system",
+        "shader-system",
+        "topic-shader-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "反射驱动材质系统和手写 layout 驱动材质系统，各自的优缺点是什么？",
+        "Back": "反射驱动接入快、自动化高，但编译链和运行时布局更难完全可控；手写 layout 更稳定、可预测、易于做性能治理，但维护成本更高。成熟项目通常是核心路径手控，外围用反射辅助。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "material-system",
+        "shader-reflection",
+        "topic-shader-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Bindless 资源为什么能缓解传统绑定模型的瓶颈？它带来了哪些新的管理难点？",
+        "Back": "Bindless 减少频繁绑定和 descriptor 切换，让 shader 通过索引访问大资源表，更适合 GPU-Driven 和大批量材质。难点转移到资源索引生命周期、表容量管理、调试可见性和越界安全。"
+      },
+      "tags": [
+        "bindless",
+        "cluster-shader",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shader-system",
+        "topic-shader-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "材质系统里，哪些参数适合做 per-material，哪些应该抽到 global、per-frame 或 per-draw？",
+        "Back": "跨全局一致的环境、相机和光照参数应放 global 或 per-frame，真正按实例变化的变换和对象特性放 per-draw，稳定的外观属性放 per-material。分层的目的是减少重复上传和无意义变体。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "material-system",
+        "shader-parameters",
+        "topic-shader-system"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "Shader variant 爆炸的根源是什么？你会从哪些层面治理？",
+        "Back": "根源是把大量特性组合放在编译期开关里，导致乘法级组合和构建、内存、加载成本失控。治理要同时做特性分层、关键词裁剪、运行时分支替代、项目级统计和内容侧约束。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shader-variant",
+        "topic-shader-system"
+      ],
+      "followups": [
+        {
+          "question": "哪些 keyword 更应该保留在编译期，哪些更适合转成运行时分支？",
+          "concept": "编译期开关与运行时分支取舍",
+          "coveredSignals": [
+            "keyword",
+            "运行时分支",
+            "编译期",
+            "variant",
+            "裁剪"
+          ],
+          "tags": [
+            "followup",
+            "shader-variant"
+          ]
+        },
+        {
+          "question": "你会怎么做变体统计和裁剪策略，避免团队继续把组合数加回去？",
+          "concept": "治理闭环",
+          "coveredSignals": [
+            "统计",
+            "裁剪",
+            "治理",
+            "组合",
+            "监控"
+          ],
+          "tags": [
+            "followup",
+            "engineering"
+          ]
+        }
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "multi_compile、shader_feature、local keyword 的使用策略应该如何制定？",
+        "Back": "原则是全局开关最少化，真正跨项目和平台的差异才放全局；材质级差异优先局部关键词；能运行时决定的不要轻易编译成变体。策略要先由工程设边界，再让内容团队在边界内使用。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shader-variant",
+        "topic-shader-system",
+        "unity"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一套 Shader 系统怎样才算工程上成熟？除了能跑，还要看哪些能力？",
+        "Back": "除了能编译和渲染，还要看变体治理、增量构建、反射一致性、平台回退、调试可视化、错误定位和与材质资产流水线的衔接。成熟度体现在团队规模扩大后是否仍然可控。"
+      },
+      "tags": [
+        "cluster-shader",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "shader-system",
+        "topic-shader-system"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Unity 的 Main Thread、Render Thread、Job Worker、GC 分别会在什么情况下成为瓶颈？",
+        "Back": "Main Thread 常死在脚本逻辑、资源挂接和引擎调用密集区，Render Thread 多见于 draw 和状态组织，Job Worker 会在任务不均或等待时失速，GC 则在频繁分配和对象寿命失控时造成尖刺。看瓶颈必须把它们放回同一帧时间线上。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "profiling",
+        "threads",
+        "topic-multithreading",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "URP 或 HDRP 和自研渲染架构相比，最大的可控性差异体现在哪？",
+        "Back": "SRP 给了项目级改造入口，但很多底层策略仍受 Unity 运行时、资源绑定模型和平台抽象限制。自研的可控性优势主要体现在资源生命周期、提交流程、变体治理和平台特化上。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-lighting-shading",
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "srp",
+        "topic-rendering-basics",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Unity 中 SRP Batcher、GPU Instancing、Dynamic Batching 各自解决什么问题？为什么不能混为一谈？",
+        "Back": "SRP Batcher 主要减少材质常量和状态切换成本，GPU Instancing 解决同 mesh 同材质多实例的提交效率，Dynamic Batching 则是 CPU 侧临时合批小网格。它们针对的瓶颈层级不同，不能因为都叫 batching 就当成同一种优化。"
+      },
+      "tags": [
+        "batching",
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "rendering",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "为什么 Unity 项目里经常看起来 drawcall 不高，但仍然很慢？",
+        "Back": "因为慢的不一定是 draw 数，而可能是脚本、GC、资源加载、Render Thread、shader 过重、后处理、带宽或同步等待。drawcall 只是一个现象指标，不是性能归因本身。"
+      },
+      "tags": [
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "profiling",
+        "rendering",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "GC.Alloc 常见来源有哪些？为什么有些 Alloc 很小但仍然值得关注？",
+        "Back": "常见来源包括字符串拼接、装箱、LINQ、闭包、数组复制、协程和临时集合。单次很小但高频路径里持续发生的 Alloc 会抬高 GC 压力，并造成难以预测的帧尖刺。"
+      },
+      "tags": [
+        "cluster-unity-performance",
+        "csharp",
+        "deck-unity",
+        "gc",
+        "layer-2-followup",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Addressables 真正复杂的部分是什么？不是会不会用，而是哪些线上问题？",
+        "Back": "真正复杂的是依赖包管理、引用计数、版本更新、内存驻留和异常恢复。线上常见问题不是 API 不会调，而是资源重复加载、释放时机错误、包版本不一致和下载回退链路失控。"
+      },
+      "tags": [
+        "addressables",
+        "asset-pipeline",
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "IL2CPP、Mono、Burst、Jobs 各自改变了什么层级的性能问题？",
+        "Back": "Mono 和 IL2CPP 主要影响脚本执行和运行时开销模型，Burst 提升的是可向量化和原生化的数据计算路径，Jobs 解决的是并发调度和批量执行。它们作用层级不同，不能拿其中一个去期待解决全部问题。"
+      },
+      "tags": [
+        "burst",
+        "cluster-performance",
+        "cluster-unity-performance",
+        "deck-unity",
+        "jobs",
+        "layer-2-followup",
+        "topic-profiling",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "Unity 里资源加载卡顿，为什么不能只盯着磁盘 IO？还要看哪些线程和阶段？",
+        "Back": "因为卡顿常发生在反序列化、主线程实例化、纹理上传、shader 预热和依赖资源挂接阶段。真正的加载耗时通常跨 IO、Worker、Main Thread 和 Render Thread。"
+      },
+      "tags": [
+        "cluster-concurrency",
+        "cluster-unity-performance",
+        "deck-unity",
+        "layer-2-followup",
+        "loading",
+        "profiling",
+        "topic-multithreading",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "你如何在 Unity 中区分引擎限制和项目代码问题？",
+        "Back": "先用官方 profiler 和最小复现确认时间到底花在用户脚本、渲染内容还是引擎内部，再看是否存在明确可替换实现。凡是内容结构、资源组织和调用模式能改掉的问题，通常先不要轻易归因给引擎限制。"
+      },
+      "tags": [
+        "cluster-unity-performance",
+        "deck-unity",
+        "engineering",
+        "layer-2-followup",
+        "profiling",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "Unity Performance Interview",
+      "fields": {
+        "Front": "一个 Unity 项目想往半自研引擎化演进，通常从哪几层开始改最值？",
+        "Back": "通常先改资源加载与缓存、渲染组织层、性能监控和内容规范，而不是一上来重写全部底层。高价值点是先把项目级架构拉清楚，再决定哪些能力值得下沉成平台层。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-unity-performance",
+        "deck-unity",
+        "engineering",
+        "layer-2-followup",
+        "topic-unity",
+        "unity-performance"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "RAII 在引擎开发中最重要的价值是什么？哪些资源特别适合用 RAII 管理？",
+        "Back": "RAII 的核心价值是让资源释放与作用域绑定，降低异常路径、早返回和多分支下的泄漏风险。文件句柄、锁、GPU 资源包装、临时映射和事务性状态切换都很适合用 RAII 管。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "ownership",
+        "raii",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么移动语义对引擎容器和资源句柄特别重要？哪些类型不应该轻易实现 move？",
+        "Back": "移动语义能减少临时对象和容器扩容时的大量拷贝，对大对象、唯一所有权和缓冲区类型很关键。绑定地址稳定性、注册回调或自引用不变量很强的类型不应草率支持 move，否则容易留下悬挂状态。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "containers",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "move-semantics",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "unique_ptr、shared_ptr、weak_ptr 在引擎里各自适合什么场景？为什么很多引擎尽量少用 shared_ptr？",
+        "Back": "unique_ptr 适合明确唯一所有权，weak_ptr 适合观察者语义，shared_ptr 只适合确实存在共享生命周期且无法集中管理的少数场景。很多引擎少用 shared_ptr，是因为它的引用计数、控制块和生命周期扩散会让性能与架构边界一起变模糊。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "ownership",
+        "smart-pointer",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "虚函数、多态、模板、type-erasure 在工程里分别适合解决什么问题？",
+        "Back": "虚函数适合稳定运行时接口，模板适合零开销泛型和编译期组合，type-erasure 适合在不暴露模板细节时保留一定灵活性。关键不是谁更高级，而是接口稳定性、编译成本和调用成本的取舍。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "polymorphism",
+        "templates",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "为什么资深 C++ 面试一定会问对象布局、vtable、内存对齐、padding？",
+        "Back": "因为这些决定了真实内存占用、缓存行为、ABI 和跨模块兼容性。引擎开发很多性能和崩溃问题最后都落在对象真实布局上，而不是语法表层。"
+      },
+      "tags": [
+        "abi",
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "object-layout",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "cache line、false sharing、AoS/SoA 对引擎性能的影响是什么？",
+        "Back": "它们影响的是缓存命中、带宽和并发写入冲突。AoS 更利于对象语义，SoA 更利于批量计算，false sharing 会让看似独立的线程因为写同一 cache line 而相互拖慢。"
+      },
+      "tags": [
+        "cache",
+        "cluster-cpp-core",
+        "cluster-performance",
+        "cpp",
+        "data-oriented",
+        "deck-cpp",
+        "layer-2-followup",
+        "topic-cpp",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "placement new 适合用在什么场景？它和内存池或 arena allocator 常怎么配合？",
+        "Back": "placement new 适合在已分配好的原始内存上显式构造对象，常用于对象池、arena、ECS chunk 和自定义容器。它通常与自定义分配器配合，把分配和构造拆开以获得更强的生命周期控制。"
+      },
+      "tags": [
+        "allocator",
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "placement-new",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "自定义 allocator 在引擎里最常见的收益是什么？为什么不是所有地方都值得上？",
+        "Back": "收益通常是减少碎片、批量释放、提高局部性和让内存统计更可见。不是所有地方都值得上，因为通用场景下标准分配器已经够用，自定义 allocator 会带来接口侵入、调试复杂度和维护成本。"
+      },
+      "tags": [
+        "allocator",
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "memory",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "什么情况下 std::vector 扩容会成为性能问题？如何避免无意义拷贝和内存抖动？",
+        "Back": "当元素很大、扩容频繁、移动成本高或发生在热路径时，vector 扩容会成为实际瓶颈。常见做法是 reserve、分层存储、对象句柄化或让元素支持廉价移动。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cluster-performance",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "performance",
+        "topic-cpp",
+        "topic-profiling",
+        "vector"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "exception 在游戏引擎里为什么经常被禁用或弱化使用？代价是什么？",
+        "Back": "因为异常会影响二进制体积、跨模块 ABI、控制流可见性和某些平台的调试体验。代价是错误传播需要靠返回值、断言和显式状态处理，代码会更啰嗦，也更依赖纪律。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "engineering",
+        "exception",
+        "layer-2-followup",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "你如何理解接口稳定性和模板泛型灵活性之间的冲突？",
+        "Back": "模板提供强大的零开销抽象，但会把实现细节和编译依赖扩散出去；稳定接口则强调二进制边界和低耦合。工程上常把模板留在内部热路径，把模块边界收敛成稳定的非模板接口。"
+      },
+      "tags": [
+        "architecture",
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "templates",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "C++ 中什么叫 ABI 稳定性？为什么插件化或模块化系统会特别关心它？",
+        "Back": "ABI 稳定性指的是编译后的符号、对象布局、调用约定和异常模型在二进制层面保持兼容。插件系统特别关心它，因为插件和宿主往往不是同一次编译产物，一旦 ABI 不一致就可能在运行时崩溃。"
+      },
+      "tags": [
+        "abi",
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "layer-2-followup",
+        "plugin",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C++ Interview",
+      "fields": {
+        "Front": "你会怎么向面试官解释懂 C++ 和会写业务 C++ 的区别？",
+        "Back": "会写业务 C++ 主要是能把功能写出来，懂 C++ 则是知道对象模型、生命周期、性能成本、并发语义和 ABI 边界，能解释某个写法为什么安全且可维护。资深岗位看的是后者。"
+      },
+      "tags": [
+        "cluster-cpp-core",
+        "cpp",
+        "deck-cpp",
+        "engineering",
+        "interview",
+        "layer-2-followup",
+        "topic-cpp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "C# 的值类型和引用类型在性能上的真实影响是什么？为什么不能简单说 struct 一定更快？",
+        "Back": "值类型避免堆分配和额外引用间接，但复制成本和布局大小也可能变高；引用类型分配贵，但传递和共享成本更低。真正性能取决于大小、逃逸、访问模式和装箱情况，不是类型名字本身。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "cluster-performance",
+        "csharp",
+        "deck-csharp",
+        "layer-2-followup",
+        "performance",
+        "topic-csharp",
+        "topic-profiling",
+        "value-type"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "boxing 或 unboxing 为什么容易在高频路径里造成问题？常见隐蔽来源有哪些？",
+        "Back": "装箱会把值类型包装成对象，引入堆分配和类型转换成本。常见隐蔽来源包括接口调用、非泛型集合、字符串格式化、枚举转 object 和某些委托或日志路径。"
+      },
+      "tags": [
+        "boxing",
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "gc",
+        "layer-2-followup",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "interface、delegate、lambda、LINQ 在性能敏感代码里分别要注意什么？",
+        "Back": "这些抽象会带来间接调用、闭包分配、迭代器对象或隐藏枚举成本。不是不能用，而是要避免在每帧热路径里无意识地产生分配和不可见开销。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "cluster-performance",
+        "csharp",
+        "deck-csharp",
+        "layer-2-followup",
+        "linq",
+        "performance",
+        "topic-csharp",
+        "topic-profiling"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "ref、in、out、ref struct、Span<T> 各自解决什么问题？",
+        "Back": "它们主要解决避免大对象复制、表达只读引用、返回多个结果和安全地操作栈上或连续内存的问题。核心目标是减少分配和拷贝，同时保持较好的类型安全。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "layer-2-followup",
+        "memory",
+        "span",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "为什么 foreach 有时会产生额外开销？哪些情况下问题更明显？",
+        "Back": "开销通常来自枚举器分配、接口装箱或对非数组集合的额外抽象层。问题在热路径、值类型集合和泛型被擦成接口时更明显。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "foreach",
+        "layer-2-followup",
+        "performance",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "C# 事件系统为什么容易引发内存泄漏或生命周期问题？",
+        "Back": "因为订阅方往往被发布方强引用，若忘记退订，对象即使逻辑上无用了也不会被 GC 回收。事件跨场景、跨系统和静态对象时尤其容易把生命周期边界打乱。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "events",
+        "layer-2-followup",
+        "lifecycle",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "async 或 await 在游戏运行时为什么不能乱用？它更适合哪类任务？",
+        "Back": "因为它会把控制流打散并依赖调度器，若用于每帧热路径会带来额外状态机和时序复杂度。它更适合 IO、后台请求、工具链任务和明确异步边界的加载流程。"
+      },
+      "tags": [
+        "async-await",
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "layer-2-followup",
+        "runtime",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "托管堆、LOH、分代 GC 的基本机制是什么？游戏里最该关注哪类分配？",
+        "Back": "分代 GC 利用大多数对象朝生夕死的特点，把回收重点放在年轻代；LOH 则处理大对象且回收更重。游戏里最该关注的是每帧持续产生的小对象和意外提升到长生命周期的中等对象。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "gc",
+        "layer-2-followup",
+        "memory",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "Unity 或 C# 项目里，如何设计既保持开发效率又不把 GC 压爆的数据结构？",
+        "Back": "做法通常是热路径使用可复用容器、对象池、结构化数组和预分配，非热路径保留较高层抽象。关键不是全项目禁用 new，而是把分配集中在低频和可控阶段。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "cluster-unity-performance",
+        "csharp",
+        "deck-csharp",
+        "gc",
+        "layer-2-followup",
+        "topic-csharp",
+        "topic-unity",
+        "unity"
+      ]
+    },
+    {
+      "deckName": "C# Interview",
+      "fields": {
+        "Front": "脚本层和原生层交互时，P/Invoke、Marshal、GCHandle 相关问题你最担心什么？",
+        "Back": "最担心的是生命周期和所有权不清导致悬挂引用、重复释放或长时间 pin 住托管对象。其次是数据布局不匹配和频繁跨边界调用带来的隐藏性能成本。"
+      },
+      "tags": [
+        "cluster-csharp-runtime",
+        "csharp",
+        "deck-csharp",
+        "interop",
+        "layer-2-followup",
+        "memory",
+        "topic-csharp"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "线上出了偶现渲染 bug，但本地复现率极低，你会怎么排查？",
+        "Back": "先补日志、资源版本、设备信息和关键渲染状态快照，再尽量把问题缩成最小场景并增加录制能力。偶现问题通常要靠证据链收集和条件收缩，而不是反复手点 hoping to repro。"
+      },
+      "tags": [
+        "cluster-debugging-maintenance",
+        "debugging",
+        "deck-graphics",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "production",
+        "topic-engineering"
+      ]
+    },
+    {
+      "deckName": "Graphics Engine Interview",
+      "fields": {
+        "Front": "一个模块历史包袱很重，你会怎么做渐进式重构，而不是推倒重来？",
+        "Back": "通常先建立外部稳定接口和监控，再把最痛的路径切到新实现，并逐步收缩旧代码的写入口。渐进式重构的关键不是重写，而是控制风险和保住业务连续性。"
+      },
+      "tags": [
+        "cluster-debugging-maintenance",
+        "deck-graphics",
+        "engineering",
+        "graphics-engine",
+        "layer-2-followup",
+        "level-mid",
+        "refactor",
+        "topic-engineering"
+      ]
+    }
+  ]
+}
