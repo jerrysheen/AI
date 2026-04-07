@@ -1,5 +1,5 @@
 ---
-name: google-calandar
+name: google-calendar
 description: Verify connectivity to a Google Calendar and Google Tasks Google Apps Script web app, then call it safely for calendar and task operations. Use when Codex needs to read the deployment URL from url.txt, validate GET/POST reachability, list calendars or tasklists, or create/update/delete calendar events and Google Tasks through that endpoint.
 ---
 
@@ -7,7 +7,7 @@ description: Verify connectivity to a Google Calendar and Google Tasks Google Ap
 
 Read `url.txt` first.
 
-Use [request-contract.md](/F:/AI/skills/google-calandar/docs/request-contract.md) and [calendar-task-request.schema.json](/F:/AI/skills/google-calandar/schemas/calendar-task-request.schema.json) when another model must convert natural language into a valid request object.
+Use [request-contract.md](/F:/AI/skills/google-calendar/docs/request-contract.md) and [calendar-task-request.schema.json](/F:/AI/skills/google-calendar/schemas/calendar-task-request.schema.json) when another model must convert natural language into a valid request object.
 
 Accept either of these formats in `url.txt`:
 

@@ -2,17 +2,17 @@
 
 Use this skill in two phases:
 
-1. Normalize the user's request into exactly one JSON object that matches [calendar-task-request.schema.json](/F:/AI/skills/google-calandar/schemas/calendar-task-request.schema.json).
+1. Normalize the user's request into exactly one JSON object that matches [calendar-task-request.schema.json](/F:/AI/skills/google-calendar/schemas/calendar-task-request.schema.json).
 2. Execute that object with:
 
 ```powershell
-node .\skills\google-calandar\scripts\google-calendar.js execute --payload '{"action":"create_task","title":"提交周报","due":"2026-04-05"}'
+node .\skills\google-calendar\scripts\google-calendar.js execute --payload '{"action":"create_task","title":"提交周报","due":"2026-04-05"}'
 ```
 
 Or write the JSON to a file and execute it with:
 
 ```powershell
-node .\skills\google-calandar\scripts\google-calendar.js execute --payloadFile .\tmp\calendar-request.json
+node .\skills\google-calendar\scripts\google-calendar.js execute --payloadFile .\tmp\calendar-request.json
 ```
 
 Normalization rules:

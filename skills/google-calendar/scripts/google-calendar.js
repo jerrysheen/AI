@@ -188,11 +188,11 @@ function parseArgs(argv) {
 
 function buildContract() {
   return {
-    skill: 'google-calandar',
+    skill: 'google-calendar',
     version: '1',
     output_mode: 'json',
-    request_schema_file: 'skills/google-calandar/schemas/calendar-task-request.schema.json',
-    execution_entrypoint: 'node skills/google-calandar/scripts/google-calendar.js execute --payload <json>',
+    request_schema_file: 'skills/google-calendar/schemas/calendar-task-request.schema.json',
+    execution_entrypoint: 'node skills/google-calendar/scripts/google-calendar.js execute --payload <json>',
     actions: {
       calendar: [
         {

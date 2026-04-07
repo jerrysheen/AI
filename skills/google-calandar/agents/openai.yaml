@@ -1,4 +1,0 @@
-interface:
-  display_name: "Google Calendar"
-  short_description: "Verify and call a calendar web app"
-  default_prompt: "Use $google-calandar to validate the Google Calendar Apps Script endpoint in url.txt before calendar or task operations. For broad queries like what I need to do today, return daily_brief directly. Do not make the upper layer infer or pass a date for today; google-calendar.js must use the current UTC day internally. Include past items and group results into ended, in_progress, and upcoming. Keep quick task capture concise unless the user clearly wants more detail."
