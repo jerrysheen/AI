@@ -19,13 +19,13 @@ CHROME_PATH="$(read_config_field chrome.path)"
 mkdir -p "${CHROME_PROFILE_DIR}"
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
-  open -na "Google Chrome" --args \
+  "${CHROME_PATH}" \
     "--user-data-dir=${CHROME_PROFILE_DIR}" \
     "--remote-debugging-port=${DEBUG_PORT}" \
     "--no-first-run" \
     "--no-default-browser-check" \
     "--new-window" \
-    "${STARTUP_URL}"
+    "${STARTUP_URL}" >/dev/null 2>&1 &
 else
   "${CHROME_PATH}" \
     "--user-data-dir=${CHROME_PROFILE_DIR}" \

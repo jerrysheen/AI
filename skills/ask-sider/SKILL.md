@@ -1,6 +1,20 @@
 ﻿# ASK Sider
 
-Use this skill when a task must send one prompt to the logged-in Sider web app and return the final visible reply from that browser session.
+Use this skill only as a thin message forwarder to the logged-in Sider web app.
+
+The upper layer must only:
+
+- forward one plain-text prompt
+- wait for one visible reply
+- return that reply as-is
+
+The upper layer must not:
+
+- summarize the Sider reply
+- reinterpret the Sider reply
+- continue asking follow-up questions on its own
+- rewrite the user's intent into a broader prompt
+- switch to another tool because it dislikes the answer quality
 
 ## When To Use
 
@@ -27,7 +41,7 @@ Do not use this skill when:
 
 ## Outputs
 
-- default: plain reply text
+- default: plain reply text, returned as-is
 - `-AsJson`: JSON object with `status`, `sent_message`, `reply_text`, `page_url`, `note`, `send_confirmed`, `generation_observed`, `reply_observed`, `recovery_hint`
 
 ## Entry Points
@@ -45,12 +59,22 @@ Do not use this skill when:
 1. Treat the user request as one plain-text prompt.
 2. On macOS/Linux, use [ask-sider.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.sh). On Windows, use [ask-sider.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/ask-sider.ps1).
 3. If the dedicated Chrome profile is not initialized, run [init-sider-profile.sh](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.sh) on macOS/Linux or [init-sider-profile.ps1](/Users/jerry/Desktop/AI/skills/ask-sider/scripts/init-sider-profile.ps1) on Windows, then let the user complete login in that browser window.
-4. Reuse the dedicated Chrome profile configured in [sider-chat.json](/F:/AI/skills/ask-sider/config/sider-chat.json).
+4. Reuse the dedicated Chrome profile configured in [sider-chat.json](/Users/jerry/Desktop/AI/skills/ask-sider/config/sider-chat.json).
 5. Reuse an existing Sider chat tab when present.
 6. Send the prompt through the web UI.
 7. Confirm whether the page actually accepted the message.
 8. Wait until the visible `停止生成` state disappears.
 9. Return the latest assistant message from the chat thread.
+
+## Upper-Layer Contract
+
+- Treat this skill as transport, not reasoning.
+- Do not add your own framing before or after the returned Sider text unless the user explicitly asked for analysis of that text.
+- If the reply is partial, noisy, off-topic, or low quality, report that fact plainly and stop.
+- If the user wants another try, only resend a new user-approved prompt.
+- Do not ask a second question automatically.
+- Do not convert one user request into a multi-step research workflow.
+- Do not mix Sider output with local conclusions and present them as one answer.
 
 ## Constraints
 
@@ -58,6 +82,7 @@ Do not use this skill when:
 - Do not run multiple `ASK Sider` invocations in parallel against the same Sider session.
 - Prefer the platform shell wrapper over invoking `ask-sider.js` directly.
 - If the browser session is unavailable, initialize it first instead of silently switching to another tool or API.
+- Do not let the upper layer "help" by expanding, summarizing, or steering the conversation.
 - If `status` is `send_not_confirmed`, retrying the send is safe.
 - If `status` is `reply_not_observed`, do not resend the prompt. Try a recovery read first.
 - Treat visible reply text growth as the primary completion signal.
@@ -74,6 +99,20 @@ Do not use this skill when:
 ```bash
 ./skills/ask-sider/scripts/ask-sider.sh "请只回复 OK" --as-json
 ```
+
+## Correct Caller Behavior
+
+Allowed:
+
+- user asks one question
+- caller sends exactly that question
+- caller returns Sider's visible reply
+
+Not allowed:
+
+- "Sider answered poorly, so I will ask a better question for the user"
+- "I will summarize Sider first, then give my own improved answer"
+- "I will use Sider as step 1, then continue with my own interview or research flow"
 
 ## Repository Layout
 

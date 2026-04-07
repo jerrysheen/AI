@@ -1269,22 +1269,6 @@
       "followups": []
     },
     {
-      "id": "09785fa0-970b-40d7-b0d3-0773cf3ee982",
-      "deckName": "Graphics Engine Interview",
-      "front": "混合（Blend）是什么？一般用于什么场景？",
-      "back": "混合是在片元输出和目标 render target 现有颜色之间按规则合成结果，常用于透明、粒子、UI 和某些后处理累加效果。",
-      "tags": [
-        "blend",
-        "cluster-pipeline",
-        "deck-graphics",
-        "graphics-engine",
-        "layer-1-foundation",
-        "level-basic",
-        "topic-rendering-basics"
-      ],
-      "followups": []
-    },
-    {
       "id": "6aa33d58-fcab-4bb4-8ac9-62f42dba94fc",
       "deckName": "Graphics Engine Interview",
       "front": "什么是 NDC 坐标？",
@@ -1795,7 +1779,7 @@
     {
       "id": "0e347468-cf8d-436e-9553-94d58a5a776a",
       "deckName": "Graphics Engine Interview",
-      "front": "`Bias` 是为了解决什么问题？",
+      "front": "Shadow map 中的 Bias 是为了解决什么问题？",
       "back": "Bias 主要用来缓解阴影比较时的自遮挡误差，也就是 Shadow Acne。它通过给深度比较加一点偏移，避免本该亮的表面被误判为在阴影里。",
       "tags": [
         "bias",
@@ -2220,8 +2204,8 @@
     {
       "id": "1038bb54-cb5e-472c-bb7f-668b6def9a16",
       "deckName": "Graphics Engine Interview",
-      "front": "组件系统的核心价值是什么？",
-      "back": "组件系统把对象能力拆成可组合单元，降低继承层级耦合，让功能扩展和编辑器组织更灵活。",
+      "front": "ECS（实体组件系统）的核心价值是什么？",
+      "back": "ECS把对象能力拆成可组合单元，降低继承层级耦合，让功能扩展和编辑器组织更灵活。",
       "tags": [
         "cluster-engine-basic",
         "component-system",
@@ -3278,7 +3262,7 @@
     {
       "id": "0d99ab6a-a5c2-461e-ba0b-a30b86d90097",
       "deckName": "Graphics Engine Interview",
-      "front": "为什么 deferred 不好处理 MSAA？",
+      "front": "为什么 deferred 不好处理 MSAA？相比之下，为什么前向渲染处理 MSAA 成本较低？",
       "back": "因为 deferred 需要在 G-buffer 中保存多种中间属性，多样本下这些属性的存储、解析和后续光照都更复杂且成本更高。",
       "tags": [
         "cluster-render-path-basic",

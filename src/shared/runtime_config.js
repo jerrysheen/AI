@@ -1,4 +1,5 @@
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
@@ -88,7 +89,15 @@ function getChromePath() {
   if (explicit && String(explicit).trim()) {
     return String(explicit).trim();
   }
-  return "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+
+  const platform = os.platform();
+  if (platform === "darwin") {
+    return "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+  }
+  if (platform === "win32") {
+    return "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+  }
+  return "google-chrome";
 }
 
 function getBilibiliRunsDir() {
