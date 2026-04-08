@@ -26,6 +26,12 @@ POST /documents
 Content-Type: application/json
 ```
 
+Recommended ingest flow:
+
+1. Upstream agent filters and cleans the material.
+2. Upstream agent sends canonical `title`, `sourceType`, and cleaned `rawContent`.
+3. Backend runs final extraction when `autoExtract=true`.
+
 Body:
 
 ```json
@@ -52,6 +58,12 @@ Important response fields:
 - `document.annotations`
 - `extractionWarning`
 - `reindexWarning`
+
+Guidance:
+
+- `rawContent` should be the cleaned source body, not an upstream summary
+- `annotations` should carry explicit human signals only
+- keep `autoExtract=true` for the normal two-stage flow where the backend performs final structuring
 
 ## Document Read
 

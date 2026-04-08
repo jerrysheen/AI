@@ -445,7 +445,9 @@ Return strict JSON with this shape:
 Rules:
 - Produce 3 to 8 knowledge cards when enough content exists.
 - Prefer reusable technical insights over generic restatements.
-- Keep annotations for explicit future-use signals, experiments, or follow-ups.
+- Treat the document content as already filtered by an upstream agent; refine it, do not re-introduce wrapper noise.
+- Keep annotations only for explicit future-use signals, experiments, open questions, or follow-ups that are clearly supported by the content.
+- Do not create annotations for ordinary facts, summaries, or generic interesting points.
 - confidence must be between 0 and 1.
 
 Document title: {title}

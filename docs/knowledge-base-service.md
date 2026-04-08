@@ -115,6 +115,36 @@ Example body:
 }
 ```
 
+### `POST /documents/delete`
+Deletes document records, cascades related knowledge cards and annotations, then rebuilds the Llama index.
+
+Example body:
+
+```json
+{
+  "id": 123
+}
+```
+
+You can also delete by title match. By default, title matching deletes only the most recent match:
+
+```json
+{
+  "title": "龟龟投资框架",
+  "match": "contains"
+}
+```
+
+To delete every matched document instead of just the newest one:
+
+```json
+{
+  "title": "龟龟投资框架",
+  "match": "contains",
+  "deleteAll": true
+}
+```
+
 ### `GET /knowledge/search?q=ai优化&topK=5`
 Runs semantic retrieval through LlamaIndex. Falls back to SQL keyword search if the runtime is not ready.
 

@@ -26,13 +26,17 @@
       textarea { min-height: 96px; resize: vertical; }
       .row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
       .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+      .actions.end { justify-content: flex-end; }
       button { padding: 8px 12px; border: 1px solid #bbb; border-radius: 4px; background: #f2f2f2; cursor: pointer; }
       button:hover { background: #eaeaea; }
+      button.danger { border-color: #d9534f; color: #b42318; background: #fff5f5; }
+      button.danger:hover { background: #ffe3e3; }
       .status { min-height: 18px; color: #0a58ca; }
       .list { display: grid; gap: 8px; }
       .item { border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fcfcfc; }
       .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
       .chip { padding: 2px 6px; border: 1px solid #ccc; border-radius: 999px; background: #fafafa; color: #666; font-size: 12px; }
+      mark.hit { background: #ffe08a; color: inherit; padding: 0 1px; border-radius: 2px; }
       pre { margin: 0; padding: 10px; overflow: auto; background: #111; color: #d7f3ff; border-radius: 4px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
       .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
@@ -86,6 +90,25 @@ Auto research loop may fit optimization experiments</textarea>
             <button id="refresh-documents">刷新文档列表</button>
           </div>
           <div class="status" id="document-status"></div>
+          <h3>删除文档</h3>
+          <div class="row">
+            <div>
+              <label for="delete-title">按标题匹配</label>
+              <input id="delete-title" placeholder="输入标题关键词">
+            </div>
+            <div>
+              <label for="delete-match">匹配方式</label>
+              <select id="delete-match">
+                <option value="contains">contains</option>
+                <option value="exact">exact</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button id="delete-by-title" class="danger">删除最新匹配</button>
+            <button id="delete-all-by-title" class="danger">删除全部匹配</button>
+          </div>
+          <div class="status" id="delete-status"></div>
           <h3>最近文档</h3>
           <div class="list" id="documents-list"></div>
           <h3>最近一次录入响应</h3>
@@ -137,6 +160,15 @@ Auto research loop may fit optimization experiments</textarea>
       function prettyJson(value) { return JSON.stringify(value, null, 2); }
       async function readJson(response) { const text = await response.text(); try { return JSON.parse(text); } catch { return { ok: false, error: text }; } }
       function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
+      function escapeRegExp(value) { return String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+      function highlightQuery(text, query) {
+        const rawText = String(text ?? "");
+        const rawQuery = String(query ?? "").trim();
+        const escaped = escapeHtml(rawText);
+        if (!rawQuery) { return escaped; }
+        const pattern = new RegExp(`(${escapeRegExp(rawQuery)})`, "ig");
+        return escaped.replace(pattern, '<mark class="hit">$1</mark>');
+      }
       function setStatus(id, text) { document.getElementById(id).textContent = text || ""; }
       function setJson(id, value) { document.getElementById(id).textContent = prettyJson(value); }
       function renderDocument(item) {
@@ -144,13 +176,14 @@ Auto research loop may fit optimization experiments</textarea>
         const annotations = item.annotations || [];
         const cardHtml = cards.map((card) => `<div class="item"><div><strong>${escapeHtml(card.title)}</strong></div><div>${escapeHtml(card.summary || "")}</div><div class="chips"><span class="chip">topic: ${escapeHtml(card.topic || "")}</span><span class="chip">confidence: ${escapeHtml(card.confidence ?? "")}</span>${(card.tags || []).map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</div></div>`).join("");
         const annotationHtml = annotations.map((note) => `<div class="item"><div><strong>${escapeHtml(note.signalType || "note")}</strong></div><div>${escapeHtml(note.note || "")}</div></div>`).join("");
-        return `<div class="item"><div><strong>${escapeHtml(item.title)}</strong> <span class="mono">#${escapeHtml(item.id)}</span></div><div>${escapeHtml(item.aiSummary || "")}</div><div class="chips"><span class="chip">${escapeHtml(item.sourceType)}</span><span class="chip">cards: ${cards.length}</span><span class="chip">annotations: ${annotations.length}</span></div>${cardHtml ? `<div style="margin-top:8px;"><strong>Knowledge Cards</strong></div>${cardHtml}` : ""}${annotationHtml ? `<div style="margin-top:8px;"><strong>Annotations</strong></div>${annotationHtml}` : ""}</div>`;
+        return `<div class="item"><div><strong>${escapeHtml(item.title)}</strong> <span class="mono">#${escapeHtml(item.id)}</span></div><div>${escapeHtml(item.aiSummary || "")}</div><div class="chips"><span class="chip">${escapeHtml(item.sourceType)}</span><span class="chip">cards: ${cards.length}</span><span class="chip">annotations: ${annotations.length}</span></div>${cardHtml ? `<div style="margin-top:8px;"><strong>Knowledge Cards</strong></div>${cardHtml}` : ""}${annotationHtml ? `<div style="margin-top:8px;"><strong>Annotations</strong></div>${annotationHtml}` : ""}<div class="actions end" style="margin-top:8px;"><button class="danger" data-delete-id="${escapeHtml(item.id)}" data-delete-title="${escapeHtml(item.title)}">删除这篇</button></div></div>`;
       }
-      function renderSearchResult(item, index) {
-        return `<div class="item"><div><strong>#${index + 1}</strong> ${escapeHtml(item.title || "Untitled")}</div><div>${escapeHtml(item.snippet || item.aiSummary || "")}</div><div class="chips"><span class="chip">documentId: ${escapeHtml(item.documentId ?? item.id ?? "")}</span>${item.score !== undefined ? `<span class="chip">score: ${Number(item.score).toFixed(4)}</span>` : ""}<span class="chip">${escapeHtml(item.sourceType || "document")}</span></div></div>`;
+      function renderSearchResult(item, index, query) {
+        const extraSnippets = (item.matchedSnippets || []).filter((snippet) => snippet && snippet !== item.snippet).slice(0, 2);
+        return `<div class="item"><div><strong>#${index + 1}</strong> ${escapeHtml(item.title || "Untitled")}</div><div>${highlightQuery(item.snippet || item.aiSummary || "", query)}</div>${extraSnippets.length ? `<div style="margin-top:6px;">${extraSnippets.map((snippet) => `• ${highlightQuery(snippet, query)}`).join("<br>")}</div>` : ""}<div class="chips"><span class="chip">documentId: ${escapeHtml(item.documentId ?? item.id ?? "")}</span>${item.score !== undefined ? `<span class="chip">score: ${Number(item.score).toFixed(4)}</span>` : ""}${item.keywordScore !== undefined ? `<span class="chip">keyword: ${Number(item.keywordScore).toFixed(2)}</span>` : ""}${item.semanticScore !== undefined ? `<span class="chip">semantic: ${Number(item.semanticScore).toFixed(4)}</span>` : ""}${item.matchCount !== undefined ? `<span class="chip">matches: ${escapeHtml(item.matchCount)}</span>` : ""}<span class="chip">${escapeHtml(item.sourceType || "document")}</span></div></div>`;
       }
       function renderAskResult(payload) {
-        const sources = (payload.sources || []).map((item, index) => renderSearchResult(item, index)).join("");
+        const sources = (payload.sources || []).map((item, index) => renderSearchResult(item, index, document.getElementById("ask-query").value.trim())).join("");
         return `<div class="item"><div><strong>Answer</strong></div><div>${escapeHtml(payload.answer || "")}</div><div class="chips"><span class="chip">mode: ${escapeHtml(payload.mode || "")}</span><span class="chip">sources: ${(payload.sources || []).length}</span></div></div>${sources}`;
       }
       async function loadDocuments() {
@@ -173,6 +206,23 @@ Auto research loop may fit optimization experiments</textarea>
         setStatus("document-status", `created document #${result.document.id}`);
         await loadDocuments();
       }
+      async function deleteDocument(payload, label) {
+        setStatus("delete-status", `deleting ${label}...`);
+        const response = await fetch("/documents/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const result = await readJson(response);
+        setJson("document-response", result);
+        if (!result.ok) { setStatus("delete-status", result.error || "delete failed"); return; }
+        setStatus("delete-status", `deleted ${result.deletedCount || 0} document(s)`);
+        await loadDocuments();
+      }
+      async function deleteByTitle(deleteAll) {
+        const title = document.getElementById("delete-title").value.trim();
+        const match = document.getElementById("delete-match").value;
+        if (!title) { setStatus("delete-status", "请输入标题关键词"); return; }
+        const confirmed = window.confirm(deleteAll ? `确认删除所有匹配 “${title}” 的文档？` : `确认删除最新匹配 “${title}” 的文档？`);
+        if (!confirmed) { return; }
+        await deleteDocument({ title, match, deleteAll }, deleteAll ? `all matches for "${title}"` : `latest match for "${title}"`);
+      }
       async function runSearch() {
         setStatus("search-status", "searching...");
         const query = document.getElementById("search-query").value.trim();
@@ -186,9 +236,11 @@ Auto research loop may fit optimization experiments</textarea>
         setJson("search-response", payload);
         const target = document.getElementById("search-results");
         if (!payload.ok) { target.innerHTML = ""; setStatus("search-status", payload.error || "search failed"); return; }
-        const rawItems = payload.rawResults || payload.results || [];
-        target.innerHTML = rawItems.map(renderSearchResult).join("") || '<div class="item">no results</div>';
-        setStatus("search-status", `mode=${payload.mode}, grouped=${(payload.results || []).length}, raw=${rawItems.length}`);
+        const groupedItems = payload.results || [];
+        const rawItems = payload.rawResults || [];
+        const keywordItems = payload.keywordResults || [];
+        target.innerHTML = groupedItems.map((item, index) => renderSearchResult(item, index, query)).join("") || '<div class="item">no results</div>';
+        setStatus("search-status", `mode=${payload.mode}, grouped=${groupedItems.length}, raw=${rawItems.length}, keyword=${keywordItems.length}`);
       }
       async function runAsk() {
         setStatus("ask-status", "asking...");
@@ -203,8 +255,19 @@ Auto research loop may fit optimization experiments</textarea>
       }
       document.getElementById("submit-document").addEventListener("click", submitDocument);
       document.getElementById("refresh-documents").addEventListener("click", loadDocuments);
+      document.getElementById("delete-by-title").addEventListener("click", () => deleteByTitle(false));
+      document.getElementById("delete-all-by-title").addEventListener("click", () => deleteByTitle(true));
       document.getElementById("run-search").addEventListener("click", runSearch);
       document.getElementById("run-ask").addEventListener("click", runAsk);
+      document.getElementById("documents-list").addEventListener("click", async (event) => {
+        const button = event.target.closest("button[data-delete-id]");
+        if (!button) { return; }
+        const id = Number(button.dataset.deleteId);
+        const title = button.dataset.deleteTitle || "";
+        const confirmed = window.confirm(`确认删除 #${id} ${title} 吗？`);
+        if (!confirmed) { return; }
+        await deleteDocument({ id }, `document #${id}`);
+      });
       loadDocuments();
     </script>
   </body>

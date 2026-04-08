@@ -61,6 +61,41 @@ class KnowledgeBaseStoreTests(unittest.TestCase):
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["title"], "Video note")
 
+    def test_delete_document_cascades_related_rows(self) -> None:
+        document = store_module.create_document(
+            title="Delete me",
+            source_type="note",
+            raw_content="raw body",
+            knowledge_cards=[{"title": "Card", "summary": "Loop on experiment metrics", "topic": "AI optimization"}],
+            annotations=[{"note": "Remove this too", "signalType": "use_later"}],
+        )
+
+        deleted = store_module.delete_document(int(document["id"]))
+
+        self.assertTrue(deleted)
+        self.assertIsNone(store_module.get_document(int(document["id"])))
+        with store_module.get_connection() as connection:
+            card_count = connection.execute("SELECT COUNT(*) FROM knowledge_cards WHERE document_id = ?", (int(document["id"]),)).fetchone()[0]
+            annotation_count = connection.execute("SELECT COUNT(*) FROM annotations WHERE document_id = ?", (int(document["id"]),)).fetchone()[0]
+        self.assertEqual(card_count, 0)
+        self.assertEqual(annotation_count, 0)
+
+    def test_find_documents_by_title_returns_most_recent_matches(self) -> None:
+        older = store_module.create_document(
+            title="Quarterly planning memo",
+            source_type="note",
+            raw_content="older body",
+        )
+        newer = store_module.create_document(
+            title="Quarterly planning memo v2",
+            source_type="note",
+            raw_content="newer body",
+        )
+
+        results = store_module.find_documents_by_title("Quarterly planning", limit=5)
+
+        self.assertEqual([item["id"] for item in results[:2]], [int(newer["id"]), int(older["id"])])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -121,6 +121,12 @@
         color: #4d5156;
         font-size: 14px;
       }
+      mark.hit {
+        background: #ffe08a;
+        color: inherit;
+        padding: 0 1px;
+        border-radius: 2px;
+      }
       .result-chips {
         display: flex;
         flex-wrap: wrap;
@@ -171,6 +177,19 @@
       function escapeHtml(value) {
         return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
       }
+      function escapeRegExp(value) {
+        return String(value ?? "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+      function highlightQuery(text, query) {
+        const rawText = String(text ?? "");
+        const rawQuery = String(query ?? "").trim();
+        const escaped = escapeHtml(rawText);
+        if (!rawQuery) {
+          return escaped;
+        }
+        const pattern = new RegExp(`(${escapeRegExp(rawQuery)})`, "ig");
+        return escaped.replace(pattern, '<mark class="hit">$1</mark>');
+      }
       function renderResults(payload, query) {
         const items = payload.results || [];
         if (!items.length) {
@@ -183,15 +202,17 @@
               <div class="result-title">${escapeHtml(item.title || "Untitled")}</div>
               <div class="result-meta">${escapeHtml(item.sourceType || "document")} · documentId=${escapeHtml(item.documentId ?? item.id ?? "")}</div>
               ${item.createdAt ? `<div class="result-meta">createdAt=${escapeHtml(item.createdAt)}</div>` : ""}
-              <div class="result-snippet">${escapeHtml(item.snippet || item.aiSummary || "")}</div>
+              <div class="result-snippet">${highlightQuery(item.snippet || item.aiSummary || "", query)}</div>
               ${(item.matchedSnippets || []).length > 1 ? `
                 <div class="result-snippet" style="margin-top:6px;">
-                  ${item.matchedSnippets.slice(1).map((snippet) => `• ${escapeHtml(snippet)}`).join("<br>")}
+                  ${item.matchedSnippets.slice(1).map((snippet) => `• ${highlightQuery(snippet, query)}`).join("<br>")}
                 </div>
               ` : ""}
               <div class="result-chips">
                 <span class="chip">rank #${index + 1}</span>
                 ${item.score !== undefined ? `<span class="chip">score ${Number(item.score).toFixed(4)}</span>` : ""}
+                ${item.keywordScore !== undefined ? `<span class="chip">keyword ${Number(item.keywordScore).toFixed(2)}</span>` : ""}
+                ${item.semanticScore !== undefined ? `<span class="chip">semantic ${Number(item.semanticScore).toFixed(4)}</span>` : ""}
                 ${item.matchCount !== undefined ? `<span class="chip">matched nodes ${item.matchCount}</span>` : ""}
               </div>
             </div>

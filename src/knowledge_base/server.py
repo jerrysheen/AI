@@ -20,7 +20,18 @@ from .llama_runtime import (
     runtime_ready,
     semantic_search,
 )
-from .store import create_document, fetch_document_bundles, get_document, get_documents_by_ids, initialize_store, keyword_search, list_documents
+from .store import (
+    create_document,
+    delete_document,
+    fetch_document_bundles,
+    find_documents_by_title,
+    get_document,
+    get_documents_by_ids,
+    initialize_store,
+    keyword_search,
+    keyword_search_ranked,
+    list_documents,
+)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
@@ -82,6 +93,68 @@ def filter_grouped_results_by_time(
     return filtered
 
 
+def merge_hybrid_search_results(
+    *,
+    keyword_results: list[Dict[str, Any]],
+    semantic_results: list[Dict[str, Any]],
+    top_k: int,
+) -> list[Dict[str, Any]]:
+    merged: Dict[int, Dict[str, Any]] = {}
+
+    for item in semantic_results:
+        document_id = int(item.get("documentId", 0) or 0)
+        if document_id <= 0:
+            continue
+        merged[document_id] = dict(item)
+        merged[document_id]["semanticScore"] = float(item.get("score", 0) or 0)
+        merged[document_id]["keywordScore"] = 0.0
+        merged[document_id]["keywordHits"] = 0
+        merged[document_id]["score"] = float(item.get("score", 0) or 0)
+
+    for item in keyword_results:
+        document_id = int(item.get("documentId", 0) or 0)
+        if document_id <= 0:
+            continue
+        current = merged.get(document_id)
+        keyword_score = float(item.get("keywordScore", item.get("score", 0)) or 0)
+        keyword_hits = int(item.get("keywordHits", item.get("matchCount", 0)) or 0)
+        if current is None:
+            merged[document_id] = {
+                **item,
+                "semanticScore": 0.0,
+                "keywordScore": keyword_score,
+                "keywordHits": keyword_hits,
+                "score": keyword_score,
+            }
+            continue
+
+        current["keywordScore"] = keyword_score
+        current["keywordHits"] = keyword_hits
+        current["score"] = keyword_score + float(current.get("semanticScore", 0) or 0)
+        if not str(current.get("snippet", "")).strip() and str(item.get("snippet", "")).strip():
+            current["snippet"] = item.get("snippet", "")
+        if str(item.get("snippet", "")).strip():
+            snippets = list(current.get("matchedSnippets", []) or [])
+            if item["snippet"] not in snippets:
+                snippets.insert(0, item["snippet"])
+            current["matchedSnippets"] = snippets[:3]
+        current["matchCount"] = max(int(current.get("matchCount", 0) or 0), keyword_hits)
+
+    ordered = sorted(
+        merged.values(),
+        key=lambda item: (
+            -float(item.get("score", 0) or 0),
+            -float(item.get("keywordScore", 0) or 0),
+            -float(item.get("semanticScore", 0) or 0),
+            str(item.get("documentId", "")),
+        ),
+    )
+    limited = ordered[: max(1, min(int(top_k or 5), 20))]
+    for item in limited:
+        item["matchedSnippets"] = list(item.get("matchedSnippets", []) or [])[:3]
+    return limited
+
+
 class KnowledgeBaseHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         parsed = urlparse(self.path)
@@ -132,17 +205,24 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             if not query:
                 self.write_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "q is required"})
                 return
+            keyword_results = keyword_search_ranked(query, limit=max(top_k * 3, top_k))
             try:
                 raw_results = semantic_search(query, top_k=max(top_k * 3, top_k))
-                grouped_results = group_search_results(raw_results, top_k=top_k)
+                semantic_grouped_results = group_search_results(raw_results, top_k=max(top_k * 3, top_k))
+                grouped_results = merge_hybrid_search_results(
+                    keyword_results=keyword_results,
+                    semantic_results=semantic_grouped_results,
+                    top_k=top_k,
+                )
                 grouped_results = filter_grouped_results_by_time(
                     grouped_results,
                     days=days,
                     created_after_raw=created_after,
                 )
-                payload = {"ok": True, "mode": "llama", "results": grouped_results}
+                payload = {"ok": True, "mode": "hybrid", "results": grouped_results}
                 if raw:
                     payload["rawResults"] = raw_results
+                    payload["keywordResults"] = keyword_results
                 if days > 0:
                     payload["days"] = days
                 if created_after:
@@ -155,7 +235,7 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
                         "ok": True,
                         "mode": "keyword-fallback",
                         "warning": str(exc),
-                        "results": keyword_search(query, limit=top_k),
+                        "results": keyword_results[: max(1, min(int(top_k or 5), 20))] or keyword_search(query, limit=top_k),
                     },
                 )
             return
@@ -174,6 +254,9 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             return
         if parsed.path == "/knowledge/reindex":
             self.handle_reindex()
+            return
+        if parsed.path == "/documents/delete":
+            self.handle_delete_document(body)
             return
         self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Not found"})
 
@@ -256,6 +339,69 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             self.write_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": str(exc)})
             return
         self.write_json(HTTPStatus.OK, result)
+
+    def handle_delete_document(self, body: Dict[str, Any]) -> None:
+        document_id = int(body.get("id", 0) or 0)
+        title_query = str(body.get("title", "")).strip()
+        exact = str(body.get("match", "contains")).strip().lower() == "exact"
+        delete_all = bool(body.get("deleteAll", False))
+        limit = int(body.get("limit", 20) or 20)
+
+        targets: list[Dict[str, Any]] = []
+        match_mode = "id"
+
+        if document_id > 0:
+            document = get_document(document_id)
+            if document is None:
+                self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Document not found"})
+                return
+            targets = [document]
+        else:
+            if not title_query:
+                self.write_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": "id or title is required"})
+                return
+            match_mode = "title_exact" if exact else "title_contains"
+            matches = [get_document(int(item["id"])) for item in find_documents_by_title(title_query, limit=limit, exact=exact)]
+            targets = [item for item in matches if item is not None]
+            if not targets:
+                self.write_json(
+                    HTTPStatus.NOT_FOUND,
+                    {"ok": False, "error": "Document not found", "title": title_query, "match": match_mode},
+                )
+                return
+            if not delete_all:
+                targets = targets[:1]
+
+        deleted_documents: list[Dict[str, Any]] = []
+        for document in targets:
+            if delete_document(int(document["id"])):
+                deleted_documents.append(document)
+
+        if not deleted_documents:
+            self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Document not found"})
+            return
+
+        reindex_result: Optional[Dict[str, Any]] = None
+        reindex_warning = ""
+        try:
+            reindex_result = rebuild_index(fetch_document_bundles())
+        except Exception as exc:
+            reindex_warning = str(exc)
+
+        self.write_json(
+            HTTPStatus.OK,
+            {
+                "ok": True,
+                "match": match_mode,
+                "query": {"id": document_id} if document_id > 0 else {"title": title_query, "deleteAll": delete_all, "limit": limit},
+                "deletedCount": len(deleted_documents),
+                "deletedDocumentId": int(deleted_documents[0]["id"]) if len(deleted_documents) == 1 else None,
+                "deletedDocument": deleted_documents[0] if len(deleted_documents) == 1 else None,
+                "deletedDocuments": deleted_documents,
+                "reindexWarning": reindex_warning,
+                "reindex": reindex_result,
+            },
+        )
 
     def read_json_body(self) -> Optional[Dict[str, Any]]:
         content_length = int(self.headers.get("Content-Length", "0") or 0)
