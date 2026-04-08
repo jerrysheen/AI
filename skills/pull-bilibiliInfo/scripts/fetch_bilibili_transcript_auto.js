@@ -7,9 +7,10 @@ const { fetchBilibiliSubtitle, extractBvid } = require("./fetch_bilibili_subtitl
 
 async function fetchBilibiliTranscriptAuto(urlOrBvid, options = {}) {
   const bvid = extractBvid(urlOrBvid);
+  const requestedLang = options.preferLang || "ai-zh";
   const subtitleResult = await fetchBilibiliSubtitle(
     bvid,
-    options.preferLang || "ai-zh",
+    requestedLang,
     options.cookie || "",
     {
       includeSegments: Boolean(options.withSegments),
@@ -25,6 +26,44 @@ async function fetchBilibiliTranscriptAuto(urlOrBvid, options = {}) {
       asr_file: null,
       fallback_used: false,
     };
+  }
+
+  const availableSubtitles = Array.isArray(subtitleResult.available_subtitles)
+    ? subtitleResult.available_subtitles
+    : [];
+  const noAiTrack =
+    requestedLang.startsWith("ai-") &&
+    availableSubtitles.length > 0 &&
+    availableSubtitles.some((item) => !item.is_ai);
+
+  if (noAiTrack) {
+    const fallbackTrack =
+      availableSubtitles.find((item) => item.lang === "zh" && !item.is_ai) ||
+      availableSubtitles.find((item) => !item.is_ai) ||
+      availableSubtitles[0];
+
+    if (fallbackTrack && fallbackTrack.lang) {
+      const fallbackResult = await fetchBilibiliSubtitle(
+        bvid,
+        fallbackTrack.lang,
+        options.cookie || "",
+        {
+          includeSegments: Boolean(options.withSegments),
+          debugPort: options.debugPort,
+        }
+      );
+
+      if (!fallbackResult.error) {
+        return {
+          ...fallbackResult,
+          requested_subtitle_lang: requestedLang,
+          transcript_source: "subtitle",
+          audio_file: null,
+          asr_file: null,
+          fallback_used: true,
+        };
+      }
+    }
   }
 
   // Future ASR hook: if Whisper fallback is re-enabled later, branch here and

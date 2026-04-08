@@ -10,13 +10,14 @@ description: Fetch Bilibili transcript text with minimal metadata for one specif
 This skill is strict.
 
 - Run one normal transcript fetch flow for the requested video.
-- If the result shows `has_ai_subtitle = false`, or `error` says no AI subtitle track is available, reply explicitly that AI subtitles are unavailable for this video and stop.
-- In that case, the caller should treat the result as `false` for transcript availability and end the workflow.
+- Prefer `ai-zh` first when available.
+- If the result shows no AI subtitle track but exposes normal subtitle tracks such as `zh`, fall back to the normal subtitle track and continue.
+- Only stop when neither AI subtitles nor normal subtitles are available.
 - Do not try another directory.
 - Do not try another copy of the skill.
 - Do not retry with alternate shell wrappers.
 - Do not switch to other scripts, other APIs, OCR, ASR, audio download, browser scraping variants, or manual guessing.
-- Do not keep probing once the no-AI-subtitle result is clear.
+- Do not keep probing once subtitle unavailability is clear.
 
 ## When To Trigger
 
@@ -62,10 +63,11 @@ Prefer this workflow:
 
 1. For one video, run the automatic transcript entrypoint first.
 2. Prefer `ai-zh` first when subtitles exist.
-3. If AI subtitles are missing, stop immediately and return a no-subtitle result directly.
-4. Prefer the default lightweight JSON output and summarize from `full_text`.
-5. Preserve metadata such as `title`, `subtitle_lang`, `has_ai_subtitle`, and `transcript_source`.
-6. When presenting results to the user, extract key information densely from `full_text` instead of collapsing it too early into a vague summary.
+3. If AI subtitles are missing but normal subtitles exist, use the normal subtitle track directly.
+4. If no subtitle tracks exist at all, stop and return a no-subtitle result directly.
+5. Prefer the default lightweight JSON output and summarize from `full_text`.
+6. Preserve metadata such as `title`, `subtitle_lang`, `has_ai_subtitle`, and `transcript_source`.
+7. When presenting results to the user, extract key information densely from `full_text` instead of collapsing it too early into a vague summary.
 
 The scripts can reuse a logged-in Chrome Bilibili tab to expose AI subtitles. Use environment variable `BILIBILI_COOKIE` only as a fallback when needed. Do not hardcode personal cookies into the script.
 
@@ -90,17 +92,17 @@ Output contract:
 - `transcript_source` is `subtitle` when a transcript is available.
 - `available_subtitles` lists subtitle tracks when subtitle lookup succeeds.
 - `has_ai_subtitle` indicates whether an `ai-*` track was exposed.
-- `error` is non-null when metadata fetch failed or the preferred AI subtitle track was unavailable.
-- If `has_ai_subtitle` is `false` or `error` indicates no AI subtitle track, the caller must explicitly say that this video currently has no AI subtitles.
-- If `has_ai_subtitle` is `false`, transcript availability should be treated as `false`.
-- When there is no AI subtitle track, stop there. Do not try audio download, ASR, OCR, manual guessing, or summary generation from incomplete data.
+- `error` is non-null when metadata fetch failed or no usable subtitle track was available.
+- If `has_ai_subtitle` is `false` but `full_text` is non-empty, that means the transcript came from a normal subtitle track.
+- Treat transcript availability as `false` only when `full_text` is empty and no usable subtitle track was found.
+- When there is no usable subtitle track, stop there. Do not try audio download, ASR, OCR, manual guessing, or summary generation from incomplete data.
 - When `full_text` is non-empty, prefer detailed content extraction over generic summarization.
 - If the caller wants a summary, keep it faithful to the transcript and include enough specifics that the user can tell what was actually said.
 
 If the script reports no subtitles:
 
-- Treat that result as no available AI subtitle for the requested video.
-- Tell the user explicitly that no AI subtitle is available for this video.
+- Treat that result as no available subtitle for the requested video.
+- Tell the user explicitly whether AI subtitles were unavailable and whether normal subtitles were also unavailable.
 - Tell the user explicitly that transcript availability is `false`.
 - Stop after reporting that status.
 - Do not continue looking for alternative extraction paths.
