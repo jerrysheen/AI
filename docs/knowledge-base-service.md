@@ -23,7 +23,9 @@ F:\AI\
       test_store.py
   scripts\
     start-knowledge-base.ps1
+    start-knowledge-base.sh
   requirements-knowledge-base.txt
+  requirements-hf-cpu.txt
   data\
     knowledge-base\
       db\
@@ -150,9 +152,15 @@ Rebuilds the index from SQLite data.
 
 ## Operator Workflow
 
-1. Install dependencies from `requirements-knowledge-base.txt`.
+1. Create the pinned CPU-only environment:
+
+   ```bash
+   python3.11 -m venv .venv-hf-cpu
+   TMPDIR="$PWD/.tmp" ./.venv-hf-cpu/bin/python -m pip install -r requirements-knowledge-base.txt
+   TMPDIR="$PWD/.tmp" ./.venv-hf-cpu/bin/python -m pip install -r requirements-hf-cpu.txt
+   ```
 2. Set `OPENAI_API_KEY` or `AI_KNOWLEDGE_BASE_OPENAI_API_KEY`.
-3. Start the service.
+3. Start the service with `./scripts/start-knowledge-base.sh` on macOS/Linux, or `.\scripts\start-knowledge-base.ps1` on Windows.
 4. Push a document into `POST /documents`.
 5. Query via `GET /knowledge/search` or `POST /knowledge/ask`.
 

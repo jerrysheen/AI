@@ -1,5 +1,6 @@
 .chrome-*
 .env
+.venv*
 .ai-data*
 __pycache__/
 *.py[cod]

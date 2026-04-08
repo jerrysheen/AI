@@ -41,8 +41,17 @@ if (Test-Path $envFile) {
 }
 
 Write-Stage -Percent 35 -Label "resolve python entrypoint"
+$pythonEntry = $env:AI_KNOWLEDGE_BASE_PYTHON
+if (-not $pythonEntry) {
+    $preferred = Join-Path (Get-Location) ".venv-hf-cpu\Scripts\python.exe"
+    if (Test-Path $preferred) {
+        $pythonEntry = $preferred
+    } else {
+        $pythonEntry = "python"
+    }
+}
 $env:AI_KNOWLEDGE_BASE_BOOT_PROGRESS = "1"
 Write-Stage -Percent 55 -Label "import knowledge-base modules"
 Write-Stage -Percent 75 -Label "initialize storage and http server"
 Write-Stage -Percent 90 -Label "handoff to python runtime"
-python -m src.knowledge_base.server
+& $pythonEntry -m src.knowledge_base.server

@@ -3,6 +3,27 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+ENV_FILE = REPO_ROOT / ".env"
+
+
+def _load_repo_env() -> None:
+    if not ENV_FILE.exists():
+        return
+    for raw_line in ENV_FILE.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        if not key or key in os.environ:
+            continue
+        cleaned = value.strip()
+        if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {'"', "'"}:
+            cleaned = cleaned[1:-1]
+        os.environ[key] = cleaned
+
+
+_load_repo_env()
 
 
 def _resolve_repo_path(configured: str, default_relative: str) -> Path:
