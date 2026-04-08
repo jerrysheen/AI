@@ -1,3 +1,10 @@
 .chrome-*
 .env
 .ai-data*
+__pycache__/
+*.py[cod]
+tmp/
+data/knowledge-base/
+data/knowledge-base-smoketest/
+data/knowledge-base-smoketest-2/
+data/knowledge-base-smoketest-m3/

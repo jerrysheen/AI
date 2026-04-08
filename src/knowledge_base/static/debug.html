@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Knowledge Base Debug Console</title>
+    <style>
+      body {
+        margin: 0;
+        font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: #222;
+        background: #f7f7f7;
+      }
+      .page { max-width: 1280px; margin: 0 auto; padding: 16px; }
+      h1, h2, h3 { margin: 0 0 10px; font-weight: 600; }
+      h1 { font-size: 20px; }
+      h2 { font-size: 16px; }
+      h3 { font-size: 14px; }
+      p { margin: 0 0 10px; color: #555; }
+      .grid { display: grid; gap: 12px; grid-template-columns: 1.1fr 1fr; }
+      .panel { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 12px; }
+      .stack { display: grid; gap: 8px; }
+      label { display: block; margin-bottom: 4px; color: #555; }
+      input, textarea, select, button { font: inherit; }
+      input, textarea, select { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+      textarea { min-height: 96px; resize: vertical; }
+      .row { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+      .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+      button { padding: 8px 12px; border: 1px solid #bbb; border-radius: 4px; background: #f2f2f2; cursor: pointer; }
+      button:hover { background: #eaeaea; }
+      .status { min-height: 18px; color: #0a58ca; }
+      .list { display: grid; gap: 8px; }
+      .item { border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #fcfcfc; }
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+      .chip { padding: 2px 6px; border: 1px solid #ccc; border-radius: 999px; background: #fafafa; color: #666; font-size: 12px; }
+      pre { margin: 0; padding: 10px; overflow: auto; background: #111; color: #d7f3ff; border-radius: 4px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+      .nav { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+      .nav a { color:#0a58ca; text-decoration:none; }
+      @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="nav">
+        <div class="stack" style="gap:4px;">
+          <h1>Knowledge Base Debug Console</h1>
+          <p>用于验证录入、抽取、检索、问答和原始 JSON 响应。</p>
+        </div>
+        <a href="/">返回搜索页</a>
+      </div>
+
+      <section class="grid">
+        <section class="panel stack">
+          <h2>录入文档</h2>
+          <div class="row">
+            <div>
+              <label for="doc-title">标题</label>
+              <input id="doc-title" value="AI coding frameworks note">
+            </div>
+            <div>
+              <label for="doc-type">来源类型</label>
+              <select id="doc-type">
+                <option value="note">note</option>
+                <option value="article">article</option>
+                <option value="video">video</option>
+                <option value="chat">chat</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="doc-url">来源链接</label>
+            <input id="doc-url" placeholder="https://...">
+          </div>
+          <div>
+            <label for="doc-content">正文</label>
+            <textarea id="doc-content">Superpowers uses strict workflow discipline. GSD isolates context into fresh sessions to reduce context rot. gstack is strong at governance and review. Auto research mode can loop on measurable experiments for optimization.</textarea>
+          </div>
+          <div>
+            <label for="doc-notes">人工标记，每行一条</label>
+            <textarea id="doc-notes">GSD worth trying for AI optimization
+Auto research loop may fit optimization experiments</textarea>
+          </div>
+          <div class="actions">
+            <button id="submit-document">提交文档</button>
+            <button id="refresh-documents">刷新文档列表</button>
+          </div>
+          <div class="status" id="document-status"></div>
+          <h3>最近文档</h3>
+          <div class="list" id="documents-list"></div>
+          <h3>最近一次录入响应</h3>
+          <pre id="document-response">{}</pre>
+        </section>
+
+        <section class="panel stack">
+          <h2>检索与问答</h2>
+          <div>
+            <label for="search-query">检索 query</label>
+            <input id="search-query" value="AI 优化">
+          </div>
+          <div class="row">
+            <div>
+              <label for="search-days">最近 N 天</label>
+              <input id="search-days" value="" placeholder="例如 1 / 7 / 20">
+            </div>
+            <div>
+              <label for="search-created-after">createdAfter</label>
+              <input id="search-created-after" value="" placeholder="2026-04-01T00:00:00Z">
+            </div>
+          </div>
+          <div class="actions">
+            <button id="run-search">执行检索</button>
+          </div>
+          <div class="status" id="search-status"></div>
+          <h3>Top-K 检索结果</h3>
+          <div class="list" id="search-results"></div>
+          <h3>最近一次检索响应</h3>
+          <pre id="search-response">{}</pre>
+
+          <div>
+            <label for="ask-query">问答 query</label>
+            <textarea id="ask-query">针对 AI 的优化我们记录了哪些？</textarea>
+          </div>
+          <div class="actions">
+            <button id="run-ask">执行问答</button>
+          </div>
+          <div class="status" id="ask-status"></div>
+          <h3>问答结果</h3>
+          <div class="list" id="ask-results"></div>
+          <h3>最近一次问答响应</h3>
+          <pre id="ask-response">{}</pre>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      function prettyJson(value) { return JSON.stringify(value, null, 2); }
+      async function readJson(response) { const text = await response.text(); try { return JSON.parse(text); } catch { return { ok: false, error: text }; } }
+      function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;"); }
+      function setStatus(id, text) { document.getElementById(id).textContent = text || ""; }
+      function setJson(id, value) { document.getElementById(id).textContent = prettyJson(value); }
+      function renderDocument(item) {
+        const cards = item.knowledgeCards || [];
+        const annotations = item.annotations || [];
+        const cardHtml = cards.map((card) => `<div class="item"><div><strong>${escapeHtml(card.title)}</strong></div><div>${escapeHtml(card.summary || "")}</div><div class="chips"><span class="chip">topic: ${escapeHtml(card.topic || "")}</span><span class="chip">confidence: ${escapeHtml(card.confidence ?? "")}</span>${(card.tags || []).map((tag) => `<span class="chip">${escapeHtml(tag)}</span>`).join("")}</div></div>`).join("");
+        const annotationHtml = annotations.map((note) => `<div class="item"><div><strong>${escapeHtml(note.signalType || "note")}</strong></div><div>${escapeHtml(note.note || "")}</div></div>`).join("");
+        return `<div class="item"><div><strong>${escapeHtml(item.title)}</strong> <span class="mono">#${escapeHtml(item.id)}</span></div><div>${escapeHtml(item.aiSummary || "")}</div><div class="chips"><span class="chip">${escapeHtml(item.sourceType)}</span><span class="chip">cards: ${cards.length}</span><span class="chip">annotations: ${annotations.length}</span></div>${cardHtml ? `<div style="margin-top:8px;"><strong>Knowledge Cards</strong></div>${cardHtml}` : ""}${annotationHtml ? `<div style="margin-top:8px;"><strong>Annotations</strong></div>${annotationHtml}` : ""}</div>`;
+      }
+      function renderSearchResult(item, index) {
+        return `<div class="item"><div><strong>#${index + 1}</strong> ${escapeHtml(item.title || "Untitled")}</div><div>${escapeHtml(item.snippet || item.aiSummary || "")}</div><div class="chips"><span class="chip">documentId: ${escapeHtml(item.documentId ?? item.id ?? "")}</span>${item.score !== undefined ? `<span class="chip">score: ${Number(item.score).toFixed(4)}</span>` : ""}<span class="chip">${escapeHtml(item.sourceType || "document")}</span></div></div>`;
+      }
+      function renderAskResult(payload) {
+        const sources = (payload.sources || []).map((item, index) => renderSearchResult(item, index)).join("");
+        return `<div class="item"><div><strong>Answer</strong></div><div>${escapeHtml(payload.answer || "")}</div><div class="chips"><span class="chip">mode: ${escapeHtml(payload.mode || "")}</span><span class="chip">sources: ${(payload.sources || []).length}</span></div></div>${sources}`;
+      }
+      async function loadDocuments() {
+        setStatus("document-status", "loading documents...");
+        const response = await fetch("/documents?limit=10");
+        const payload = await readJson(response);
+        const target = document.getElementById("documents-list");
+        if (!payload.ok) { target.innerHTML = ""; setStatus("document-status", payload.error || "load failed"); return; }
+        target.innerHTML = (payload.documents || []).map(renderDocument).join("") || '<div class="item">no documents</div>';
+        setStatus("document-status", `loaded ${payload.documents.length} documents`);
+      }
+      async function submitDocument() {
+        setStatus("document-status", "submitting...");
+        const annotations = document.getElementById("doc-notes").value.split("\n").map((line) => line.trim()).filter(Boolean).map((note) => ({ note, signalType: "use_later" }));
+        const payload = { title: document.getElementById("doc-title").value.trim(), sourceType: document.getElementById("doc-type").value, sourceUrl: document.getElementById("doc-url").value.trim(), rawContent: document.getElementById("doc-content").value.trim(), annotations, autoExtract: true };
+        const response = await fetch("/documents", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const result = await readJson(response);
+        setJson("document-response", result);
+        if (!result.ok) { setStatus("document-status", result.error || "submit failed"); return; }
+        setStatus("document-status", `created document #${result.document.id}`);
+        await loadDocuments();
+      }
+      async function runSearch() {
+        setStatus("search-status", "searching...");
+        const query = document.getElementById("search-query").value.trim();
+        const days = document.getElementById("search-days").value.trim();
+        const createdAfter = document.getElementById("search-created-after").value.trim();
+        const params = new URLSearchParams({ q: query, topK: "6", raw: "1" });
+        if (days) { params.set("days", days); }
+        if (createdAfter) { params.set("createdAfter", createdAfter); }
+        const response = await fetch(`/knowledge/search?${params.toString()}`);
+        const payload = await readJson(response);
+        setJson("search-response", payload);
+        const target = document.getElementById("search-results");
+        if (!payload.ok) { target.innerHTML = ""; setStatus("search-status", payload.error || "search failed"); return; }
+        const rawItems = payload.rawResults || payload.results || [];
+        target.innerHTML = rawItems.map(renderSearchResult).join("") || '<div class="item">no results</div>';
+        setStatus("search-status", `mode=${payload.mode}, grouped=${(payload.results || []).length}, raw=${rawItems.length}`);
+      }
+      async function runAsk() {
+        setStatus("ask-status", "asking...");
+        const query = document.getElementById("ask-query").value.trim();
+        const response = await fetch("/knowledge/ask", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, topK: 4 }) });
+        const payload = await readJson(response);
+        setJson("ask-response", payload);
+        const target = document.getElementById("ask-results");
+        if (!payload.ok) { target.innerHTML = ""; setStatus("ask-status", payload.error || "ask failed"); return; }
+        target.innerHTML = renderAskResult(payload);
+        setStatus("ask-status", `mode=${payload.mode}`);
+      }
+      document.getElementById("submit-document").addEventListener("click", submitDocument);
+      document.getElementById("refresh-documents").addEventListener("click", loadDocuments);
+      document.getElementById("run-search").addEventListener("click", runSearch);
+      document.getElementById("run-ask").addEventListener("click", runAsk);
+      loadDocuments();
+    </script>
+  </body>
+</html>
