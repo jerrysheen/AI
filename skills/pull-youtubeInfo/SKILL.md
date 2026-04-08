@@ -31,7 +31,7 @@ Notes:
 - Use the shared Chrome remote debugging port. Current default is `9222`.
 - The skill reuses a local Chrome session and opens the transcript panel to collect subtitle text from YouTube's panel data flow.
 - Prefer the API entrypoint for external callers because it returns normalized `video` and `transcript` objects.
-- The skill has a hard timeout of `30s`. If the task does not finish within `30s`, it must stop, close the page, and return `status: "unavailable"`.
+- The skill has a hard timeout of `60s`. If the task does not finish within `60s`, it must stop, close the page, and return `status: "unavailable"`.
 
 Workflow:
 

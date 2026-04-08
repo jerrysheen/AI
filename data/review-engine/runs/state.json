@@ -575,12 +575,12 @@
       "lastReviewedAt": ""
     },
     "110e359b-9a85-4f8d-8d70-286a48ff4ddb": {
-      "reps": 1,
+      "reps": 2,
       "lapses": 0,
-      "easeFactor": 2.45,
-      "intervalDays": 0.006944,
-      "dueAt": "2026-04-07T13:31:17.120675+00:00",
-      "lastReviewedAt": "2026-04-07T13:21:17.120675+00:00"
+      "easeFactor": 2.4,
+      "intervalDays": 0.008333,
+      "dueAt": "2026-04-08T05:48:16.682782+00:00",
+      "lastReviewedAt": "2026-04-08T05:36:16.728862+00:00"
     },
     "3d549c28-f9f5-4d7c-b995-5ba203bae49b": {
       "dueAt": "2026-04-06T11:08:43.306527Z",
@@ -932,12 +932,12 @@
       "lastReviewedAt": ""
     },
     "1038bb54-cb5e-472c-bb7f-668b6def9a16": {
-      "reps": 1,
+      "reps": 2,
       "lapses": 0,
-      "easeFactor": 2.45,
-      "intervalDays": 0.006944,
-      "dueAt": "2026-04-07T13:31:17.029384+00:00",
-      "lastReviewedAt": "2026-04-07T13:21:17.029384+00:00"
+      "easeFactor": 2.4,
+      "intervalDays": 0.008333,
+      "dueAt": "2026-04-08T05:44:39.741531+00:00",
+      "lastReviewedAt": "2026-04-08T05:32:39.787611+00:00"
     },
     "d3adf5df-5379-4bc1-9fed-1c93b4481b4c": {
       "dueAt": "2026-04-06T11:08:43.306527Z",
@@ -1379,12 +1379,12 @@
       "lastReviewedAt": ""
     },
     "0d99ab6a-a5c2-461e-ba0b-a30b86d90097": {
-      "reps": 2,
+      "reps": 3,
       "lapses": 0,
-      "easeFactor": 2.4,
-      "intervalDays": 0.008333,
-      "dueAt": "2026-04-07T13:26:04.093227+00:00",
-      "lastReviewedAt": "2026-04-07T13:14:04.139307+00:00"
+      "easeFactor": 2.35,
+      "intervalDays": 0.01,
+      "dueAt": "2026-04-08T05:31:51.689054+00:00",
+      "lastReviewedAt": "2026-04-08T05:17:27.723614+00:00"
     },
     "3e9a8a1b-8314-49d1-91a1-0870c2c87782": {
       "dueAt": "2026-04-06T11:08:43.306527Z",
@@ -1457,6 +1457,6 @@
   },
   "session": {
     "activeDeck": "Graphics Engine Interview",
-    "currentCardId": "0d99ab6a-a5c2-461e-ba0b-a30b86d90097"
+    "currentCardId": "12563a2a-c9d9-45ae-9bc6-b89feed6a9f9"
   }
 }

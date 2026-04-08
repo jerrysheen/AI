@@ -18,7 +18,7 @@ function isWindowsPath(value) {
 function resolveMacChromeApp(chromePath) {
   const value = String(chromePath || "").trim();
   if (value.endsWith("/Contents/MacOS/Google Chrome")) {
-    return value.replace(/\/Contents\/MacOS\/Google Chrome$/, ".app");
+    return value.replace(/\/Contents\/MacOS\/Google Chrome$/, "");
   }
   if (value.endsWith(".app")) {
     return value;

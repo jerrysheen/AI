@@ -4,7 +4,8 @@ const cp = require("node:child_process");
 const http = require("node:http");
 const path = require("node:path");
 const { getChromeDebugPort } = require("./runtime_shim");
-const DEFAULT_TASK_TIMEOUT_MS = 30000;
+const DEFAULT_TASK_TIMEOUT_MS = 60000;
+const FINALIZATION_GRACE_MS = 15000;
 
 function extractVideoId(input) {
   const value = String(input || "").trim();
@@ -395,6 +396,10 @@ async function fetchYouTubeSubtitle(input, options = {}) {
 
       const expression = `(async () => {
         const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+        const pollIntervalMs = 5000;
+        const settleIdleMs = 10000;
+        // Reserve time for initial page settle, CDP round-trips, and response body collection.
+        const deadlineMs = Date.now() + Math.max(15000, ${JSON.stringify(timeoutMs)} - 15000);
         const clickFirst = (selectors) => {
           for (const selector of selectors) {
             const element = document.querySelector(selector);
@@ -418,139 +423,269 @@ async function fetchYouTubeSubtitle(input, options = {}) {
           'button[aria-label*="Close ad"]',
           'button[aria-label*="关闭广告"]'
         ];
-        let adHandlingRounds = 0;
-        for (; adHandlingRounds < 12; adHandlingRounds += 1) {
-          const adShowing = Boolean(document.querySelector('.ad-showing, .ytp-ad-player-overlay, .ytp-ad-module'));
-          const skipped = clickFirst(adSkipSelectors);
-          const dismissed = clickFirst(adDismissSelectors);
-          if (!adShowing && !skipped && !dismissed) {
-            break;
+        const isAdBlocking = () => Boolean(document.querySelector(
+          '.ad-showing, .ytp-ad-player-overlay, .ytp-ad-module, .ytp-ad-overlay-container, .video-ads'
+        ));
+        const ensureNoAdBlocking = async (maxRounds = 12) => {
+          let rounds = 0;
+          for (; rounds < maxRounds; rounds += 1) {
+            const adShowing = isAdBlocking();
+            const skipVisible = adSkipSelectors.some((selector) => document.querySelector(selector));
+            const dismissVisible = adDismissSelectors.some((selector) => document.querySelector(selector));
+            const skipped = clickFirst(adSkipSelectors);
+            const dismissed = clickFirst(adDismissSelectors);
+            if (!adShowing && !skipVisible && !dismissVisible && !skipped && !dismissed) {
+              break;
+            }
+            await wait(skipped || dismissed ? 1200 : 2000);
           }
-          await wait(skipped || dismissed ? 1200 : 2000);
-        }
-
-        const raw = window.ytInitialPlayerResponse || window.ytplayer?.config?.args?.player_response;
-        let playerResponse = raw;
-        if (typeof playerResponse === 'string') {
-          try {
-            playerResponse = JSON.parse(playerResponse);
-          } catch {}
-        }
-
-        const tracklist = playerResponse?.captions?.playerCaptionsTracklistRenderer || null;
-        const tracks = Array.isArray(tracklist?.captionTracks) ? tracklist.captionTracks : [];
+          return rounds;
+        };
         const preferredLang = ${JSON.stringify(options.preferLang || "")};
-        let selected = null;
-
-        if (preferredLang) {
-          selected = tracks.find((item) => item?.languageCode === preferredLang) || null;
-        }
-        if (!selected) {
-          selected = tracks.find((item) => item?.kind === 'asr') || tracks[0] || null;
-        }
-
-        const chapterButton = [...document.querySelectorAll('button, [role="button"]')].find((element) => {
-          const text = (element.innerText || element.textContent || '').trim();
-          return /章节|chapter|在此视频中/i.test(text);
-        });
-        if (chapterButton) {
-          chapterButton.click();
-        }
-
-        await wait(1500);
-
-        let transcriptTab = [...document.querySelectorAll('[role="tab"], button, [role="button"]')].find((element) => {
-          const text = (element.innerText || element.textContent || '').trim();
-          return /转写文稿|文字稿|transcript/i.test(text);
-        });
-        if (!transcriptTab) {
-          const menuButton = [...document.querySelectorAll('button, [role="button"]')].find((element) => {
-            const label = (element.getAttribute('aria-label') || '').trim();
-            const text = (element.innerText || element.textContent || '').trim();
-            return /更多操作|more actions/i.test(label) || /更多操作|more actions/i.test(text);
-          });
-          if (menuButton) {
-            menuButton.click();
-            await wait(800);
-            transcriptTab = [...document.querySelectorAll('[role="menuitem"], [role="tab"], button, [role="button"]')].find((element) => {
-              const text = (element.innerText || element.textContent || '').trim();
-              return /显示转写文稿|显示文字稿|show transcript/i.test(text);
-            });
+        const readPlayerResponse = () => {
+          const raw = window.ytInitialPlayerResponse || window.ytplayer?.config?.args?.player_response;
+          let playerResponse = raw;
+          if (typeof playerResponse === 'string') {
+            try {
+              playerResponse = JSON.parse(playerResponse);
+            } catch {}
           }
-        }
-        if (transcriptTab) {
-          transcriptTab.click();
-        }
-
-        await wait(4000);
-
-        const transcriptPanel =
-          document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]') ||
-          document.querySelector('ytd-engagement-panel-section-list-renderer[visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"]');
-        const transcriptScroller =
-          transcriptPanel?.querySelector('#segments-container') ||
-          transcriptPanel?.querySelector('#body.ytd-engagement-panel-section-list-renderer') ||
-          transcriptPanel?.querySelector('#content') ||
-          transcriptPanel;
-
-        if (transcriptScroller) {
-          for (let index = 0; index < 6; index += 1) {
-            transcriptScroller.scrollTop = transcriptScroller.scrollHeight;
-            await wait(500);
+          if (!playerResponse && typeof window.ytplayer?.config?.args?.raw_player_response === 'string') {
+            try {
+              playerResponse = JSON.parse(window.ytplayer.config.args.raw_player_response);
+            } catch {}
           }
-          transcriptScroller.scrollTop = 0;
-          await wait(500);
-        }
-
-        const domTranscriptSegments = [...document.querySelectorAll(
-          'ytd-transcript-segment-renderer, ytd-transcript-search-panel-renderer ytd-transcript-segment-list-renderer > *'
-        )]
-          .map((element) => {
-            const timestamp =
-              element.querySelector('.segment-timestamp')?.textContent?.trim() ||
-              element.querySelector('#timestamp')?.textContent?.trim() ||
-              element.querySelector('[class*="timestamp"]')?.textContent?.trim() ||
-              null;
-            const text =
-              element.querySelector('.segment-text')?.textContent?.trim() ||
-              element.querySelector('#segment-text')?.textContent?.trim() ||
-              element.querySelector('[class*="segment-text"]')?.textContent?.trim() ||
-              element.textContent?.trim() ||
-              '';
-            return {
-              timestamp,
-              text,
-            };
-          })
-          .filter((item) => item.text && item.text !== item.timestamp);
-
-        let transcriptPayload = null;
-        let transcriptStatus = null;
-        let transcriptError = null;
-
-        if (selected?.baseUrl) {
+          return playerResponse || null;
+        };
+        const pickTrack = (tracks) => {
+          if (preferredLang) {
+            const match = tracks.find((item) => item?.languageCode === preferredLang);
+            if (match) {
+              return match;
+            }
+          }
+          return tracks.find((item) => item?.kind === 'asr') || tracks[0] || null;
+        };
+        const fetchDirectTranscript = async (selected) => {
+          if (!selected?.baseUrl) {
+            return { transcriptPayload: null, transcriptStatus: null, transcriptError: null };
+          }
           const transcriptUrl = selected.baseUrl + '&fmt=json3';
           try {
             const response = await fetch(transcriptUrl, { credentials: 'include' });
-            transcriptStatus = response.status;
             const text = await response.text();
-            transcriptPayload = text || null;
+            return {
+              transcriptPayload: text || null,
+              transcriptStatus: response.status,
+              transcriptError: null,
+            };
           } catch (error) {
-            transcriptError = error instanceof Error ? error.message : String(error);
+            return {
+              transcriptPayload: null,
+              transcriptStatus: null,
+              transcriptError: error instanceof Error ? error.message : String(error),
+            };
           }
+        };
+        const tryOpenTranscriptUi = async () => {
+          let transcriptTab = [...document.querySelectorAll('[role="tab"], button, [role="button"]')].find((element) => {
+            const text = (element.innerText || element.textContent || '').trim();
+            return /转写文稿|文字稿|transcript/i.test(text);
+          });
+          if (!transcriptTab) {
+            const chapterButton = [...document.querySelectorAll('button, [role="button"]')].find((element) => {
+              const text = (element.innerText || element.textContent || '').trim();
+              return /章节|chapter|在此视频中/i.test(text);
+            });
+            if (chapterButton) {
+              chapterButton.click();
+              await wait(800);
+            }
+            transcriptTab = [...document.querySelectorAll('[role="tab"], button, [role="button"]')].find((element) => {
+              const text = (element.innerText || element.textContent || '').trim();
+              return /转写文稿|文字稿|transcript/i.test(text);
+            });
+          }
+          if (!transcriptTab) {
+            const menuButton = [...document.querySelectorAll('button, [role="button"]')].find((element) => {
+              const label = (element.getAttribute('aria-label') || '').trim();
+              const text = (element.innerText || element.textContent || '').trim();
+              return /更多操作|more actions/i.test(label) || /更多操作|more actions/i.test(text);
+            });
+            if (menuButton) {
+              menuButton.click();
+              await wait(800);
+              transcriptTab = [...document.querySelectorAll('[role="menuitem"], [role="tab"], button, [role="button"]')].find((element) => {
+                const text = (element.innerText || element.textContent || '').trim();
+                return /显示转写文稿|显示文字稿|show transcript/i.test(text);
+              });
+            }
+          }
+          if (transcriptTab) {
+            transcriptTab.click();
+            await wait(2500);
+          }
+          return Boolean(transcriptTab);
+        };
+        const collectDomTranscriptSegments = async () => {
+          const transcriptPanel =
+            document.querySelector('ytd-engagement-panel-section-list-renderer[target-id="engagement-panel-searchable-transcript"]') ||
+            document.querySelector('ytd-engagement-panel-section-list-renderer[visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"]');
+          const transcriptScroller =
+            transcriptPanel?.querySelector('#segments-container') ||
+            transcriptPanel?.querySelector('#body.ytd-engagement-panel-section-list-renderer') ||
+            transcriptPanel?.querySelector('#content') ||
+            transcriptPanel;
+          if (transcriptScroller) {
+            for (let index = 0; index < 6; index += 1) {
+              transcriptScroller.scrollTop = transcriptScroller.scrollHeight;
+              await wait(350);
+            }
+            transcriptScroller.scrollTop = 0;
+            await wait(350);
+          }
+          return [...document.querySelectorAll(
+            'ytd-transcript-segment-renderer, ytd-transcript-search-panel-renderer ytd-transcript-segment-list-renderer > *'
+          )]
+            .map((element) => {
+              const timestamp =
+                element.querySelector('.segment-timestamp')?.textContent?.trim() ||
+                element.querySelector('#timestamp')?.textContent?.trim() ||
+                element.querySelector('[class*="timestamp"]')?.textContent?.trim() ||
+                null;
+              const text =
+                element.querySelector('.segment-text')?.textContent?.trim() ||
+                element.querySelector('#segment-text')?.textContent?.trim() ||
+                element.querySelector('[class*="segment-text"]')?.textContent?.trim() ||
+                element.textContent?.trim() ||
+                '';
+              return {
+                timestamp,
+                text,
+              };
+            })
+            .filter((item) => item.text && item.text !== item.timestamp);
+        };
+
+        let adHandlingRounds = 0;
+        let attemptCount = 0;
+        let lastPlayerResponse = null;
+        let lastTracks = [];
+        let lastSelected = null;
+        let lastDomTranscriptSegments = [];
+        let lastTranscriptPayload = null;
+        let lastTranscriptStatus = null;
+        let lastTranscriptError = null;
+        let lastTranscriptTabFound = false;
+        let observedTranscriptSignal = false;
+        let observedTranscriptContent = false;
+        let lastContentFingerprint = '';
+        let lastContentChangeAt = 0;
+
+        const buildContentFingerprint = (transcriptPayload, domTranscriptSegments) => {
+          const payloadLength = transcriptPayload ? transcriptPayload.length : 0;
+          const domCount = Array.isArray(domTranscriptSegments) ? domTranscriptSegments.length : 0;
+          const domTail = domCount
+            ? domTranscriptSegments
+                .slice(Math.max(0, domCount - 3))
+                .map((item) => (item.timestamp || '') + ':' + (item.text || ''))
+                .join('|')
+            : '';
+          return String(payloadLength) + '::' + String(domCount) + '::' + domTail;
+        };
+
+        while (Date.now() < deadlineMs) {
+          attemptCount += 1;
+          adHandlingRounds += await ensureNoAdBlocking(attemptCount === 1 ? 12 : 4);
+
+          const video = document.querySelector('video');
+          if (video) {
+            video.muted = true;
+            try {
+              video.pause();
+            } catch {}
+          }
+
+          const playerResponse = readPlayerResponse();
+          const tracklist = playerResponse?.captions?.playerCaptionsTracklistRenderer || null;
+          const tracks = Array.isArray(tracklist?.captionTracks) ? tracklist.captionTracks : [];
+          const selected = pickTrack(tracks);
+          const directResult = await fetchDirectTranscript(selected);
+
+          lastPlayerResponse = playerResponse;
+          lastTracks = tracks;
+          lastSelected = selected;
+          lastTranscriptPayload = directResult.transcriptPayload;
+          lastTranscriptStatus = directResult.transcriptStatus;
+          lastTranscriptError = directResult.transcriptError;
+          observedTranscriptSignal = observedTranscriptSignal || Boolean(selected);
+
+          let transcriptTabFound = lastTranscriptTabFound;
+          let domTranscriptSegments = lastDomTranscriptSegments;
+
+          if (!directResult.transcriptPayload) {
+            adHandlingRounds += await ensureNoAdBlocking(4);
+            transcriptTabFound = await tryOpenTranscriptUi();
+            lastTranscriptTabFound = transcriptTabFound;
+            adHandlingRounds += await ensureNoAdBlocking(3);
+
+            domTranscriptSegments = await collectDomTranscriptSegments();
+            lastDomTranscriptSegments = domTranscriptSegments;
+          } else {
+            lastTranscriptTabFound = false;
+            lastDomTranscriptSegments = [];
+            domTranscriptSegments = [];
+          }
+
+          const hasContent = Boolean(directResult.transcriptPayload) || domTranscriptSegments.length > 0;
+          if (hasContent) {
+            observedTranscriptSignal = true;
+            observedTranscriptContent = true;
+            const fingerprint = buildContentFingerprint(directResult.transcriptPayload, domTranscriptSegments);
+            if (fingerprint && fingerprint !== lastContentFingerprint) {
+              lastContentFingerprint = fingerprint;
+              lastContentChangeAt = Date.now();
+            }
+          }
+
+          if (observedTranscriptContent && lastContentChangeAt && Date.now() - lastContentChangeAt >= settleIdleMs) {
+            return {
+              title: playerResponse?.videoDetails?.title || document.title || null,
+              isAdShowing: isAdBlocking(),
+              adHandlingRounds,
+              attemptCount,
+              tracks,
+              selected,
+              domTranscriptSegments,
+              transcriptPayload: directResult.transcriptPayload,
+              transcriptStatus: directResult.transcriptStatus,
+              transcriptError: directResult.transcriptError,
+              transcriptTabFound,
+              skippedUiFallback: !domTranscriptSegments.length
+            };
+          }
+
+          if (Date.now() + pollIntervalMs >= deadlineMs) {
+            break;
+          }
+          await wait(pollIntervalMs);
         }
 
         return {
-          title: playerResponse?.videoDetails?.title || document.title || null,
-          isAdShowing: Boolean(document.querySelector('.ad-showing')),
+          title: lastPlayerResponse?.videoDetails?.title || document.title || null,
+          isAdShowing: isAdBlocking(),
           adHandlingRounds,
-          tracks,
-          selected,
-          domTranscriptSegments,
-          transcriptPayload,
-          transcriptStatus,
-          transcriptError,
-          transcriptTabFound: Boolean(transcriptTab)
+          attemptCount,
+          tracks: lastTracks,
+          selected: lastSelected,
+          domTranscriptSegments: lastDomTranscriptSegments,
+          transcriptPayload: lastTranscriptPayload,
+          transcriptStatus: lastTranscriptStatus,
+          transcriptError: lastTranscriptError,
+          transcriptTabFound: lastTranscriptTabFound,
+          skippedUiFallback: observedTranscriptContent && !lastDomTranscriptSegments.length,
+          observedTranscriptSignal,
+          observedTranscriptContent
         };
       })()`;
 
@@ -579,7 +714,7 @@ async function fetchYouTubeSubtitle(input, options = {}) {
         ...value,
         panelPayload,
       };
-    }), timeoutMs);
+    }), timeoutMs + FINALIZATION_GRACE_MS);
 
     result.title = payload?.title || result.title;
     result.available_subtitles = Array.isArray(payload?.tracks) ? payload.tracks.map(normalizeTrack) : [];
@@ -594,13 +729,8 @@ async function fetchYouTubeSubtitle(input, options = {}) {
           : null);
     }
 
-    if (payload?.transcriptError) {
-      result.error = `Transcript request failed: ${payload.transcriptError}`;
-      return result;
-    }
-
     if (!payload?.selected) {
-      result.error = "No subtitle track was available for the requested video.";
+      result.error = "No subtitle track was available for the requested video within the polling window.";
       return result;
     }
 
@@ -632,8 +762,10 @@ async function fetchYouTubeSubtitle(input, options = {}) {
 
     if (!result.full_text) {
       result.error = payload?.transcriptTabFound
-        ? "Transcript panel was opened, but no subtitle text could be parsed from panel or timedtext responses."
-        : `Subtitle track was found, but the subtitle body was empty (status ${payload?.transcriptStatus || "unknown"}).`;
+        ? "Transcript polling timed out after opening the transcript panel, but no subtitle text could be parsed from panel or timedtext responses."
+        : payload?.transcriptError
+          ? `Transcript polling timed out. The last subtitle request failed: ${payload.transcriptError}`
+          : `Transcript polling timed out. Subtitle track was found, but the subtitle body stayed empty (status ${payload?.transcriptStatus || "unknown"}).`;
     }
 
     return result;
