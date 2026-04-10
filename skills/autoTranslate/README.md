@@ -1,6 +1,6 @@
 # autoTranslate
 
-Local media transcription skill based on `ffmpeg` and `whisper.cpp`.
+Local media transcription skill based on `ffmpeg`, `whisper.cpp`, and `faster-whisper`.
 
 ## What It Does
 
@@ -30,6 +30,12 @@ Use a faster but lower-quality model:
 node skills/autoTranslate/scripts/transcribe_local_media.js "/absolute/path/to/file.mp4" --model-size tiny
 ```
 
+GPU local run with `faster-whisper`:
+
+```bash
+python skills/autoTranslate/scripts/transcribe_local_media_gpu.py "/absolute/path/to/file.mp4" --model-size small --compute-type float16 --debug
+```
+
 ## Defaults From `.env`
 
 The script reads the repo-root `.env` automatically and uses these defaults when present:
@@ -42,6 +48,13 @@ The script reads the repo-root `.env` automatically and uses these defaults when
 - `AI_WHISPER_CLI_COMMAND`
 - `AI_FFMPEG_COMMAND`
 - `AI_FFPROBE_COMMAND`
+- `AI_AUTO_TRANSLATE_WORKER_BACKEND`
+- `AI_AUTO_TRANSLATE_GPU_PYTHON_COMMAND`
+- `AI_AUTO_TRANSLATE_GPU_DEVICE`
+- `AI_AUTO_TRANSLATE_GPU_COMPUTE_TYPE`
+- `AI_AUTO_TRANSLATE_GPU_BEAM_SIZE`
+- `AI_AUTO_TRANSLATE_GPU_DEBUG`
+- `AI_AUTO_TRANSLATE_GPU_MODELS_DIR`
 
 ## Output
 
@@ -80,6 +93,36 @@ Or:
 powershell -ExecutionPolicy Bypass -File .\skills\autoTranslate\scripts\deploy_windows_cpu_worker.ps1
 ```
 
+For an NVIDIA Windows machine such as an RTX 5060 box, you can still prepare the GPU environment with:
+
+```bat
+skills\autoTranslate\scripts\deploy_windows_gpu_worker.cmd
+```
+
+Or:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\autoTranslate\scripts\deploy_windows_gpu_worker.ps1
+```
+
+GPU debug and benchmark on Windows:
+
+```bat
+skills\autoTranslate\scripts\benchmark_windows_gpu_worker.cmd "D:\path\to\sample.mp4" small 30
+```
+
+The GPU installer runs `gpu_worker_doctor.py`, creates a Python venv, and installs `faster-whisper`.
+
+The HTTP worker can now handle both backends inside one service. Pick the backend per job:
+
+```bash
+node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to/file.mp4" --remote-base-url http://WINDOWS_HOST:8768 --backend cpu
+```
+
+```bash
+node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to/file.mp4" --remote-base-url http://WINDOWS_HOST:8768 --backend gpu --model-size small --compute-type float16 --beam-size 5 --debug
+```
+
 Submit a local file to the remote worker from another machine:
 
 ```bash
@@ -97,6 +140,12 @@ The remote worker supports:
 - `GET /jobs/<jobId>/files/<name>` to download artifacts such as `transcript.json`, `transcript.srt`, `run-summary.json`, and `worker.log`
 
 The polling response includes `progress.stage`, `progress.percent`, and `progress.message`.
+
+`/health` now reports:
+
+- `default_backend`
+- `supported_backends`
+- `gpu_available`
 
 Large uploads are allowed by default. The worker upload limit is controlled by:
 

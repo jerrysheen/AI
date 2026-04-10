@@ -37,6 +37,7 @@ function parseArgs(argv) {
     input: null,
     remoteBaseUrl: process.env.AI_AUTO_TRANSLATE_REMOTE_BASE_URL || "",
     token: process.env.AI_AUTO_TRANSLATE_WORKER_TOKEN || "",
+    backend: process.env.AI_AUTO_TRANSLATE_WORKER_BACKEND || "",
     modelSize: process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "base",
     language: process.env.AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE || "auto",
     threads: Number(process.env.AI_AUTO_TRANSLATE_THREADS || 4),
@@ -47,6 +48,9 @@ function parseArgs(argv) {
     outputDir: null,
     keepWav: false,
     includeText: true,
+    computeType: process.env.AI_AUTO_TRANSLATE_GPU_COMPUTE_TYPE || "",
+    beamSize: Number(process.env.AI_AUTO_TRANSLATE_GPU_BEAM_SIZE || 5),
+    debug: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -72,6 +76,10 @@ function parseArgs(argv) {
       args.includeText = false;
       continue;
     }
+    if (token === "--debug") {
+      args.debug = true;
+      continue;
+    }
 
     const nextValue = argv[index + 1];
     if (!nextValue || nextValue.startsWith("--")) {
@@ -84,6 +92,9 @@ function parseArgs(argv) {
         break;
       case "--token":
         args.token = nextValue;
+        break;
+      case "--backend":
+        args.backend = nextValue;
         break;
       case "--model-size":
         args.modelSize = nextValue;
@@ -105,6 +116,12 @@ function parseArgs(argv) {
         break;
       case "--output-dir":
         args.outputDir = nextValue;
+        break;
+      case "--compute-type":
+        args.computeType = nextValue;
+        break;
+      case "--beam-size":
+        args.beamSize = Number(nextValue);
         break;
       default:
         throw new Error(`Unknown option: ${token}`);
@@ -209,10 +226,14 @@ async function main() {
 
   const uploadBuffer = fs.readFileSync(uploadPath);
   const createUrl = new URL("/jobs", args.remoteBaseUrl);
+  if (args.backend) createUrl.searchParams.set("backend", args.backend);
   createUrl.searchParams.set("modelSize", args.modelSize);
   createUrl.searchParams.set("language", args.language);
   createUrl.searchParams.set("threads", String(args.threads));
   createUrl.searchParams.set("keepWav", args.keepWav ? "true" : "false");
+  if (args.computeType) createUrl.searchParams.set("computeType", args.computeType);
+  if (Number.isFinite(args.beamSize) && args.beamSize > 0) createUrl.searchParams.set("beamSize", String(args.beamSize));
+  if (args.debug) createUrl.searchParams.set("debug", "true");
 
   log("upload", `sending ${path.basename(uploadPath)} (${Math.round(uploadBuffer.length / 1024 / 1024)}MB) to ${createUrl.origin}`);
   const createResponse = await requestUrl("POST", createUrl.toString(), {

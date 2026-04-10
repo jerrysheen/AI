@@ -20,6 +20,7 @@ const SHARED_DATA_DIR = resolveSharedDataDir(REPO_ROOT);
 const WORKER_HOST = process.env.AI_AUTO_TRANSLATE_WORKER_HOST || "0.0.0.0";
 const WORKER_PORT = Number(process.env.AI_AUTO_TRANSLATE_WORKER_PORT || 8768);
 const WORKER_TOKEN = process.env.AI_AUTO_TRANSLATE_WORKER_TOKEN || "";
+const DEFAULT_WORKER_BACKEND = String(process.env.AI_AUTO_TRANSLATE_WORKER_BACKEND || "cpu").trim().toLowerCase();
 const MAX_UPLOAD_MB = Number(process.env.AI_AUTO_TRANSLATE_WORKER_MAX_UPLOAD_MB || 2048);
 const MAX_UPLOAD_BYTES = Math.max(64, MAX_UPLOAD_MB) * 1024 * 1024;
 const JOBS_ROOT = resolveRepoPath(
@@ -68,6 +69,7 @@ function buildJobInfo(jobId) {
     updated_at: job.updatedAt,
     input_file: job.inputFile,
     run_dir: job.runDir,
+    backend: getJobBackend(job),
     options: job.options,
     log_file: job.logPath,
     progress: job.progress || null,
@@ -107,6 +109,27 @@ function parseBoolean(value) {
   return value === "1" || value === "true" || value === "yes";
 }
 
+function splitCommand(commandText) {
+  return String(commandText || "").trim().split(/\s+/).filter(Boolean);
+}
+
+function getSupportedBackends() {
+  const supported = ["cpu"];
+  const gpuScriptPath = path.join(SKILL_DIR, "scripts", "transcribe_local_media_gpu.py");
+  if (fs.existsSync(gpuScriptPath) && String(process.env.AI_AUTO_TRANSLATE_GPU_PYTHON_COMMAND || "").trim()) {
+    supported.push("gpu");
+  }
+  return supported;
+}
+
+function isBackendSupported(backend) {
+  return getSupportedBackends().includes(backend);
+}
+
+function getJobBackend(job) {
+  return String(job?.options?.backend || DEFAULT_WORKER_BACKEND || "cpu").trim().toLowerCase();
+}
+
 function maybeUpdateProgressFromLine(jobId, text) {
   const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   for (const line of lines) {
@@ -127,6 +150,10 @@ function maybeUpdateProgressFromLine(jobId, text) {
       if (stage === "extract" && extractMatch) {
         patch.percent = 25 + Math.floor(Number(extractMatch[1]) * 0.05);
       }
+      const segmentProgressMatch = message.match(/^segment progress (\d+)%/);
+      if (stage === "whisper" && segmentProgressMatch) {
+        patch.percent = 30 + Math.floor(Number(segmentProgressMatch[1]) * 0.69);
+      }
       setJobProgress(jobId, patch);
     }
 
@@ -146,26 +173,59 @@ function startTranscription(jobId) {
   const job = jobs.get(jobId);
   if (!job) return;
 
-  const scriptPath = path.join(SKILL_DIR, "scripts", "transcribe_local_media.js");
-  const args = [
-    scriptPath,
-    job.inputPath,
-    "--output-dir", job.runDir,
-  ];
+  const backend = getJobBackend(job);
+  let command = "node";
+  let args = [];
 
-  if (job.options.modelSize) args.push("--model-size", job.options.modelSize);
-  if (job.options.language) args.push("--language", job.options.language);
-  if (job.options.threads) args.push("--threads", String(job.options.threads));
-  if (job.options.startSeconds) args.push("--start-seconds", String(job.options.startSeconds));
-  if (job.options.clipSeconds) args.push("--clip-seconds", String(job.options.clipSeconds));
-  if (job.options.prompt) args.push("--prompt", job.options.prompt);
-  if (job.options.keepWav) args.push("--keep-wav");
+  if (!isBackendSupported(backend)) {
+    updateJob(jobId, { status: "failed", error: `Backend not supported: ${backend}` });
+    setJobProgress(jobId, { stage: "failed", percent: 100, message: `backend not supported: ${backend}` });
+    appendLog(job.logPath, `[${nowIso()}] [worker] backend not supported: ${backend}`);
+    return;
+  }
+
+  if (backend === "gpu") {
+    const pythonCommand = process.env.AI_AUTO_TRANSLATE_GPU_PYTHON_COMMAND || "python";
+    const pythonParts = splitCommand(pythonCommand);
+    command = pythonParts[0] || "python";
+    const commandPrefix = pythonParts.slice(1);
+    const scriptPath = path.join(SKILL_DIR, "scripts", "transcribe_local_media_gpu.py");
+    args = [
+      ...commandPrefix,
+      scriptPath,
+      job.inputPath,
+      "--output-dir", job.runDir,
+    ];
+    if (job.options.modelSize) args.push("--model-size", job.options.modelSize);
+    if (job.options.language) args.push("--language", job.options.language);
+    if (job.options.startSeconds) args.push("--start-seconds", String(job.options.startSeconds));
+    if (job.options.clipSeconds) args.push("--clip-seconds", String(job.options.clipSeconds));
+    if (job.options.prompt) args.push("--prompt", job.options.prompt);
+    if (job.options.keepWav) args.push("--keep-wav");
+    if (job.options.computeType) args.push("--compute-type", job.options.computeType);
+    if (job.options.beamSize) args.push("--beam-size", String(job.options.beamSize));
+    if (job.options.debug) args.push("--debug");
+  } else {
+    const scriptPath = path.join(SKILL_DIR, "scripts", "transcribe_local_media.js");
+    args = [
+      scriptPath,
+      job.inputPath,
+      "--output-dir", job.runDir,
+    ];
+    if (job.options.modelSize) args.push("--model-size", job.options.modelSize);
+    if (job.options.language) args.push("--language", job.options.language);
+    if (job.options.threads) args.push("--threads", String(job.options.threads));
+    if (job.options.startSeconds) args.push("--start-seconds", String(job.options.startSeconds));
+    if (job.options.clipSeconds) args.push("--clip-seconds", String(job.options.clipSeconds));
+    if (job.options.prompt) args.push("--prompt", job.options.prompt);
+    if (job.options.keepWav) args.push("--keep-wav");
+  }
 
   updateJob(jobId, { status: "running" });
-  setJobProgress(jobId, { stage: "queued", percent: 0, message: "job accepted" });
-  appendLog(job.logPath, `[${nowIso()}] [worker] starting transcription`);
+  setJobProgress(jobId, { stage: "queued", percent: 0, message: `job accepted (${backend})` });
+  appendLog(job.logPath, `[${nowIso()}] [worker] starting transcription backend=${backend}`);
 
-  const child = spawn("node", args, {
+  const child = spawn(command, args, {
     cwd: REPO_ROOT,
     env: process.env,
     stdio: ["ignore", "pipe", "pipe"],
@@ -235,6 +295,7 @@ function handleCreateJob(request, response, url) {
   const inputPath = path.join(runDir, inputFile);
   const logPath = path.join(runDir, "worker.log");
   const options = {
+    backend: String(url.searchParams.get("backend") || DEFAULT_WORKER_BACKEND || "cpu").trim().toLowerCase(),
     modelSize: url.searchParams.get("modelSize") || process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "base",
     language: url.searchParams.get("language") || process.env.AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE || "auto",
     threads: Number(url.searchParams.get("threads") || process.env.AI_AUTO_TRANSLATE_THREADS || 4),
@@ -242,7 +303,22 @@ function handleCreateJob(request, response, url) {
     clipSeconds: Number(url.searchParams.get("clipSeconds") || 0),
     prompt: url.searchParams.get("prompt") || "",
     keepWav: parseBoolean(url.searchParams.get("keepWav") || "false"),
+    computeType: url.searchParams.get("computeType") || process.env.AI_AUTO_TRANSLATE_GPU_COMPUTE_TYPE || "",
+    beamSize: Number(url.searchParams.get("beamSize") || process.env.AI_AUTO_TRANSLATE_GPU_BEAM_SIZE || 5),
+    debug: parseBoolean(url.searchParams.get("debug") || process.env.AI_AUTO_TRANSLATE_GPU_DEBUG || "false"),
   };
+  if (!["cpu", "gpu"].includes(options.backend)) {
+    sendJson(response, 400, { ok: false, error: `Unsupported backend: ${options.backend}` });
+    return;
+  }
+  if (!isBackendSupported(options.backend)) {
+    sendJson(response, 400, {
+      ok: false,
+      error: `Backend not available: ${options.backend}`,
+      supported_backends: getSupportedBackends(),
+    });
+    return;
+  }
 
   let receivedBytes = 0;
   const writeStream = fs.createWriteStream(inputPath);
@@ -346,6 +422,9 @@ function createServer() {
         repo_root: REPO_ROOT,
         jobs_root: JOBS_ROOT,
         port: WORKER_PORT,
+        default_backend: DEFAULT_WORKER_BACKEND,
+        supported_backends: getSupportedBackends(),
+        gpu_available: isBackendSupported("gpu"),
         max_upload_mb: MAX_UPLOAD_MB,
         token_required: Boolean(WORKER_TOKEN),
       });
@@ -388,6 +467,6 @@ server.listen(WORKER_PORT, WORKER_HOST, () => {
     process.stdout.write(`[${nowIso()}] [worker] warning: AI_AUTO_TRANSLATE_WORKER_TOKEN is empty; anyone who can reach this port can submit jobs\n`);
   }
   process.stdout.write(
-    `[${nowIso()}] [worker] listening on http://${WORKER_HOST}:${WORKER_PORT} jobs_root=${JOBS_ROOT} max_upload_mb=${MAX_UPLOAD_MB}\n`
+    `[${nowIso()}] [worker] listening on http://${WORKER_HOST}:${WORKER_PORT} default_backend=${DEFAULT_WORKER_BACKEND} supported_backends=${getSupportedBackends().join(",")} jobs_root=${JOBS_ROOT} max_upload_mb=${MAX_UPLOAD_MB}\n`
   );
 });
