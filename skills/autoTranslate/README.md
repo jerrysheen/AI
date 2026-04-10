@@ -75,3 +75,25 @@ node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to
 ```
 
 The submit script defaults to extracting a mono 16k WAV locally before upload so the network payload is already transcription-ready.
+
+The remote worker supports:
+
+- `GET /health` for basic service checks
+- `POST /jobs` to upload a WAV and create a transcription job
+- `GET /jobs/<jobId>` to poll status and progress
+- `GET /jobs/<jobId>/text` to read `transcript.txt` directly
+- `GET /jobs/<jobId>/files/<name>` to download artifacts such as `transcript.json`, `transcript.srt`, `run-summary.json`, and `worker.log`
+
+The polling response includes `progress.stage`, `progress.percent`, and `progress.message`.
+
+Large uploads are allowed by default. The worker upload limit is controlled by:
+
+- `AI_AUTO_TRANSLATE_WORKER_MAX_UPLOAD_MB`
+
+Current default is `2048` MB, so large WAV uploads do not fail due to a small body limit.
+
+For safer LAN use, set:
+
+- `AI_AUTO_TRANSLATE_WORKER_TOKEN`
+
+When a token is set, the client should pass `--token <value>` or use the same env var locally.

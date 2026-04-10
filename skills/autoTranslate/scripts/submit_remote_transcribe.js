@@ -46,6 +46,7 @@ function parseArgs(argv) {
     sendWav: true,
     outputDir: null,
     keepWav: false,
+    includeText: true,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -65,6 +66,10 @@ function parseArgs(argv) {
     }
     if (token === "--keep-wav") {
       args.keepWav = true;
+      continue;
+    }
+    if (token === "--no-include-text") {
+      args.includeText = false;
       continue;
     }
 
@@ -134,7 +139,7 @@ function requestUrl(method, urlString, options = {}) {
     const request = client.request(url, {
       method,
       headers: options.headers || {},
-      timeout: options.timeoutMs || 30000,
+      timeout: options.timeoutMs ?? 30000,
     }, (response) => {
       const chunks = [];
       response.on("data", (chunk) => chunks.push(chunk));
@@ -240,7 +245,11 @@ async function main() {
     }
 
     statusPayload = JSON.parse(statusResponse.body.toString("utf8"));
-    log("remote", `status=${statusPayload.status}`);
+    const progress = statusPayload.progress;
+    const progressText = progress && Number.isFinite(progress.percent)
+      ? ` progress=${progress.percent}% stage=${progress.stage}`
+      : "";
+    log("remote", `status=${statusPayload.status}${progressText}`);
 
     if (statusPayload.status === "completed") break;
     if (statusPayload.status === "failed") {
@@ -263,6 +272,17 @@ async function main() {
     }
   }
 
+  let transcriptText = null;
+  if (args.includeText) {
+    const textResponse = await requestUrl("GET", new URL(`/jobs/${jobId}/text`, args.remoteBaseUrl).toString(), {
+      headers: args.token ? { authorization: `Bearer ${args.token}` } : {},
+      timeoutMs: 30000,
+    });
+    if (textResponse.statusCode === 200) {
+      transcriptText = textResponse.body.toString("utf8");
+    }
+  }
+
   if (!args.keepWav && args.sendWav) {
     fs.rmSync(uploadPath, { force: true });
   }
@@ -272,8 +292,10 @@ async function main() {
     job_id: jobId,
     local_run_dir: runDir,
     remote_status: statusPayload.status,
+    remote_progress: statusPayload.progress || null,
     remote_result: statusPayload.result || null,
     downloaded_files: downloaded,
+    transcript_text: transcriptText,
   };
 
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
