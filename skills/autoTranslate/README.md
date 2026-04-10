@@ -68,6 +68,18 @@ Or:
 powershell -ExecutionPolicy Bypass -File .\skills\autoTranslate\scripts\start_remote_transcribe_worker.ps1
 ```
 
+One-click install and start on Windows:
+
+```bat
+skills\autoTranslate\scripts\deploy_windows_cpu_worker.cmd
+```
+
+Or:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\skills\autoTranslate\scripts\deploy_windows_cpu_worker.ps1
+```
+
 Submit a local file to the remote worker from another machine:
 
 ```bash

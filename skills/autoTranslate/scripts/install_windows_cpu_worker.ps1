@@ -97,6 +97,7 @@ Ensure-EnvLine "AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE" "auto"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_THREADS" "4"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_HOST" "0.0.0.0"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_PORT" "8768"
+Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_MAX_UPLOAD_MB" "2048"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_JOBS_DIR" ".ai-data/auto-translate/remote-jobs"
 
 Write-Step "installation complete"
