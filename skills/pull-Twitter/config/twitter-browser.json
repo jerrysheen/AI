@@ -1,0 +1,15 @@
+{
+  "site": {
+    "startup_url": "https://twitter.com"
+  },
+  "chrome": {
+    "path": "",
+    "user_data_dir": "",
+    "startup_delay_ms": 4000,
+    "remote_debug_port": 9222,
+    "extra_args": [
+      "--no-first-run",
+      "--no-default-browser-check"
+    ]
+  }
+}

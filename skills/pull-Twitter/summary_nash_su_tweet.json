@@ -1,0 +1,26 @@
+{
+  "summary_version": "v1",
+  "source": {
+    "platform": "twitter",
+    "source_url": "https://x.com/nash_su/status/2042017125678903330",
+    "source_title": "开源啦🎉🎉🎉 基于 @karpathy 的 llm-wiki 方法论...",
+    "publish_time": "2026-04-08T23:09:56Z",
+    "author_handle": "@nash_su",
+    "tweet_id": "2042017125678903330",
+    "retrieved_at": "2026-04-10T14:05:00+08:00"
+  },
+  "summary": "这是一条开源项目发布推文，作者基于 Andrej Karpathy 的 llm-wiki 方法论，将其从抽象设计模式实现为完整的跨平台桌面应用 llm_wiki，兼容 Obsidian 并做了大量优化增强。",
+  "key_points": [
+    "核心功能 1：两步思维链 Ingest，拆分为分析+生成两次 LLM 调用，保存到知识库的文件使用 LLM 进行深入分析，拆解内容生成知识图谱。",
+    "核心功能 2：知识图谱构建，将知识库内的内容构建成图谱，并加入不同实体之间关系强度的加权计算算法，通过关系强度决定 LLM Chat 时引用资料的优先级。",
+    "核心功能 3：四阶段查询检索管线，CJK 二元组分词搜索→图谱扩展→预算控制（4K-1M 可配，60/20/5/15 分配→带引用编号的上下文组装。",
+    "核心功能 4：多对话聊天，独立会话持久化，引用面板标注使用了哪些 Wiki 页面，结果还可以保存到 Wiki 同时 Ingest。",
+    "增强功能 1：深度研究模式，对特定话题联网查询资料并进行深度研究，使用 Tavily API 多查询检索，综合后自动 Ingest 回 Wiki，支持并发任务队列。",
+    "增强功能 2：Chrome 扩展，开发了 chrome 插件，一键将有价值的网页内容插入知识库。",
+    "增强功能 3：多格式支持，PDF/DOCX/PPTX/XLSX 结构化提取，保留标题、列表、表格语义，非纯文本转换。",
+    "增强功能 4：智能级联删除，删资料自动清 Wiki 摘要、索引、死链接，共享实体仅移除引用不删页面。",
+    "技术栈：Tauri v2 + React 19，全平台兼容的跨平台工程。",
+    "开源地址：http://github.com/nashsu/llm_wiki，欢迎 Star🌟"
+  ],
+  "source_note": "summary comes from nitter_rss tweet content, has_video: true"
+}
