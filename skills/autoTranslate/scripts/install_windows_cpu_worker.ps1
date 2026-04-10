@@ -102,3 +102,4 @@ Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_JOBS_DIR" ".ai-data/auto-translate/remo
 Write-Step "installation complete"
 Write-Step "worker start command:"
 Write-Host "powershell -ExecutionPolicy Bypass -File .\skills\autoTranslate\scripts\start_remote_transcribe_worker.ps1"
+Write-Host "cmd /c .\skills\autoTranslate\scripts\start_remote_transcribe_worker.cmd"

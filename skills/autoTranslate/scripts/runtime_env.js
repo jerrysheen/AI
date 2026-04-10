@@ -56,6 +56,11 @@ function resolveSharedDataDir(repoRoot) {
   return path.resolve(repoRoot, process.env.AI_SHARED_DATA_DIR || ".ai-data");
 }
 
+function resolveRepoPath(repoRoot, targetPath, fallbackPath) {
+  const value = String(targetPath || fallbackPath || "").trim();
+  return path.resolve(repoRoot, value);
+}
+
 function resolveCommand(defaultCommand, envKey) {
   return String(process.env[envKey] || defaultCommand).trim();
 }
@@ -63,6 +68,7 @@ function resolveCommand(defaultCommand, envKey) {
 module.exports = {
   findRepoRoot,
   loadRepoEnv,
+  resolveRepoPath,
   resolveSharedDataDir,
   resolveCommand,
 };

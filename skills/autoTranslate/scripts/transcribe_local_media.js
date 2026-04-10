@@ -8,6 +8,7 @@ const { spawn } = require("node:child_process");
 const {
   findRepoRoot,
   loadRepoEnv,
+  resolveRepoPath,
   resolveSharedDataDir,
   resolveCommand,
 } = require("./runtime_env");
@@ -17,13 +18,15 @@ const REPO_ROOT = findRepoRoot(SKILL_DIR);
 loadRepoEnv(REPO_ROOT);
 
 const SHARED_DATA_DIR = resolveSharedDataDir(REPO_ROOT);
-const DEFAULT_RUNS_DIR = path.join(
+const DEFAULT_RUNS_DIR = resolveRepoPath(
   REPO_ROOT,
-  process.env.AI_AUTO_TRANSLATE_RUNS_DIR || path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "runs")
+  process.env.AI_AUTO_TRANSLATE_RUNS_DIR,
+  path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "runs")
 );
-const DEFAULT_MODELS_DIR = path.join(
+const DEFAULT_MODELS_DIR = resolveRepoPath(
   REPO_ROOT,
-  process.env.AI_AUTO_TRANSLATE_MODELS_DIR || path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "cache", "whisper", "models")
+  process.env.AI_AUTO_TRANSLATE_MODELS_DIR,
+  path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "cache", "whisper", "models")
 );
 
 const MODEL_REGISTRY = {

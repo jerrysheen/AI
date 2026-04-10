@@ -8,6 +8,7 @@ const { spawn } = require("node:child_process");
 const {
   findRepoRoot,
   loadRepoEnv,
+  resolveRepoPath,
   resolveSharedDataDir,
 } = require("./runtime_env");
 
@@ -19,9 +20,10 @@ const SHARED_DATA_DIR = resolveSharedDataDir(REPO_ROOT);
 const WORKER_HOST = process.env.AI_AUTO_TRANSLATE_WORKER_HOST || "0.0.0.0";
 const WORKER_PORT = Number(process.env.AI_AUTO_TRANSLATE_WORKER_PORT || 8768);
 const WORKER_TOKEN = process.env.AI_AUTO_TRANSLATE_WORKER_TOKEN || "";
-const JOBS_ROOT = path.join(
+const JOBS_ROOT = resolveRepoPath(
   REPO_ROOT,
-  process.env.AI_AUTO_TRANSLATE_WORKER_JOBS_DIR || path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "remote-jobs")
+  process.env.AI_AUTO_TRANSLATE_WORKER_JOBS_DIR,
+  path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "remote-jobs")
 );
 
 const jobs = new Map();

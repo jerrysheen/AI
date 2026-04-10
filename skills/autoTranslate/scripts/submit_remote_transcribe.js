@@ -8,6 +8,7 @@ const { spawn } = require("node:child_process");
 const {
   findRepoRoot,
   loadRepoEnv,
+  resolveRepoPath,
   resolveSharedDataDir,
   resolveCommand,
 } = require("./runtime_env");
@@ -17,9 +18,10 @@ const REPO_ROOT = findRepoRoot(SKILL_DIR);
 loadRepoEnv(REPO_ROOT);
 
 const SHARED_DATA_DIR = resolveSharedDataDir(REPO_ROOT);
-const DEFAULT_LOCAL_RUNS_DIR = path.join(
+const DEFAULT_LOCAL_RUNS_DIR = resolveRepoPath(
   REPO_ROOT,
-  process.env.AI_AUTO_TRANSLATE_REMOTE_CLIENT_RUNS_DIR || path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "remote-client-runs")
+  process.env.AI_AUTO_TRANSLATE_REMOTE_CLIENT_RUNS_DIR,
+  path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "remote-client-runs")
 );
 
 function nowIso() {
