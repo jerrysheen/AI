@@ -11,9 +11,11 @@ from .config import (
     get_embedding_provider,
     get_huggingface_embedding_model,
     get_index_dir,
-    get_openai_api_key,
-    get_openai_base_url,
+    get_openai_embedding_api_key,
+    get_openai_embedding_base_url,
     get_openai_embedding_model,
+    get_openai_llm_api_key,
+    get_openai_llm_base_url,
     get_openai_llm_model,
 )
 from .json_utils import extract_json_object
@@ -79,7 +81,7 @@ def _load_huggingface_embedding_class() -> Any:
 def llm_dependencies_available() -> bool:
     if not _core_available():
         return False
-    if get_openai_base_url():
+    if get_openai_llm_base_url():
         return _has_module("llama_index.llms.openai_like")
     return _has_module("llama_index.llms.openai")
 
@@ -98,14 +100,14 @@ def dependencies_available() -> bool:
 
 
 def llm_runtime_ready() -> bool:
-    return llm_dependencies_available() and bool(get_openai_api_key())
+    return llm_dependencies_available() and bool(get_openai_llm_api_key())
 
 
 def embedding_runtime_ready() -> bool:
     if not embedding_dependencies_available():
         return False
     if get_embedding_provider() == "openai":
-        return bool(get_openai_api_key())
+        return bool(get_openai_embedding_api_key())
     return _probe_huggingface_runtime()["ok"]
 
 
@@ -144,11 +146,10 @@ def _probe_huggingface_runtime() -> Dict[str, Any]:
     return _huggingface_runtime_probe
 
 
-def _build_openai_kwargs() -> Dict[str, Any]:
-    kwargs: Dict[str, Any] = {"api_key": get_openai_api_key()}
-    base_url = get_openai_base_url()
+def _build_openai_kwargs(*, api_key: str, base_url: str) -> Dict[str, Any]:
+    kwargs: Dict[str, Any] = {"api_key": api_key}
     if base_url:
-        kwargs["base_url"] = base_url
+        kwargs["api_base"] = base_url
     return kwargs
 
 
@@ -161,9 +162,10 @@ def _ensure_core() -> None:
 def _ensure_llm_runtime() -> None:
     global _llm_initialized
     _ensure_core()
-    if not get_openai_api_key():
-        raise RuntimeError("OPENAI_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_API_KEY is required for LLM usage")
-    base_url = get_openai_base_url()
+    api_key = get_openai_llm_api_key()
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_LLM_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_API_KEY is required for LLM usage")
+    base_url = get_openai_llm_base_url()
     started = time.perf_counter()
     if base_url:
         openai_like_llm_class = _load_openai_like_llm_class()
@@ -173,7 +175,7 @@ def _ensure_llm_runtime() -> None:
             runtime_log(f"initialize llm provider=openai-compatible model={get_openai_llm_model()}")
         Settings.llm = openai_like_llm_class(
             model=get_openai_llm_model(),
-            api_key=get_openai_api_key(),
+            api_key=api_key,
             api_base=base_url,
             context_window=128000,
             is_chat_model=True,
@@ -188,7 +190,10 @@ def _ensure_llm_runtime() -> None:
         raise RuntimeError("LlamaIndex OpenAI LLM dependency is not installed")
     if not _llm_initialized:
         runtime_log(f"initialize llm provider=openai model={get_openai_llm_model()}")
-    Settings.llm = openai_llm_class(model=get_openai_llm_model(), **_build_openai_kwargs())
+    Settings.llm = openai_llm_class(
+        model=get_openai_llm_model(),
+        **_build_openai_kwargs(api_key=api_key, base_url=base_url),
+    )
     if not _llm_initialized:
         runtime_log(f"llm ready in {time.perf_counter() - started:.2f}s")
         _llm_initialized = True
@@ -203,11 +208,17 @@ def _ensure_embedding_runtime() -> None:
         openai_embedding_class = _load_openai_embedding_class()
         if openai_embedding_class is None:
             raise RuntimeError("LlamaIndex OpenAI embedding dependency is not installed")
-        if not get_openai_api_key():
-            raise RuntimeError("OPENAI_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_API_KEY is required for OpenAI embeddings")
+        api_key = get_openai_embedding_api_key()
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_EMBED_API_KEY or AI_KNOWLEDGE_BASE_OPENAI_API_KEY is required for OpenAI embeddings")
+        base_url = get_openai_embedding_base_url()
         if not _embedding_initialized:
             runtime_log(f"initialize embedding provider=openai model={get_openai_embedding_model()}")
-        Settings.embed_model = openai_embedding_class(model=get_openai_embedding_model(), **_build_openai_kwargs())
+        Settings.embed_model = openai_embedding_class(
+            model_name=get_openai_embedding_model(),
+            embed_batch_size=10,
+            **_build_openai_kwargs(api_key=api_key, base_url=base_url),
+        )
         if not _embedding_initialized:
             runtime_log(f"embedding ready in {time.perf_counter() - started:.2f}s")
             _embedding_initialized = True

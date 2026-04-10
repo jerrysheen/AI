@@ -1,4 +1,4 @@
 interface:
   display_name: "Pull Bilibili Info"
   short_description: "Fetch Bilibili subtitles and summarize"
-  default_prompt: "Use $pull-bilibiliInfo to fetch one Bilibili video transcript and summarize the content."
+  default_prompt: "Use $pull-bilibiliInfo to fetch one Bilibili video transcript and summarize with lightweight source schema. Output one JSON object including source.platform, source.source_url, source.source_title, source.publish_time, source.author_channel, source.video_id, source.retrieved_at, summary, key_points, and source_note."

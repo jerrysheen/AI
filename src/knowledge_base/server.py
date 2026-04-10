@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import time
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -8,7 +9,16 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
-from .config import get_bind_host, get_bind_port, get_index_dir, get_openai_llm_model, get_openai_base_url, get_service_root_dir, should_auto_extract
+from .config import (
+    get_bind_host,
+    get_bind_port,
+    get_index_dir,
+    get_openai_embedding_base_url,
+    get_openai_llm_base_url,
+    get_openai_llm_model,
+    get_service_root_dir,
+    should_auto_extract,
+)
 from .llama_runtime import (
     ask_index,
     dependencies_available,
@@ -34,6 +44,77 @@ from .store import (
 )
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+_reindex_lock = threading.Lock()
+_reindex_running = False
+_reindex_pending = False
+_reindex_last_error = ""
+_reindex_last_started_at = ""
+_reindex_last_finished_at = ""
+_reindex_last_duration_ms = 0
+_reindex_last_result: Optional[Dict[str, Any]] = None
+
+
+def _iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _snapshot_reindex_state() -> Dict[str, Any]:
+    with _reindex_lock:
+        return {
+            "running": _reindex_running,
+            "pending": _reindex_pending,
+            "lastError": _reindex_last_error,
+            "lastStartedAt": _reindex_last_started_at,
+            "lastFinishedAt": _reindex_last_finished_at,
+            "lastDurationMs": _reindex_last_duration_ms,
+            "lastResult": _reindex_last_result,
+        }
+
+
+def _run_reindex_loop() -> None:
+    global _reindex_running, _reindex_pending, _reindex_last_error
+    global _reindex_last_started_at, _reindex_last_finished_at, _reindex_last_duration_ms, _reindex_last_result
+    while True:
+        started_at = _iso_now()
+        started_ts = time.perf_counter()
+        error_message = ""
+        result: Optional[Dict[str, Any]] = None
+        try:
+            result = rebuild_index(fetch_document_bundles())
+        except Exception as exc:  # pragma: no cover - surfaced via API
+            error_message = str(exc)
+        finished_at = _iso_now()
+        duration_ms = int((time.perf_counter() - started_ts) * 1000)
+        with _reindex_lock:
+            _reindex_last_started_at = started_at
+            _reindex_last_finished_at = finished_at
+            _reindex_last_duration_ms = duration_ms
+            _reindex_last_error = error_message
+            _reindex_last_result = result
+            if _reindex_pending:
+                _reindex_pending = False
+                continue
+            _reindex_running = False
+            break
+
+
+def schedule_reindex() -> Dict[str, Any]:
+    global _reindex_running, _reindex_pending
+    should_start_worker = False
+    with _reindex_lock:
+        if _reindex_running:
+            _reindex_pending = True
+        else:
+            _reindex_running = True
+            should_start_worker = True
+    if should_start_worker:
+        worker = threading.Thread(target=_run_reindex_loop, daemon=True, name="knowledge-reindex")
+        worker.start()
+    state = _snapshot_reindex_state()
+    state["status"] = "running" if state["running"] else "queued"
+    return state
 
 
 def boot_progress(percent: int, label: str) -> None:
@@ -164,6 +245,9 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
         if parsed.path == "/debug":
             self.write_file(STATIC_DIR / "debug.html", "text/html; charset=utf-8")
             return
+        if parsed.path == "/documents/read":
+            self.write_file(STATIC_DIR / "document.html", "text/html; charset=utf-8")
+            return
         if parsed.path == "/health":
             self.write_json(
                 HTTPStatus.OK,
@@ -176,7 +260,8 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
                     "llamaRuntimeReady": runtime_ready(),
                     "llmRuntimeReady": llm_runtime_ready(),
                     "embeddingRuntime": describe_embedding_runtime(),
-                    "openaiBaseUrl": get_openai_base_url(),
+                    "llmBaseUrl": get_openai_llm_base_url(),
+                    "embeddingBaseUrl": get_openai_embedding_base_url(),
                     "llmModel": get_openai_llm_model(),
                 },
             )
@@ -239,6 +324,9 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
                     },
                 )
             return
+        if parsed.path == "/knowledge/reindex/status":
+            self.write_json(HTTPStatus.OK, {"ok": True, "reindex": _snapshot_reindex_state()})
+            return
         self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Not found"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -275,11 +363,13 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             auto_extract = should_auto_extract()
         extraction: Dict[str, Any] = {"documentSummary": "", "knowledgeCards": [], "annotations": []}
         extraction_warning = ""
+        extraction_started = time.perf_counter()
         if auto_extract:
             try:
                 extraction = extract_knowledge(title, source_type, raw_content)
             except Exception as exc:
                 extraction_warning = str(exc)
+        extraction_duration_ms = int((time.perf_counter() - extraction_started) * 1000)
 
         manual_cards = body.get("knowledgeCards", []) if isinstance(body.get("knowledgeCards"), list) else []
         manual_annotations = body.get("annotations", []) if isinstance(body.get("annotations"), list) else []
@@ -294,12 +384,7 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             annotations=extraction.get("annotations", []) + manual_annotations,
         )
 
-        reindex_result: Optional[Dict[str, Any]] = None
-        reindex_warning = ""
-        try:
-            reindex_result = rebuild_index(fetch_document_bundles())
-        except Exception as exc:
-            reindex_warning = str(exc)
+        reindex_state = schedule_reindex()
 
         self.write_json(
             HTTPStatus.CREATED,
@@ -307,8 +392,8 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
                 "ok": True,
                 "document": document,
                 "extractionWarning": extraction_warning,
-                "reindexWarning": reindex_warning,
-                "reindex": reindex_result,
+                "extractionDurationMs": extraction_duration_ms,
+                "reindexStatus": reindex_state,
             },
         )
 
@@ -333,12 +418,8 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             )
 
     def handle_reindex(self) -> None:
-        try:
-            result = rebuild_index(fetch_document_bundles())
-        except Exception as exc:
-            self.write_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "error": str(exc)})
-            return
-        self.write_json(HTTPStatus.OK, result)
+        state = schedule_reindex()
+        self.write_json(HTTPStatus.OK, {"ok": True, "reindexStatus": state})
 
     def handle_delete_document(self, body: Dict[str, Any]) -> None:
         document_id = int(body.get("id", 0) or 0)
@@ -381,12 +462,7 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
             self.write_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "Document not found"})
             return
 
-        reindex_result: Optional[Dict[str, Any]] = None
-        reindex_warning = ""
-        try:
-            reindex_result = rebuild_index(fetch_document_bundles())
-        except Exception as exc:
-            reindex_warning = str(exc)
+        reindex_state = schedule_reindex()
 
         self.write_json(
             HTTPStatus.OK,
@@ -398,8 +474,7 @@ class KnowledgeBaseHandler(BaseHTTPRequestHandler):
                 "deletedDocumentId": int(deleted_documents[0]["id"]) if len(deleted_documents) == 1 else None,
                 "deletedDocument": deleted_documents[0] if len(deleted_documents) == 1 else None,
                 "deletedDocuments": deleted_documents,
-                "reindexWarning": reindex_warning,
-                "reindex": reindex_result,
+                "reindexStatus": reindex_state,
             },
         )
 

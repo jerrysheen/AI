@@ -53,7 +53,11 @@ AI_KNOWLEDGE_BASE_DATA_DIR=data/knowledge-base
 AI_KNOWLEDGE_BASE_AUTO_EXTRACT=true
 AI_KNOWLEDGE_BASE_OPENAI_API_KEY=
 AI_KNOWLEDGE_BASE_OPENAI_BASE_URL=
+AI_KNOWLEDGE_BASE_OPENAI_LLM_API_KEY=
+AI_KNOWLEDGE_BASE_OPENAI_LLM_BASE_URL=
 AI_KNOWLEDGE_BASE_OPENAI_LLM_MODEL=gpt-4.1-mini
+AI_KNOWLEDGE_BASE_OPENAI_EMBED_API_KEY=
+AI_KNOWLEDGE_BASE_OPENAI_EMBED_BASE_URL=
 AI_KNOWLEDGE_BASE_OPENAI_EMBED_MODEL=text-embedding-3-small
 AI_KNOWLEDGE_BASE_EMBED_PROVIDER=huggingface
 AI_KNOWLEDGE_BASE_HF_EMBED_MODEL=BAAI/bge-small-zh-v1.5
@@ -76,6 +80,26 @@ AI_KNOWLEDGE_BASE_HF_EMBED_MODEL=BAAI/bge-small-zh-v1.5
 This keeps extraction and answer generation on your existing LLM gateway, while retrieval embeddings run locally in Python.
 If you provide `AI_KNOWLEDGE_BASE_OPENAI_BASE_URL`, the service uses LlamaIndex's OpenAI-compatible client path instead of strict OpenAI model-name validation.
 
+If LLM and embedding must use different OpenAI-compatible providers, set the split variables instead:
+
+```env
+AI_KNOWLEDGE_BASE_OPENAI_LLM_API_KEY=your_llm_key
+AI_KNOWLEDGE_BASE_OPENAI_LLM_BASE_URL=https://your-llm-endpoint/v1
+AI_KNOWLEDGE_BASE_OPENAI_LLM_MODEL=your-llm-model
+
+AI_KNOWLEDGE_BASE_EMBED_PROVIDER=openai
+AI_KNOWLEDGE_BASE_OPENAI_EMBED_API_KEY=your_embed_key
+AI_KNOWLEDGE_BASE_OPENAI_EMBED_BASE_URL=https://your-embedding-endpoint/v1
+AI_KNOWLEDGE_BASE_OPENAI_EMBED_MODEL=your-embedding-model
+```
+
+Priority order:
+
+- LLM key: `AI_KNOWLEDGE_BASE_OPENAI_LLM_API_KEY` -> `AI_KNOWLEDGE_BASE_OPENAI_API_KEY` -> `OPENAI_API_KEY`
+- LLM base URL: `AI_KNOWLEDGE_BASE_OPENAI_LLM_BASE_URL` -> `AI_KNOWLEDGE_BASE_OPENAI_BASE_URL` -> `OPENAI_BASE_URL`
+- Embedding key: `AI_KNOWLEDGE_BASE_OPENAI_EMBED_API_KEY` -> `AI_KNOWLEDGE_BASE_OPENAI_API_KEY` -> `OPENAI_API_KEY`
+- Embedding base URL: `AI_KNOWLEDGE_BASE_OPENAI_EMBED_BASE_URL` -> `AI_KNOWLEDGE_BASE_OPENAI_BASE_URL` -> `OPENAI_BASE_URL`
+
 ## Endpoints
 
 ### `GET /health`
@@ -95,7 +119,7 @@ Lists the most recent documents.
 Returns one document with cards and annotations.
 
 ### `POST /documents`
-Creates a document, optionally auto-extracts knowledge, then rebuilds the Llama index.
+Creates a document, optionally auto-extracts knowledge, then schedules index rebuild asynchronously.
 
 Example body:
 
@@ -115,8 +139,20 @@ Example body:
 }
 ```
 
+Response highlights:
+
+- `document`: persisted canonical source payload
+- `extractionWarning`: extraction/runtime warning (if extraction is unavailable)
+- `extractionDurationMs`: extraction phase duration
+- `reindexStatus`: asynchronous reindex state snapshot at submit time
+
+Notes:
+
+- `rawContent` should keep the cleaned source body (not an upstream summary).
+- Reindex is no longer a blocking part of this request.
+
 ### `POST /documents/delete`
-Deletes document records, cascades related knowledge cards and annotations, then rebuilds the Llama index.
+Deletes document records, cascades related knowledge cards and annotations, then schedules index rebuild asynchronously.
 
 Example body:
 
@@ -178,7 +214,18 @@ Example body:
 ```
 
 ### `POST /knowledge/reindex`
-Rebuilds the index from SQLite data.
+Schedules an async index rebuild from SQLite data.
+
+### `GET /knowledge/reindex/status`
+Returns the current reindex state:
+
+- `running`
+- `pending`
+- `lastError`
+- `lastStartedAt`
+- `lastFinishedAt`
+- `lastDurationMs`
+- `lastResult`
 
 ## Operator Workflow
 

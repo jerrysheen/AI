@@ -99,6 +99,38 @@ Output contract:
 - When `full_text` is non-empty, prefer detailed content extraction over generic summarization.
 - If the caller wants a summary, keep it faithful to the transcript and include enough specifics that the user can tell what was actually said.
 
+Summary output schema (required when you summarize):
+
+- If you produce any summary, output exactly one JSON object and follow this schema.
+- Do not output free-form prose before or after the JSON.
+
+```json
+{
+  "summary_version": "v1",
+  "source": {
+    "platform": "bilibili",
+    "source_url": "https://www.bilibili.com/video/BV...",
+    "source_title": "video title",
+    "publish_time": "2026-04-01T12:00:00+08:00",
+    "author_channel": "uploader name",
+    "video_id": "BV...",
+    "retrieved_at": "2026-04-09T09:30:00+08:00"
+  },
+  "summary": "content summary based on transcript",
+  "key_points": [
+    "point 1",
+    "point 2"
+  ],
+  "source_note": "summary comes from subtitle transcript of this video"
+}
+```
+
+Lightweight rules:
+
+- `source.source_url` is mandatory.
+- If transcript is unavailable, do not summarize.
+- Never infer from title, thumbnail, comments, or outside knowledge.
+
 If the script reports no subtitles:
 
 - Treat that result as no available subtitle for the requested video.

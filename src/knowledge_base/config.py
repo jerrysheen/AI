@@ -80,10 +80,38 @@ def get_openai_api_key() -> str:
     )
 
 
+def get_openai_llm_api_key() -> str:
+    return (
+        os.environ.get("AI_KNOWLEDGE_BASE_OPENAI_LLM_API_KEY", "").strip()
+        or get_openai_api_key()
+    )
+
+
+def get_openai_embedding_api_key() -> str:
+    return (
+        os.environ.get("AI_KNOWLEDGE_BASE_OPENAI_EMBED_API_KEY", "").strip()
+        or get_openai_api_key()
+    )
+
+
 def get_openai_base_url() -> str:
     return (
         os.environ.get("AI_KNOWLEDGE_BASE_OPENAI_BASE_URL", "").strip()
         or os.environ.get("OPENAI_BASE_URL", "").strip()
+    )
+
+
+def get_openai_llm_base_url() -> str:
+    return (
+        os.environ.get("AI_KNOWLEDGE_BASE_OPENAI_LLM_BASE_URL", "").strip()
+        or get_openai_base_url()
+    )
+
+
+def get_openai_embedding_base_url() -> str:
+    return (
+        os.environ.get("AI_KNOWLEDGE_BASE_OPENAI_EMBED_BASE_URL", "").strip()
+        or get_openai_base_url()
     )
 
 

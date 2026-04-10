@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Knowledge Document</title>
+    <style>
+      :root {
+        --bg: #f5f1e8;
+        --paper: #fffdf8;
+        --ink: #1f1f1f;
+        --muted: #6b665c;
+        --line: #e7dcc8;
+        --accent: #7b4f2a;
+        --accent-soft: #efe2d0;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(123, 79, 42, 0.08), transparent 28%),
+          linear-gradient(180deg, #f8f4ec 0%, var(--bg) 100%);
+        font: 15px/1.75 Georgia, "Songti SC", "Noto Serif SC", serif;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      .page {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px 20px 64px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .paper {
+        background: var(--paper);
+        border: 1px solid rgba(123, 79, 42, 0.12);
+        border-radius: 24px;
+        box-shadow: 0 18px 48px rgba(49, 38, 24, 0.08);
+        overflow: hidden;
+      }
+      .hero {
+        padding: 34px 34px 20px;
+        border-bottom: 1px solid var(--line);
+        background:
+          linear-gradient(135deg, rgba(123, 79, 42, 0.08), rgba(255, 255, 255, 0) 45%),
+          linear-gradient(180deg, #fffcf7 0%, #fffaf2 100%);
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 18px 0 14px;
+        font-size: clamp(30px, 4vw, 48px);
+        line-height: 1.12;
+        letter-spacing: -0.03em;
+      }
+      .summary {
+        margin: 0;
+        max-width: 760px;
+        color: #463d30;
+        font-size: 17px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .content {
+        padding: 26px 34px 34px;
+      }
+      .section {
+        margin-top: 28px;
+      }
+      .section:first-child {
+        margin-top: 0;
+      }
+      .section-title {
+        margin: 0 0 14px;
+        color: var(--accent);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .cards {
+        display: grid;
+        gap: 12px;
+      }
+      .card {
+        padding: 14px 16px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fffdfa;
+      }
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 17px;
+      }
+      .card p {
+        margin: 0;
+        color: #4f4639;
+      }
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .tag {
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 12px;
+      }
+      .notes {
+        display: grid;
+        gap: 10px;
+      }
+      .note {
+        padding: 12px 14px;
+        border-left: 3px solid var(--accent);
+        background: #faf5ed;
+        color: #463d30;
+      }
+      .article {
+        color: #2c2822;
+      }
+      .article h2,
+      .article h3 {
+        margin: 28px 0 12px;
+        line-height: 1.3;
+      }
+      .article h2 { font-size: 28px; }
+      .article h3 { font-size: 22px; }
+      .article p {
+        margin: 0 0 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .article ul {
+        margin: 0 0 16px 20px;
+        padding: 0;
+      }
+      .article ol {
+        margin: 0 0 16px 24px;
+        padding: 0;
+      }
+      .article li {
+        margin-bottom: 8px;
+      }
+      .article blockquote {
+        margin: 0 0 16px;
+        padding: 8px 12px;
+        border-left: 3px solid var(--accent);
+        background: #faf5ed;
+        color: #4f4639;
+      }
+      .article code {
+        padding: 0 4px;
+        border-radius: 4px;
+        background: #f1e7d8;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.92em;
+      }
+      .article pre {
+        margin: 0 0 16px;
+        padding: 12px;
+        border-radius: 10px;
+        background: #2b2620;
+        color: #f7f2e8;
+        overflow-x: auto;
+      }
+      .article pre code {
+        padding: 0;
+        background: transparent;
+        color: inherit;
+      }
+      .article hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 18px 0;
+      }
+      .empty {
+        padding: 48px 24px;
+        text-align: center;
+        color: var(--muted);
+      }
+      @media (max-width: 720px) {
+        .page { padding: 14px 12px 48px; }
+        .hero, .content { padding-left: 18px; padding-right: 18px; }
+        h1 { margin-top: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="topbar">
+        <div><a href="/">返回搜索</a> · <a href="/debug">调试页</a></div>
+        <div id="topbar-status">加载中...</div>
+      </div>
+      <article class="paper" id="document-shell">
+        <div class="empty">加载中...</div>
+      </article>
+    </main>
+
+    <script>
+      async function readJson(response) {
+        const text = await response.text();
+        try { return JSON.parse(text); } catch { return { ok: false, error: text }; }
+      }
+      function escapeHtml(value) {
+        return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+      }
+      function renderInline(rawLine) {
+        let line = escapeHtml(rawLine ?? "");
+        line = line.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_m, label, href) => {
+          return `<a href="${href}" target="_blank" rel="noreferrer">${label}</a>`;
+        });
+        line = line.replace(/`([^`]+)`/g, "<code>$1</code>");
+        line = line.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+        line = line.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+        return line;
+      }
+      function renderRichText(rawText) {
+        const text = String(rawText ?? "").replace(/\r\n/g, "\n").trim();
+        if (!text) {
+          return "<p>暂无正文。</p>";
+        }
+        const lines = text.split("\n");
+        const htmlParts = [];
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i];
+          const trimmed = line.trim();
+          if (!trimmed) {
+            i += 1;
+            continue;
+          }
+          if (/^```/.test(trimmed)) {
+            i += 1;
+            const codeLines = [];
+            while (i < lines.length && !/^```/.test(lines[i].trim())) {
+              codeLines.push(lines[i]);
+              i += 1;
+            }
+            if (i < lines.length) {
+              i += 1;
+            }
+            htmlParts.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+            continue;
+          }
+          if (/^######\s+/.test(trimmed)) {
+            htmlParts.push(`<h4>${renderInline(trimmed.replace(/^######\s+/, ""))}</h4>`);
+            i += 1;
+            continue;
+          }
+          if (/^#####\s+/.test(trimmed)) {
+            htmlParts.push(`<h4>${renderInline(trimmed.replace(/^#####\s+/, ""))}</h4>`);
+            i += 1;
+            continue;
+          }
+          if (/^####\s+/.test(trimmed)) {
+            htmlParts.push(`<h3>${renderInline(trimmed.replace(/^####\s+/, ""))}</h3>`);
+            i += 1;
+            continue;
+          }
+          if (/^###\s+/.test(trimmed)) {
+            htmlParts.push(`<h3>${renderInline(trimmed.replace(/^###\s+/, ""))}</h3>`);
+            i += 1;
+            continue;
+          }
+          if (/^##\s+/.test(trimmed)) {
+            htmlParts.push(`<h2>${renderInline(trimmed.replace(/^##\s+/, ""))}</h2>`);
+            i += 1;
+            continue;
+          }
+          if (/^#\s+/.test(trimmed)) {
+            htmlParts.push(`<h2>${renderInline(trimmed.replace(/^#\s+/, ""))}</h2>`);
+            i += 1;
+            continue;
+          }
+          if (/^>\s*/.test(trimmed)) {
+            const quoteLines = [];
+            while (i < lines.length && /^>\s*/.test(lines[i].trim())) {
+              quoteLines.push(lines[i].trim().replace(/^>\s?/, ""));
+              i += 1;
+            }
+            htmlParts.push(`<blockquote>${quoteLines.map((item) => renderInline(item)).join("<br>")}</blockquote>`);
+            continue;
+          }
+          if (/^[-*]\s+/.test(trimmed)) {
+            const items = [];
+            while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
+              items.push(lines[i].trim().replace(/^[-*]\s+/, ""));
+              i += 1;
+            }
+            htmlParts.push(`<ul>${items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</ul>`);
+            continue;
+          }
+          if (/^\d+\.\s+/.test(trimmed)) {
+            const items = [];
+            while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
+              items.push(lines[i].trim().replace(/^\d+\.\s+/, ""));
+              i += 1;
+            }
+            htmlParts.push(`<ol>${items.map((item) => `<li>${renderInline(item)}</li>`).join("")}</ol>`);
+            continue;
+          }
+          if (/^---+$/.test(trimmed) || /^___+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
+            htmlParts.push("<hr>");
+            i += 1;
+            continue;
+          }
+          const paragraph = [];
+          while (i < lines.length) {
+            const current = lines[i].trim();
+            if (!current) {
+              break;
+            }
+            if (
+              /^```/.test(current) ||
+              /^#{1,6}\s+/.test(current) ||
+              /^>\s*/.test(current) ||
+              /^[-*]\s+/.test(current) ||
+              /^\d+\.\s+/.test(current) ||
+              /^---+$/.test(current) ||
+              /^___+$/.test(current) ||
+              /^\*\*\*+$/.test(current)
+            ) {
+              break;
+            }
+            paragraph.push(lines[i].trim());
+            i += 1;
+          }
+          htmlParts.push(`<p>${paragraph.map((item) => renderInline(item)).join("<br>")}</p>`);
+        }
+        return htmlParts.join("");
+      }
+      function renderDocument(document) {
+        const cards = Array.isArray(document.knowledgeCards) ? document.knowledgeCards : [];
+        const annotations = Array.isArray(document.annotations) ? document.annotations : [];
+        const sourceUrl = String(document.sourceUrl ?? "").trim();
+        return `
+          <header class="hero">
+            <div class="eyebrow">${escapeHtml(document.sourceType || "document")} · #${escapeHtml(document.id)}</div>
+            <h1>${escapeHtml(document.title || "Untitled")}</h1>
+            ${document.aiSummary ? `<p class="summary">${escapeHtml(document.aiSummary)}</p>` : ""}
+            <div class="meta">
+              ${document.createdAt ? `<span class="chip">created ${escapeHtml(document.createdAt)}</span>` : ""}
+              ${document.updatedAt ? `<span class="chip">updated ${escapeHtml(document.updatedAt)}</span>` : ""}
+              ${sourceUrl ? `<a class="chip" href="${escapeHtml(sourceUrl)}" target="_blank" rel="noreferrer">打开来源</a>` : ""}
+              <a class="chip" href="/documents/view?id=${encodeURIComponent(document.id)}" target="_blank" rel="noreferrer">查看 JSON</a>
+            </div>
+          </header>
+          <section class="content">
+            ${cards.length ? `
+              <section class="section">
+                <h2 class="section-title">Knowledge Cards</h2>
+                <div class="cards">
+                  ${cards.map((card) => `
+                    <div class="card">
+                      <h3>${escapeHtml(card.title || "Untitled card")}</h3>
+                      ${card.summary ? `<p>${escapeHtml(card.summary)}</p>` : ""}
+                      <div class="tags">
+                        ${card.topic ? `<span class="tag">topic: ${escapeHtml(card.topic)}</span>` : ""}
+                        ${card.confidence !== undefined ? `<span class="tag">confidence: ${escapeHtml(Number(card.confidence).toFixed(2))}</span>` : ""}
+                        ${(card.tags || []).map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("")}
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              </section>
+            ` : ""}
+            ${annotations.length ? `
+              <section class="section">
+                <h2 class="section-title">Annotations</h2>
+                <div class="notes">
+                  ${annotations.map((item) => `<div class="note"><strong>${escapeHtml(item.signalType || "note")}</strong><div>${escapeHtml(item.note || "")}</div></div>`).join("")}
+                </div>
+              </section>
+            ` : ""}
+            <section class="section">
+              <h2 class="section-title">Full Document</h2>
+              <div class="article">${renderRichText(document.rawContent)}</div>
+            </section>
+          </section>
+        `;
+      }
+      async function loadDocument() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id") || "";
+        if (!id) {
+          document.getElementById("topbar-status").textContent = "缺少 id";
+          document.getElementById("document-shell").innerHTML = '<div class="empty">缺少文档 id。</div>';
+          return;
+        }
+        const response = await fetch(`/documents/view?id=${encodeURIComponent(id)}`);
+        const payload = await readJson(response);
+        if (!payload.ok) {
+          document.getElementById("topbar-status").textContent = payload.error || "加载失败";
+          document.getElementById("document-shell").innerHTML = `<div class="empty">${escapeHtml(payload.error || "文档不存在")}</div>`;
+          return;
+        }
+        const documentItem = payload.document || {};
+        document.title = `${documentItem.title || "Knowledge Document"} · Knowledge Base`;
+        document.getElementById("topbar-status").textContent = `文档 #${documentItem.id || id}`;
+        document.getElementById("document-shell").innerHTML = renderDocument(documentItem);
+      }
+      loadDocument();
+    </script>
+  </body>
+</html>

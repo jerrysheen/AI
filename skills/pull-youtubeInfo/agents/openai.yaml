@@ -1,4 +1,4 @@
 interface:
   display_name: "Pull YouTube Info"
   short_description: "Fetch YouTube subtitles and transcript text"
-  default_prompt: "Use $pull-youtubeInfo to fetch one YouTube video transcript and summarize the content."
+  default_prompt: "Use $pull-youtubeInfo to fetch one YouTube video transcript and summarize with the schema from SKILL.md. Return ONLY one valid JSON object (UTF-8), with no markdown fences and no extra text before or after JSON. Required success shape: {\"summary_version\":\"v1\",\"source\":{\"platform\":\"youtube\",\"source_url\":\"https://www.youtube.com/watch?v=...\",\"source_title\":\"...\",\"publish_time\":\"...\",\"author_channel\":\"...\",\"video_id\":\"...\",\"retrieved_at\":\"...\"},\"summary\":\"...\",\"key_points\":[\"...\"],\"source_note\":\"...\"}. If transcript is unavailable, return ONLY: {\"status\":\"unavailable\",\"source\":{\"platform\":\"youtube\",\"source_url\":\"...\",\"video_id\":\"...\"},\"error\":\"...\"}. Do not output prose."
