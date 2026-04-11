@@ -1,0 +1,28 @@
+{
+  "enabled": false,
+  "mode": "preview",
+  "selected_model": {
+    "name": "streaming-paraformer-bilingual-zh-en",
+    "asset_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-paraformer-bilingual-zh-en.tar.bz2",
+    "docs_url": "https://k2-fsa.github.io/sherpa/onnx/pretrained_models/online-paraformer/paraformer-models.html",
+    "runtime": "online paraformer int8"
+  },
+  "candidate_models": [
+    {
+      "name": "online-paraformer-zh",
+      "status": "selected",
+      "purpose": "fast first token Chinese preview"
+    },
+    {
+      "name": "online-transducer-zh-en",
+      "status": "todo",
+      "purpose": "compare latency and bilingual robustness"
+    }
+  ],
+  "evaluation_targets": [
+    "first_token_latency_ms",
+    "final_text_quality",
+    "preview_stability",
+    "mixed_zh_en_behavior"
+  ]
+}

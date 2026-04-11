@@ -48,8 +48,13 @@ class Overlay:
         self.frame.pack()
         self.status_var = tk.StringVar(value="Sherpa Ready")
         self.detail_var = tk.StringVar(value="Hold Ctrl+` to record")
+        self.meta_var = tk.StringVar(value="")
         tk.Label(self.frame, textvariable=self.status_var, bg="#111111", fg="#f5f5f5", font=("Segoe UI Semibold", 16)).pack(anchor="w")
         tk.Label(self.frame, textvariable=self.detail_var, bg="#111111", fg="#b6c2cf", font=("Segoe UI", 10)).pack(anchor="w", pady=(6, 0))
+        tk.Label(self.frame, textvariable=self.meta_var, bg="#111111", fg="#7f8c98", font=("Consolas", 10)).pack(anchor="w", pady=(6, 2))
+        self.meter = tk.Canvas(self.frame, width=260, height=10, bg="#1b1b1b", highlightthickness=0)
+        self.meter.pack(anchor="w", pady=(2, 0))
+        self.meter_fill = self.meter.create_rectangle(0, 0, 0, 10, fill="#43c463", width=0)
         self.hide_job = None
         self.root.after(0, self._position)
 
@@ -58,9 +63,19 @@ class Overlay:
         width = self.root.winfo_reqwidth()
         self.root.geometry(f"+{self.root.winfo_screenwidth() - width - 28}+28")
 
-    def show(self, status: str, detail: str = "", auto_hide_ms: int | None = None):
+    def show(self, status: str, detail: str = "", meta: str = "", level: float = 0.0, auto_hide_ms: int | None = None):
         self.status_var.set(status)
         self.detail_var.set(detail)
+        self.meta_var.set(meta)
+        width = max(0, min(260, int(260 * level)))
+        self.meter.coords(self.meter_fill, 0, 0, width, 10)
+        if level > 0.75:
+            color = "#ff6b57"
+        elif level > 0.35:
+            color = "#f3c13a"
+        else:
+            color = "#43c463"
+        self.meter.itemconfig(self.meter_fill, fill=color)
         self._position()
         self.root.deiconify()
         self.root.lift()
@@ -89,6 +104,8 @@ class MicRecorder:
         self.frames = []
         self.stream = None
         self.recording = False
+        self.started_at = None
+        self.current_level = 0.0
 
     def _resolve_device(self, configured: str):
         if configured:
@@ -103,11 +120,15 @@ class MicRecorder:
 
     def start(self) -> None:
         self.frames = []
+        self.current_level = 0.0
+        self.started_at = time.perf_counter()
 
         def callback(indata, frames, time_info, status):
             if status:
                 print(f"[hotkey] audio status: {status}")
             self.frames.append(indata.copy())
+            peak = float(np.max(np.abs(indata))) if len(indata) else 0.0
+            self.current_level = max(0.0, min(1.0, peak * 4.0))
 
         self.stream = sd.InputStream(
             samplerate=self.sample_rate,
@@ -126,6 +147,7 @@ class MicRecorder:
         self.stream.close()
         self.stream = None
         self.recording = False
+        self.current_level = 0.0
         if not self.frames:
             raise RuntimeError("No microphone frames captured.")
         audio = np.concatenate(self.frames, axis=0)
@@ -139,6 +161,12 @@ class MicRecorder:
             self.stream.close()
             self.stream = None
         self.recording = False
+        self.current_level = 0.0
+
+    def elapsed_seconds(self) -> float:
+        if not self.recording or self.started_at is None:
+            return 0.0
+        return max(0.0, time.perf_counter() - self.started_at)
 
 
 def copy_to_clipboard(text: str) -> None:
@@ -232,8 +260,8 @@ def main() -> int:
     stop_event = threading.Event()
     state = {"busy": False, "trigger_down": False, "target_hwnd": 0}
 
-    def overlay_call(status: str, detail: str = "", auto_hide_ms: int | None = None):
-        overlay.root.after(0, lambda: overlay.show(status, detail, auto_hide_ms))
+    def overlay_call(status: str, detail: str = "", meta: str = "", level: float = 0.0, auto_hide_ms: int | None = None):
+        overlay.root.after(0, lambda: overlay.show(status, detail, meta, level, auto_hide_ms))
 
     def stop_and_transcribe():
         capture_dir = root / ".ai-data" / "sherpa-onnx" / "captures"
@@ -241,17 +269,17 @@ def main() -> int:
         try:
             duration = recorder.stop(wav_path)
             if duration < 0.2:
-                overlay_call("Too Short", "Hold the hotkey a little longer", 1800)
+                overlay_call("Too Short", "Hold the hotkey a little longer", "", 0.0, 1800)
                 return
-            overlay_call("Transcribing", f"{duration:.2f}s captured")
+            overlay_call("Transcribing", f"{duration:.2f}s captured", "running SenseVoice", 0.0)
             transcript_text, transcript_path = transcribe_file(root, env, wav_path)
             if transcript_text:
                 input_to_focused_control(transcript_text, state["target_hwnd"])
-                overlay_call("Inserted", transcript_text[:72], 2200)
+                overlay_call("Inserted", transcript_text[:72], transcript_path, 0.0, 2200)
             else:
-                overlay_call("No Text", transcript_path, 2200)
+                overlay_call("No Text", transcript_path, "", 0.0, 2200)
         except Exception as exc:
-            overlay_call("Error", str(exc), 3200)
+            overlay_call("Error", str(exc), "", 0.0, 3200)
         finally:
             if wav_path.exists():
                 wav_path.unlink()
@@ -267,10 +295,10 @@ def main() -> int:
             state["target_hwnd"] = get_foreground_window()
             try:
                 recorder.start()
-                overlay_call("Recording", "Release Ctrl+` to transcribe")
+                overlay_call("Recording", "Release Ctrl+` to transcribe", "00:00.0", recorder.current_level)
             except Exception as exc:
                 state["trigger_down"] = False
-                overlay_call("Mic Error", str(exc), 2600)
+                overlay_call("Mic Error", str(exc), "", 0.0, 2600)
             return
         if event.event_type == "up":
             if not state["trigger_down"] or not recorder.recording:
@@ -283,7 +311,20 @@ def main() -> int:
 
     keyboard.hook_key("`", on_tick, suppress=True)
     threading.Thread(target=create_tray_icon(stop_event, overlay).run, daemon=True).start()
-    overlay_call("Ready", "Hold Ctrl+` to record", 1800)
+    overlay_call("Ready", "Hold Ctrl+` to record", "SenseVoice offline final mode", 0.0, 1800)
+
+    def recording_poll():
+        if recorder.recording:
+            elapsed = recorder.elapsed_seconds()
+            minutes = int(elapsed // 60)
+            seconds = elapsed - minutes * 60
+            overlay_call(
+                "Recording",
+                "Release Ctrl+` to transcribe",
+                f"{minutes:02d}:{seconds:04.1f}",
+                recorder.current_level,
+            )
+        overlay.root.after(80, recording_poll)
 
     def stop_poll():
         if stop_event.is_set():
@@ -295,6 +336,7 @@ def main() -> int:
         overlay.root.after(250, stop_poll)
 
     overlay.root.after(250, stop_poll)
+    overlay.root.after(80, recording_poll)
     overlay.run()
     recorder.shutdown()
     return 0

@@ -122,8 +122,8 @@ Current behavior:
 - tray resident client starts in background
 - hold `Ctrl+\`` to record microphone audio
 - release `Ctrl+\`` to stop and transcribe
-- a small top-right overlay shows `Ready / Recording / Transcribing / Pasted / Error`
-- transcript text is copied to clipboard and pasted into the current input using `Ctrl+V`
+- a small top-right overlay shows `Ready / Recording / Transcribing / Inserted / Error`
+- transcript text is inserted back into the previously-focused input control; clipboard paste is only fallback
 - temporary microphone wav is deleted after transcription
 - tray icon provides `Quit`
 

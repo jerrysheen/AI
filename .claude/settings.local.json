@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python skills/sherpa/scripts/transcribe_local_media_sherpa.py --input \"/f/AI/.ai-data/auto-translate/remote-jobs/1775819504854-035fc2cb/upload.wav\" --provider cpu --output-dir ./test-cpu)"
+    ]
+  }
+}
