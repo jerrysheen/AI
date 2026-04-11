@@ -180,7 +180,11 @@ def paste_to_focused_input(text: str) -> None:
 
 
 def transcribe_file(root: Path, env: dict, wav_path: Path) -> tuple[str, str]:
-    venv_python = root / ".ai-data" / "tools" / "sherpa-onnx" / "venv" / "Scripts" / "python.exe"
+    configured_venv = env.get("AI_AUTO_TRANSLATE_SHERPA_VENV", ".ai-data/tools/sherpa-onnx/venv")
+    venv_root = Path(configured_venv)
+    if not venv_root.is_absolute():
+        venv_root = (root / venv_root).resolve()
+    venv_python = venv_root / "Scripts" / "python.exe"
     python_exe = str(venv_python) if venv_python.exists() else "python"
     script_path = root / "skills" / "autoTranslate" / "scripts" / "transcribe_local_media_sherpa.py"
     job_id = "mic-" + uuid.uuid4().hex

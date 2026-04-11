@@ -1,0 +1,27 @@
+{
+  "job_id": "230149a048a44a82af7733519cbbfa58",
+  "backend": "sherpa",
+  "model": "sensevoice",
+  "provider": "cuda",
+  "language": "auto",
+  "input_path": "F:\\AI\\Tools\\Sherpa\\.ai-data\\cache\\sherpa-models\\sensevoice\\sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17\\test_wavs\\zh.wav",
+  "wav_path": "F:\\AI\\Tools\\Sherpa\\.ai-data\\cache\\sherpa-models\\sensevoice\\sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17\\test_wavs\\zh.wav",
+  "output_dir": "F:\\AI\\Tools\\Sherpa\\test-gpu",
+  "audio_duration_seconds": 5.592,
+  "timing": {
+    "prepare_seconds": 0.0,
+    "model_load_seconds": 2.258,
+    "decode_seconds": 36.808,
+    "total_seconds": 39.066,
+    "rtf": 6.582
+  },
+  "conversion": {
+    "conversion_performed": false
+  },
+  "artifacts": {
+    "transcript_txt": "F:\\AI\\Tools\\Sherpa\\test-gpu\\transcript.txt",
+    "transcript_json": "F:\\AI\\Tools\\Sherpa\\test-gpu\\transcript.json",
+    "transcript_srt": "F:\\AI\\Tools\\Sherpa\\test-gpu\\transcript.srt",
+    "run_summary_json": "F:\\AI\\Tools\\Sherpa\\test-gpu\\run-summary.json"
+  }
+}

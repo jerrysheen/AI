@@ -62,6 +62,12 @@ function Install-Wheel {
 }
 
 function Get-CudnnBinPath {
+    $cudaPath = $env:CUDA_PATH
+    $cudaMajor = $null
+    if ($cudaPath -and $cudaPath -match "v(\d+)(?:\.\d+)?$") {
+        $cudaMajor = $matches[1]
+    }
+
     $roots = @("C:\Program Files\NVIDIA\CUDNN")
     $candidates = @()
     foreach ($root in $roots) {
@@ -69,10 +75,27 @@ function Get-CudnnBinPath {
             continue
         }
         $candidates += Get-ChildItem -Path $root -Recurse -Filter "cudnn64_9.dll" -ErrorAction SilentlyContinue |
-            Sort-Object FullName -Descending |
             Select-Object -ExpandProperty DirectoryName
     }
-    return ($candidates | Select-Object -First 1)
+
+    if (-not $candidates) {
+        return $null
+    }
+
+    $candidates = $candidates | Select-Object -Unique
+
+    if ($cudaMajor) {
+        $matched = $candidates | Where-Object {
+            $parts = $_ -split '[\\/]'
+            $versionPart = if ($parts.Length -ge 2) { $parts[$parts.Length - 2] } else { "" }
+            $versionPart -like "$cudaMajor.*"
+        } | Select-Object -First 1
+        if ($matched) {
+            return $matched
+        }
+    }
+
+    return ($candidates | Sort-Object | Select-Object -First 1)
 }
 
 function Expand-TarBz2 {

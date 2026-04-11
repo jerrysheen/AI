@@ -37,9 +37,21 @@ def configure_runtime_paths(env: dict) -> None:
         extra_paths.extend([item for item in raw.split(";") if item])
     default_cudnn_root = Path(r"C:\Program Files\NVIDIA\CUDNN")
     if default_cudnn_root.exists():
-        matches = sorted(default_cudnn_root.rglob("cudnn64_9.dll"), reverse=True)
+        matches = sorted({item.parent for item in default_cudnn_root.rglob("cudnn64_9.dll")})
         if matches:
-            extra_paths.append(str(matches[0].parent))
+            cuda_path = env.get("CUDA_PATH", "")
+            cuda_major = None
+            marker = "\\CUDA\\v"
+            if marker in cuda_path:
+                version = cuda_path.split(marker, 1)[1].split("\\", 1)[0]
+                cuda_major = version.split(".", 1)[0]
+            preferred = next(
+                (item for item in matches if len(item.parts) >= 2 and item.parts[-2].startswith(f"{cuda_major}."))
+                if cuda_major
+                else (),
+                None,
+            )
+            extra_paths.append(str(preferred or matches[0]))
     valid_paths = []
     for item in extra_paths:
         if Path(item).exists() and item not in valid_paths:
