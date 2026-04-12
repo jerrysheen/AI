@@ -158,7 +158,7 @@ def get_nvidia_smi_debug(repo_root: Path) -> dict:
 def parse_args():
     parser = argparse.ArgumentParser(description="GPU local media transcription with faster-whisper")
     parser.add_argument("input")
-    parser.add_argument("--model-size", default=os.environ.get("AI_AUTO_TRANSLATE_DEFAULT_MODEL", "small"))
+    parser.add_argument("--model-size", default=os.environ.get("AI_AUTO_TRANSLATE_DEFAULT_MODEL", "medium"))
     parser.add_argument("--language", default=os.environ.get("AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE", "auto"))
     parser.add_argument("--output-dir")
     parser.add_argument("--start-seconds", type=float, default=0)
@@ -168,7 +168,11 @@ def parse_args():
     parser.add_argument("--compute-type", default=os.environ.get("AI_AUTO_TRANSLATE_GPU_COMPUTE_TYPE", "float16"))
     parser.add_argument("--beam-size", type=int, default=int(os.environ.get("AI_AUTO_TRANSLATE_GPU_BEAM_SIZE", "5")))
     parser.add_argument("--debug", action="store_true")
-    return parser.parse_args()
+    args = parser.parse_args()
+    allowed_model_sizes = {"tiny", "small", "medium", "large-v2", "large-v3"}
+    if args.model_size not in allowed_model_sizes:
+        raise ValueError(f"Unsupported model size: {args.model_size}. Allowed: {', '.join(sorted(allowed_model_sizes))}")
+    return args
 
 
 def main():

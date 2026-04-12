@@ -33,7 +33,7 @@ node skills/autoTranslate/scripts/transcribe_local_media.js "/absolute/path/to/f
 GPU local run with `faster-whisper`:
 
 ```bash
-python skills/autoTranslate/scripts/transcribe_local_media_gpu.py "/absolute/path/to/file.mp4" --model-size small --compute-type float16 --debug
+python skills/autoTranslate/scripts/transcribe_local_media_gpu.py "/absolute/path/to/file.mp4" --model-size medium --compute-type float16 --debug
 ```
 
 ## Defaults From `.env`
@@ -120,7 +120,7 @@ node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to
 ```
 
 ```bash
-node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to/file.mp4" --remote-base-url http://WINDOWS_HOST:8768 --backend gpu --model-size small --compute-type float16 --beam-size 5 --debug
+node skills/autoTranslate/scripts/submit_remote_transcribe.js "/absolute/path/to/file.mp4" --remote-base-url http://WINDOWS_HOST:8768 --backend gpu --model-size medium --compute-type float16 --beam-size 5 --debug
 ```
 
 Submit a local file to the remote worker from another machine:

@@ -92,7 +92,7 @@ $whisperExe = Ensure-WhisperCpp
 Ensure-EnvLine "AI_FFMPEG_COMMAND" "ffmpeg"
 Ensure-EnvLine "AI_FFPROBE_COMMAND" "ffprobe"
 Ensure-EnvLine "AI_WHISPER_CLI_COMMAND" $whisperExe
-Ensure-EnvLine "AI_AUTO_TRANSLATE_DEFAULT_MODEL" "base"
+Ensure-EnvLine "AI_AUTO_TRANSLATE_DEFAULT_MODEL" "medium"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE" "auto"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_THREADS" "4"
 Ensure-EnvLine "AI_AUTO_TRANSLATE_WORKER_HOST" "0.0.0.0"

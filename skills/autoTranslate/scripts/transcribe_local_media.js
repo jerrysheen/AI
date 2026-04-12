@@ -35,15 +35,15 @@ const MODEL_REGISTRY = {
     url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin?download=1",
     note: "Fastest multilingual option. Good for speed tests, weaker accuracy.",
   },
-  base: {
-    filename: "ggml-base.bin",
-    url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin?download=1",
-    note: "Balanced multilingual option. Better accuracy, moderate speed.",
-  },
   small: {
     filename: "ggml-small.bin",
     url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin?download=1",
     note: "Higher accuracy but heavier on Intel 8GB machines.",
+  },
+  medium: {
+    filename: "ggml-medium.bin",
+    url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin?download=1",
+    note: "Default accuracy-oriented option. Slower, but more stable for longer Chinese speech.",
   },
 };
 
@@ -59,7 +59,7 @@ function parseArgs(argv) {
   const defaultThreads = Number(process.env.AI_AUTO_TRANSLATE_THREADS || Math.max(2, Math.min(os.cpus().length || 4, 4)));
   const args = {
     input: null,
-    modelSize: String(process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "base").trim(),
+    modelSize: String(process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "medium").trim(),
     language: String(process.env.AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE || "auto").trim(),
     threads: defaultThreads,
     outputDir: null,
@@ -124,7 +124,7 @@ function parseArgs(argv) {
       "Usage: node skills/autoTranslate/scripts/transcribe_local_media.js <media-file> [options]\n" +
       "\n" +
       "Options:\n" +
-      "  --model-size tiny|base|small   Whisper model size (default from .env or base)\n" +
+      "  --model-size tiny|small|medium Whisper model size (default from .env or medium)\n" +
       "  --language auto|zh|en          Whisper language (default from .env or auto)\n" +
       "  --threads N                    CPU threads for whisper-cli\n" +
       "  --output-dir PATH              Run output directory\n" +

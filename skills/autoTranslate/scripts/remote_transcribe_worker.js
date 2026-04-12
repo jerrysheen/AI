@@ -23,6 +23,7 @@ const WORKER_TOKEN = process.env.AI_AUTO_TRANSLATE_WORKER_TOKEN || "";
 const DEFAULT_WORKER_BACKEND = String(process.env.AI_AUTO_TRANSLATE_WORKER_BACKEND || "cpu").trim().toLowerCase();
 const MAX_UPLOAD_MB = Number(process.env.AI_AUTO_TRANSLATE_WORKER_MAX_UPLOAD_MB || 2048);
 const MAX_UPLOAD_BYTES = Math.max(64, MAX_UPLOAD_MB) * 1024 * 1024;
+const ALLOWED_MODEL_SIZES = new Set(["tiny", "small", "medium", "large-v2", "large-v3"]);
 const JOBS_ROOT = resolveRepoPath(
   REPO_ROOT,
   process.env.AI_AUTO_TRANSLATE_WORKER_JOBS_DIR,
@@ -90,6 +91,24 @@ function updateJob(jobId, patch) {
 
 function appendLog(logPath, line) {
   fs.appendFileSync(logPath, `${line}\n`, "utf8");
+}
+
+function loadCompletedResultIfPresent(runDir) {
+  const summaryPath = path.join(runDir, "run-summary.json");
+  const transcriptPath = path.join(runDir, "transcript.txt");
+
+  if (!fs.existsSync(summaryPath) || !fs.existsSync(transcriptPath)) {
+    return null;
+  }
+
+  try {
+    const result = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
+    if (result && result.status === "completed") {
+      return result;
+    }
+  } catch {}
+
+  return null;
 }
 
 function setJobProgress(jobId, patch) {
@@ -177,6 +196,13 @@ function startTranscription(jobId) {
   let command = "node";
   let args = [];
 
+  if (!ALLOWED_MODEL_SIZES.has(job.options.modelSize)) {
+    updateJob(jobId, { status: "failed", error: `Unsupported model size: ${job.options.modelSize}` });
+    setJobProgress(jobId, { stage: "failed", percent: 100, message: `unsupported model size: ${job.options.modelSize}` });
+    appendLog(job.logPath, `[${nowIso()}] [worker] unsupported model size: ${job.options.modelSize}`);
+    return;
+  }
+
   if (!isBackendSupported(backend)) {
     updateJob(jobId, { status: "failed", error: `Backend not supported: ${backend}` });
     setJobProgress(jobId, { stage: "failed", percent: 100, message: `backend not supported: ${backend}` });
@@ -243,16 +269,29 @@ function startTranscription(jobId) {
 
   child.on("close", (code) => {
     if (code === 0) {
-      let result = null;
-      const summaryPath = path.join(job.runDir, "run-summary.json");
-      if (fs.existsSync(summaryPath)) {
-        try {
-          result = JSON.parse(fs.readFileSync(summaryPath, "utf8"));
-        } catch {}
-      }
+      const result = loadCompletedResultIfPresent(job.runDir);
       updateJob(jobId, { status: "completed", result });
       setJobProgress(jobId, { stage: "done", percent: 100, message: "completed" });
       appendLog(job.logPath, `[${nowIso()}] [worker] completed`);
+      return;
+    }
+
+    const recoveredResult = loadCompletedResultIfPresent(job.runDir);
+    if (recoveredResult) {
+      updateJob(jobId, {
+        status: "completed",
+        result: {
+          ...recoveredResult,
+          worker_exit_code: code,
+          worker_warning: `transcription outputs were written before the process exited with code ${code}`,
+        },
+      });
+      setJobProgress(jobId, {
+        stage: "done",
+        percent: 100,
+        message: `completed with warning (exit code ${code})`,
+      });
+      appendLog(job.logPath, `[${nowIso()}] [worker] completed with warning; recovered outputs after exit code ${code}`);
       return;
     }
 
@@ -296,7 +335,7 @@ function handleCreateJob(request, response, url) {
   const logPath = path.join(runDir, "worker.log");
   const options = {
     backend: String(url.searchParams.get("backend") || DEFAULT_WORKER_BACKEND || "cpu").trim().toLowerCase(),
-    modelSize: url.searchParams.get("modelSize") || process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "base",
+    modelSize: url.searchParams.get("modelSize") || process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "medium",
     language: url.searchParams.get("language") || process.env.AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE || "auto",
     threads: Number(url.searchParams.get("threads") || process.env.AI_AUTO_TRANSLATE_THREADS || 4),
     startSeconds: Number(url.searchParams.get("startSeconds") || 0),

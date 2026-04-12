@@ -23,6 +23,7 @@ const DEFAULT_LOCAL_RUNS_DIR = resolveRepoPath(
   process.env.AI_AUTO_TRANSLATE_REMOTE_CLIENT_RUNS_DIR,
   path.join(path.relative(REPO_ROOT, SHARED_DATA_DIR), "auto-translate", "remote-client-runs")
 );
+const ALLOWED_MODEL_SIZES = new Set(["tiny", "small", "medium", "large-v2", "large-v3"]);
 
 function nowIso() {
   return new Date().toISOString();
@@ -38,7 +39,7 @@ function parseArgs(argv) {
     remoteBaseUrl: process.env.AI_AUTO_TRANSLATE_REMOTE_BASE_URL || "",
     token: process.env.AI_AUTO_TRANSLATE_WORKER_TOKEN || "",
     backend: process.env.AI_AUTO_TRANSLATE_WORKER_BACKEND || "",
-    modelSize: process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "base",
+    modelSize: process.env.AI_AUTO_TRANSLATE_DEFAULT_MODEL || "medium",
     language: process.env.AI_AUTO_TRANSLATE_DEFAULT_LANGUAGE || "auto",
     threads: Number(process.env.AI_AUTO_TRANSLATE_THREADS || 4),
     clipSeconds: 0,
@@ -160,6 +161,9 @@ function parseArgs(argv) {
   if (!args.remoteBaseUrl) {
     throw new Error("Remote base URL is required. Set --remote-base-url or AI_AUTO_TRANSLATE_REMOTE_BASE_URL.");
   }
+  if (!ALLOWED_MODEL_SIZES.has(args.modelSize)) {
+    throw new Error(`Unsupported model size: ${args.modelSize}. Allowed: ${Array.from(ALLOWED_MODEL_SIZES).join(", ")}`);
+  }
 
   return args;
 }
@@ -205,6 +209,23 @@ function requestUrl(method, urlString, options = {}) {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function remoteJobHasRecoverableArtifacts(statusPayload) {
+  if (!statusPayload || typeof statusPayload !== "object") {
+    return false;
+  }
+
+  if (statusPayload.transcript_txt_ready) {
+    return true;
+  }
+
+  const outputs = statusPayload.result?.outputs;
+  return Boolean(
+    outputs?.transcript_txt ||
+    outputs?.transcript_json ||
+    outputs?.transcript_srt
+  );
 }
 
 function splitCommand(commandText) {
@@ -283,14 +304,23 @@ async function main() {
   log("remote", `job created: ${jobId}`);
 
   let statusPayload = null;
+  let recoveredFromFailedStatus = false;
   while (true) {
     await sleep(args.pollSeconds * 1000);
-    const statusResponse = await requestUrl("GET", new URL(`/jobs/${jobId}`, args.remoteBaseUrl).toString(), {
-      headers: args.token ? { authorization: `Bearer ${args.token}` } : {},
-      timeoutMs: 30000,
-    });
+    let statusResponse;
+    try {
+      statusResponse = await requestUrl("GET", new URL(`/jobs/${jobId}`, args.remoteBaseUrl).toString(), {
+        headers: args.token ? { authorization: `Bearer ${args.token}` } : {},
+        timeoutMs: 30000,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      log("remote", `status poll error: ${message}; keeping job alive and retrying`);
+      continue;
+    }
     if (statusResponse.statusCode !== 200) {
-      throw new Error(`Remote status check failed: HTTP ${statusResponse.statusCode}`);
+      log("remote", `status poll returned HTTP ${statusResponse.statusCode}; keeping job alive and retrying`);
+      continue;
     }
 
     statusPayload = JSON.parse(statusResponse.body.toString("utf8"));
@@ -302,6 +332,11 @@ async function main() {
 
     if (statusPayload.status === "completed") break;
     if (statusPayload.status === "failed") {
+      if (remoteJobHasRecoverableArtifacts(statusPayload)) {
+        recoveredFromFailedStatus = true;
+        log("remote", `status=failed but transcript artifacts are present; recovering files from job ${jobId}`);
+        break;
+      }
       throw new Error(statusPayload.error || "Remote job failed");
     }
   }
@@ -319,6 +354,13 @@ async function main() {
       downloaded[fileName] = filePath;
       log("download", `${fileName} -> ${filePath}`);
     }
+  }
+
+  if (!downloaded["transcript.txt"]) {
+    if (recoveredFromFailedStatus) {
+      throw new Error(`Remote job ${jobId} reported failed and transcript.txt could not be recovered.`);
+    }
+    throw new Error(`Remote job ${jobId} finished without transcript.txt.`);
   }
 
   let transcriptText = null;
@@ -341,6 +383,7 @@ async function main() {
     job_id: jobId,
     local_run_dir: runDir,
     remote_status: statusPayload.status,
+    recovered_from_failed_status: recoveredFromFailedStatus,
     remote_progress: statusPayload.progress || null,
     remote_result: statusPayload.result || null,
     downloaded_files: downloaded,
