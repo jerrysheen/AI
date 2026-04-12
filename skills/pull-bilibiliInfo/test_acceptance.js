@@ -53,29 +53,29 @@ function validateBilibiliDir(dir) {
   // 检查文件
   const files = fs.readdirSync(dir);
 
-  // 检查视频文件
   const videoFile = files.find((f) => f === "video.mp4");
-  if (!videoFile) {
-    throw new Error(`${prefix} 视频文件不存在 (video.mp4)`);
+  if (videoFile) {
+    const videoPath = path.join(dir, videoFile);
+    const videoStats = fs.statSync(videoPath);
+    if (videoStats.size === 0) {
+      throw new Error(`${prefix} 视频文件大小为 0`);
+    }
+    if (videoStats.size < 1024 * 100) {
+      throw new Error(`${prefix} 视频文件过小 (${videoStats.size} bytes)，可能不完整`);
+    }
+    console.log(`    ${colors.info} 视频大小: ${(videoStats.size / 1024 / 1024).toFixed(2)} MB`);
+  } else {
+    console.log(`    ${colors.info} 命中字幕路径，未下载视频`);
   }
-  const videoPath = path.join(dir, videoFile);
-  const videoStats = fs.statSync(videoPath);
-  if (videoStats.size === 0) {
-    throw new Error(`${prefix} 视频文件大小为 0`);
-  }
-  if (videoStats.size < 1024 * 100) {
-    throw new Error(`${prefix} 视频文件过小 (${videoStats.size} bytes)，可能不完整`);
-  }
-  console.log(`    ${colors.info} 视频大小: ${(videoStats.size / 1024 / 1024).toFixed(2)} MB`);
 
   // 检查 metadata 文件
-  const metadataFile = files.find((f) => f === "video.info.json");
+  const metadataFile = files.find((f) => f === "video.info.json") || files.find((f) => f === "metadata.json");
   if (!metadataFile) {
-    throw new Error(`${prefix} metadata 文件不存在 (video.info.json)`);
+    throw new Error(`${prefix} metadata 文件不存在 (video.info.json/metadata.json)`);
   }
   const metadataPath = path.join(dir, metadataFile);
   const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf8"));
-  if (!metadata.id || !metadata.title) {
+  if (!(metadata.id || metadata.bvid) || !metadata.title) {
     throw new Error(`${prefix} metadata 缺少必需字段: id 或 title`);
   }
   console.log(`    ${colors.info} 视频标题: ${metadata.title}`);
@@ -91,19 +91,16 @@ function validateBilibiliDir(dir) {
     throw new Error(`${prefix} content.txt 为空`);
   }
 
-  // ==========================================
-  // 重要: ASR 转写验证 - 验收标准必需项
-  // ==========================================
   const transcriptFile = files.find((f) => f === "transcript.txt");
   if (!transcriptFile) {
-    throw new Error(`${prefix} ❌ transcript.txt 不存在 - ASR转写未完成，验收失败`);
+    throw new Error(`${prefix} ❌ transcript.txt 不存在 - 字幕/ASR内容未落盘，验收失败`);
   }
   const transcriptPath = path.join(dir, transcriptFile);
   const transcript = fs.readFileSync(transcriptPath, "utf8");
   if (!transcript || transcript.trim().length === 0) {
-    throw new Error(`${prefix} ❌ transcript.txt 为空 - ASR转写结果为空，验收失败`);
+    throw new Error(`${prefix} ❌ transcript.txt 为空 - 字幕/ASR结果为空，验收失败`);
   }
-  console.log(`    ${colors.info} ASR转写: 已完成 (${transcript.trim().length} 字符)`);
+  console.log(`    ${colors.info} 转写内容: 已完成 (${transcript.trim().length} 字符)`);
 
   return true;
 }
@@ -169,8 +166,8 @@ async function main() {
   let failed = 0;
 
   console.log("\n=== pull-bilibiliInfo 验收测试开始 ===\n");
-  console.log("  验收标准: 视频下载成功 + ASR转写成功\n");
-  console.log("  重要: ASR转写是验收标准的必需项，未完成则验收失败\n");
+  console.log("  验收标准: 命中字幕则直接落盘；无字幕时视频下载 + ASR转写成功\n");
+  console.log("  重要: 最终必须有有效 transcript.txt，来源可以是字幕或 ASR\n");
 
   for (const test of tests) {
     try {
@@ -193,9 +190,9 @@ async function main() {
   } else {
     console.log("✅ 验收全部通过！");
     console.log(`\n${colors.info} 验收项全部通过:`);
-    console.log(`   ✓ 视频下载成功`);
+    console.log(`   ✓ 命中字幕时可直接收口；无字幕时视频下载成功`);
     console.log(`   ✓ Metadata 获取成功`);
-    console.log(`   ✓ ASR 转写成功（验收标准必需项）`);
+    console.log(`   ✓ transcript.txt 已成功落盘（字幕或 ASR）`);
     process.exit(0);
   }
 }

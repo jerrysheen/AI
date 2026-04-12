@@ -127,6 +127,17 @@ function buildVideoDownloadCommand(videoUrl, outputDir, options = {}) {
   };
 }
 
+function updateJobProgress(jobId, status, progress, extraData = {}) {
+  if (!jobId) {
+    return;
+  }
+
+  updateJobStatus(jobId, status, {
+    progress: progress || null,
+    ...extraData,
+  });
+}
+
 function downloadBilibiliVideo(videoUrl, outputDir, options = {}) {
   const plan = buildVideoDownloadCommand(videoUrl, outputDir, options);
   ensureDir(plan.outputDir);
@@ -174,6 +185,27 @@ function downloadBilibiliVideo(videoUrl, outputDir, options = {}) {
     yt_dlp_command: getYtDlpCommand(),
     output_dir: plan.outputDir,
     log: combinedOutput,
+  };
+}
+
+function buildBilibiliContentFiles(result) {
+  return {
+    text: result.content_exists ? "content.txt" : null,
+    transcript: result.transcript_path ? "transcript.txt" : null,
+    images: null,
+    video: result.video_exists ? "video.mp4" : null,
+  };
+}
+
+function buildBilibiliIndexFiles(result) {
+  return {
+    metadata: result.metadata_exists ? "metadata.json" : null,
+    content: result.content_exists ? "content.txt" : null,
+    transcript: result.transcript_path ? "transcript.txt" : null,
+    translated: null,
+    summary: null,
+    images_dir: null,
+    video_file: result.video_exists ? "video.mp4" : null,
   };
 }
 
@@ -256,6 +288,13 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
     let downloadResult = null;
     let subtitleResult = null;
 
+    updateJobProgress(jobId, "processing", {
+      stage: "fetching_subtitle",
+      percent: 15,
+      message: "正在获取 Bilibili 字幕",
+      updated_at: new Date().toISOString(),
+    });
+
     // ========== 优先尝试 AI 字幕 ==========
     try {
       console.log(`[bilibili] 优先尝试获取 AI 字幕: ${bvid}`);
@@ -267,6 +306,13 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
       if (subtitleResult && !subtitleResult.error && subtitleResult.full_text) {
         console.log(`[bilibili] ✅ 获取到 AI 字幕，来源: ${subtitleResult.transcript_source}`);
         result.transcript_source = subtitleResult.transcript_source || "ai_subtitle";
+        result.title = subtitleResult.title || `Bilibili ${bvid}`;
+        result.author = subtitleResult.owner || "";
+        result.content_type = {
+          has_video: false,
+          has_images: false,
+          has_text: true,
+        };
 
         try {
           fs.writeFileSync(transcriptPath, subtitleResult.full_text, "utf8");
@@ -286,11 +332,85 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
           job_id: jobId,
           details: "成功获取 AI 字幕",
         }, date);
+
+        const metadata = {
+          id: bvid,
+          bvid,
+          title: subtitleResult.title || null,
+          description: subtitleResult.desc || "",
+          duration: subtitleResult.duration || 0,
+          uploader: subtitleResult.owner || null,
+          subtitle_lang: subtitleResult.subtitle_lang || null,
+          subtitle_lang_doc: subtitleResult.subtitle_lang_doc || null,
+          requested_subtitle_lang: subtitleResult.requested_subtitle_lang || null,
+          transcript_source: result.transcript_source,
+          url: subtitleResult.url || sourceUrl,
+        };
+
+        try {
+          fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf8");
+          result.metadata_path = metadataPath;
+          result.metadata_exists = true;
+        } catch (e) {
+          console.error(`[bilibili] 保存 metadata 失败: ${e.message}`);
+        }
+
+        try {
+          let textContent = "";
+          if (metadata.title) {
+            textContent += `${metadata.title}\n\n`;
+          }
+          if (metadata.description) {
+            textContent += `${metadata.description}\n`;
+          }
+          if (textContent.trim()) {
+            fs.writeFileSync(contentPath, textContent, "utf8");
+            result.content_path = contentPath;
+            result.content_exists = true;
+          }
+        } catch (e) {
+          console.error(`[bilibili] 保存 content 失败: ${e.message}`);
+        }
+
+        updateJobProgress(jobId, "processed", {
+          stage: "completed",
+          percent: 100,
+          message: "命中字幕，已完成",
+          updated_at: new Date().toISOString(),
+        }, {
+          title: result.title,
+          content_type: result.content_type,
+          data_path: path.relative(path.join(taskDir, "..", ".."), taskDir),
+          content_files: buildBilibiliContentFiles(result),
+        });
+
+        updateTaskInPlatformIndex("bilibili", bvid, {
+          title: result.title,
+          author: result.author,
+          content_type: result.content_type,
+          status: "processed",
+          files: buildBilibiliIndexFiles(result),
+        }, date);
+
+        addTimelineEvent({
+          action: "processed",
+          job_id: jobId,
+          details: "Bilibili 处理完成 (命中字幕，跳过视频下载/ASR)",
+        }, date);
+
+        return result;
       }
     } catch (subtitleError) {
       console.log(`[bilibili] ⚠️ 获取 AI 字幕失败: ${subtitleError.message}`);
       subtitleResult = null;
     }
+
+    updateJobProgress(jobId, "processing", {
+      stage: "downloading_video",
+      percent: 45,
+      message: "未命中字幕，正在下载视频",
+      updated_at: new Date().toISOString(),
+    });
 
     // ========== 下载视频 (始终下载，无论是否有字幕) ==========
     try {
@@ -352,6 +472,12 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
 
     // ========== 如果没有字幕，使用 ASR 转写 ==========
     if (!result.transcript_path && result.video_exists) {
+      updateJobProgress(jobId, "processing", {
+        stage: "transcribing",
+        percent: 75,
+        message: "视频已下载，正在等待转写完成",
+        updated_at: new Date().toISOString(),
+      });
       console.log(`[bilibili] 无字幕，使用 ASR 转写视频`);
       try {
         const { transcribeVideo } = require("../../../src/shared/video_transcriber");
@@ -405,14 +531,14 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
       }
     }
 
-    const contentFiles = {
-      text: result.content_exists ? "content.txt" : null,
-      transcript: result.transcript_path ? "transcript.txt" : null,
-      images: null,
-      video: result.video_exists ? "video.mp4" : null,
-    };
+    const contentFiles = buildBilibiliContentFiles(result);
 
-    updateJobStatus(jobId, "processed", {
+    updateJobProgress(jobId, "processed", {
+      stage: "completed",
+      percent: 100,
+      message: "Bilibili 处理完成",
+      updated_at: new Date().toISOString(),
+    }, {
       title: result.title,
       content_type: result.content_type,
       data_path: path.relative(path.join(taskDir, "..", ".."), taskDir),
@@ -424,15 +550,7 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
       author: result.author,
       content_type: result.content_type,
       status: "processed",
-      files: {
-        metadata: result.metadata_exists ? "metadata.json" : null,
-        content: result.content_exists ? "content.txt" : null,
-        transcript: result.transcript_path ? "transcript.txt" : null,
-        translated: null,
-        summary: null,
-        images_dir: null,
-        video_file: result.video_exists ? "video.mp4" : null,
-      },
+      files: buildBilibiliIndexFiles(result),
     }, date);
 
     addTimelineEvent({
@@ -446,7 +564,12 @@ async function fetchBilibili(inputTextOrUrl, options = {}) {
     result.error_hint = error.stack || null;
 
     if (jobId) {
-      updateJobStatus(jobId, "processed", {
+      updateJobProgress(jobId, "failed", {
+        stage: "failed",
+        percent: 100,
+        message: `处理失败: ${result.error}`,
+        updated_at: new Date().toISOString(),
+      }, {
         notes: `处理失败: ${result.error}`,
       });
       addTimelineEvent({
