@@ -109,96 +109,22 @@ function extractYoutubeUrl(inputText) {
   throw new Error(`Unable to extract YouTube URL from input: ${inputText.slice(0, 100)}`);
 }
 
-function buildVideoDownloadCommand(videoUrl, outputDir, options = {}) {
-  const { executable, baseArgs } = parseCommand(options.ytDlpCommand || getYtDlpCommand());
-  const videoId = extractYoutubeVideoId(videoUrl);
-  const ffmpegLocation = options.ffmpegLocation || getFfmpegLocation();
-  const maxHeight = Number.isFinite(Number(options.maxHeight)) && Number(options.maxHeight) > 0
-    ? Math.floor(Number(options.maxHeight))
-    : 480;
-
-  const args = [...baseArgs];
-
-  // Keep yt-dlp close to its maintained defaults. Forcing tv/ios or web_creator
-  // increases failures on some videos because those clients may require extra tokens.
-  if (options.extractorArgs) {
-    args.push("--extractor-args", options.extractorArgs);
-  } else {
-    args.push("--extractor-args", "youtube:player-client=default,-web_creator");
-  }
-
-  // We only need media good enough for later audio extraction. Prefer a small
-  // muxed file to keep bandwidth and YouTube download friction lower.
-  args.push(
-    "-f",
-    [
-      `best[height<=${maxHeight}][vcodec!=none][acodec!=none][ext=mp4]`,
-      `best[height<=${maxHeight}][vcodec!=none][acodec!=none]`,
-      "18",
-      "best",
-    ].join("/")
-  );
-  args.push("--merge-output-format", "mp4");
-  args.push("--no-playlist");
-  args.push("-o", path.join(outputDir, "video.%(ext)s"));
-  args.push("--write-description");
-  args.push("--write-info-json");
-  // 添加用户代理避免被拦截
-  args.push("--user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-  // 忽略小错误，继续下载
-  args.push("--no-abort-on-error");
-  args.push("--ignore-errors");
-
-  if (ffmpegLocation && String(ffmpegLocation).trim()) {
-    args.push("--ffmpeg-location", ffmpegLocation);
-  }
-
-  if (options.cookiesFromBrowser) {
-    args.push("--cookies-from-browser", options.cookiesFromBrowser);
-  }
-
-  if (options.cookiesFile) {
-    args.push("--cookies", path.resolve(options.cookiesFile));
-  }
-
-  args.push(videoUrl);
-
-  return {
-    video_id: videoId,
-    executable,
-    args,
-    outputDir,
-    ffmpegLocation,
-  };
+function buildVideoDownloadCommand() {
+  throw new Error("Not implemented: YouTube video download is disabled. Metadata/subtitle only.");
 }
 
-function shouldAttemptVideoDownload({ metadata, subtitleResult, options = {} }) {
-  if (options.forceVideoDownload) {
-    return true;
+function updateJobProgress(jobId, status, progress, extraData = {}) {
+  if (!jobId) {
+    return;
   }
 
-  if (options.cookiesFromBrowser || options.cookiesFile) {
-    return true;
-  }
-
-  if (!metadata) {
-    return true;
-  }
-
-  // Keep video download as an explicit fallback only when the caller provided a
-  // stronger signal that download is intended.
-  if (!subtitleResult?.full_text) {
-    return true;
-  }
-
-  return false;
+  updateJobStatus(jobId, status, {
+    progress: progress || null,
+    ...extraData,
+  });
 }
 
 function shouldFinalizeAsEmptyResult({ metadata, subtitleResult, options = {} }) {
-  if (options.forceVideoDownload || options.cookiesFromBrowser || options.cookiesFile) {
-    return false;
-  }
-
   if (subtitleResult?.full_text) {
     return false;
   }
@@ -304,55 +230,7 @@ function fetchYoutubeMetadata(videoUrl, outputDir, options = {}) {
 }
 
 function downloadYoutubeVideo(videoUrl, outputDir, options = {}) {
-  const plan = buildVideoDownloadCommand(videoUrl, outputDir, options);
-  ensureDir(plan.outputDir);
-
-  const result = cp.spawnSync(plan.executable, plan.args, {
-    cwd: path.resolve(options.cwd || process.cwd()),
-    encoding: "utf8",
-    timeout: Number(options.timeoutMs) || 1000 * 60 * 30,
-    maxBuffer: 1024 * 1024 * 32,
-  });
-
-  const stdout = String(result.stdout || "");
-  const stderr = String(result.stderr || "");
-  const combinedOutput = `${stdout}${stderr}`.trim();
-
-  const videoPath = path.join(outputDir, "video.mp4");
-  const infoJsonPath = path.join(outputDir, "video.info.json");
-
-  let metadata = null;
-  if (fs.existsSync(infoJsonPath)) {
-    try {
-      metadata = JSON.parse(fs.readFileSync(infoJsonPath, "utf8"));
-    } catch (e) {
-      // ignore
-    }
-  }
-
-  const outputPath = fs.existsSync(videoPath) ? videoPath : null;
-  const stat = outputPath ? fs.statSync(outputPath) : null;
-
-  // 如果视频下载失败但有metadata，仍然返回成功（video_file为null）
-  if (result.status !== 0 && !metadata) {
-    throw new Error(combinedOutput || "yt-dlp video download failed.");
-  }
-
-  return {
-    video_id: plan.video_id,
-    video_url: videoUrl,
-    video_file: outputPath,
-    file_size_bytes: stat ? stat.size : null,
-    metadata: metadata,
-    title: metadata?.title || "",
-    author: metadata?.uploader || "",
-    description: metadata?.description || "",
-    duration: metadata?.duration || 0,
-    yt_dlp_command: getYtDlpCommand(),
-    output_dir: plan.outputDir,
-    log: combinedOutput,
-    download_warning: result.status !== 0 ? combinedOutput : null,
-  };
+  throw new Error("Not implemented: YouTube video download is disabled. Metadata/subtitle only.");
 }
 
 async function fetchYoutube(inputTextOrUrl, options = {}) {
@@ -388,8 +266,6 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
 
   let metadata = null;
   let subtitleResult = null;
-  let downloadResult = null;
-
   try {
     const sourceUrl = extractYoutubeUrl(inputTextOrUrl);
     result.source_url = sourceUrl;
@@ -437,6 +313,13 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
     const contentPath = path.join(taskDir, "content.txt");
     const transcriptPath = path.join(taskDir, "transcript.txt");
 
+    updateJobProgress(jobId, "processing", {
+      stage: "fetching_metadata",
+      percent: 20,
+      message: "正在获取 YouTube metadata",
+      updated_at: new Date().toISOString(),
+    });
+
     // ========== 步骤1: 优先获取 metadata（无需认证） ==========
     console.log(`[youtube] 步骤1: 获取视频 metadata: ${videoId}`);
     try {
@@ -476,6 +359,13 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
     } catch (metaError) {
       console.log(`[youtube] ⚠️ 获取metadata失败: ${metaError.message}`);
     }
+
+    updateJobProgress(jobId, "processing", {
+      stage: "fetching_subtitle",
+      percent: 60,
+      message: "正在获取 YouTube 字幕",
+      updated_at: new Date().toISOString(),
+    });
 
     // ========== 步骤2: 尝试获取 AI 字幕（无需认证） ==========
     let subtitleSkipped = false;
@@ -529,7 +419,12 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
       result.empty_result = true;
       result.notes = buildYoutubeJobNotes({ subtitleSkipped, subtitleResult });
 
-      updateJobStatus(jobId, "processed", {
+      updateJobProgress(jobId, "processed", {
+        stage: "completed",
+        percent: 100,
+        message: "无字幕，按空结果完成",
+        updated_at: new Date().toISOString(),
+      }, {
         title: result.title || `YouTube ${videoId}`,
         content_type: result.content_type,
         data_path: path.relative(path.join(taskDir, "..", ".."), taskDir),
@@ -555,105 +450,6 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
       return result;
     }
 
-    // ========== 步骤3: 尝试下载视频（可选，有cookies时成功率更高）==========
-    const shouldDownloadVideo = shouldAttemptVideoDownload({ metadata, subtitleResult, options });
-    if (shouldDownloadVideo) {
-      try {
-        console.log(
-          `[youtube] 步骤3: 尝试下载视频: ${videoId} (cookies: ${options.cookiesFromBrowser || options.cookiesFile ? "是" : "否"})`
-        );
-        const videoOutputDir = taskDir;
-        downloadResult = downloadYoutubeVideo(sourceUrl, videoOutputDir, options);
-
-        if (downloadResult.video_file) {
-          result.video_path = downloadResult.video_file;
-          result.video_exists = true;
-          result.video_size = downloadResult.file_size_bytes;
-          result.content_type.has_video = true;
-          console.log(`[youtube] ✅ 视频下载成功`);
-
-          addTimelineEvent({
-            action: "video_downloaded",
-            job_id: jobId,
-            details: "视频下载完成",
-          }, date);
-        } else if (downloadResult.metadata && !metadata) {
-          // 如果视频没下载成功但获取到了metadata
-          metadata = downloadResult.metadata;
-          if (!result.metadata_exists && metadata) {
-            result.title = metadata.title || `YouTube ${videoId}`;
-            result.author = metadata.uploader || "";
-            result.content_type.has_text = !!(metadata.title || metadata.description);
-            try {
-              fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf8");
-              result.metadata_path = metadataPath;
-              result.metadata_exists = true;
-            } catch (e) {}
-          }
-        }
-      } catch (videoError) {
-        console.log(`[youtube] ⚠️ 视频下载失败: ${videoError.message}`);
-        // 视频下载失败不阻止任务完成（如果有metadata或字幕）
-      }
-    } else {
-      console.log(`[youtube] 步骤3: 跳过视频下载`);
-    }
-
-    // ========== 步骤4: 如果有视频但无字幕，使用 ASR 转写 ==========
-    if (!result.transcript_path && result.video_exists) {
-      console.log(`[youtube] 步骤4: 无字幕，使用 ASR 转写视频`);
-      try {
-        const { transcribeVideo } = require("../../../src/shared/video_transcriber");
-        const transcriptResult = await transcribeVideo(result.video_path, {
-          keepWav: false,
-          outputDir: taskDir,
-        });
-
-        if (transcriptResult) {
-          result.transcript_source = "asr";
-          const targetTranscriptPath = path.join(taskDir, "transcript.txt");
-          const targetJsonPath = path.join(taskDir, "transcript.json");
-          const targetSrtPath = path.join(taskDir, "transcript.srt");
-
-          if (transcriptResult.transcript_path && fs.existsSync(transcriptResult.transcript_path)) {
-            if (transcriptResult.transcript_path !== targetTranscriptPath) {
-              fs.renameSync(transcriptResult.transcript_path, targetTranscriptPath);
-            }
-            transcriptResult.transcript_path = targetTranscriptPath;
-          }
-          if (transcriptResult.transcript_json_path && fs.existsSync(transcriptResult.transcript_json_path)) {
-            if (transcriptResult.transcript_json_path !== targetJsonPath) {
-              fs.renameSync(transcriptResult.transcript_json_path, targetJsonPath);
-            }
-            transcriptResult.transcript_json_path = targetJsonPath;
-          }
-          if (transcriptResult.transcript_srt_path && fs.existsSync(transcriptResult.transcript_srt_path)) {
-            if (transcriptResult.transcript_srt_path !== targetSrtPath) {
-              fs.renameSync(transcriptResult.transcript_srt_path, targetSrtPath);
-            }
-            transcriptResult.transcript_srt_path = targetSrtPath;
-          }
-
-          result.transcript_path = targetTranscriptPath;
-          result.transcript_json_path = targetJsonPath;
-          result.transcript_srt_path = targetSrtPath;
-
-          addTimelineEvent({
-            action: "asr_completed",
-            job_id: jobId,
-            details: "ASR 转写完成",
-          }, date);
-        }
-      } catch (transcribeError) {
-        console.error("[youtube] 转写失败:", transcribeError.message);
-        // 清理 upload.wav 如果存在
-        const uploadWavPath = path.join(taskDir, "upload.wav");
-        if (fs.existsSync(uploadWavPath)) {
-          fs.unlinkSync(uploadWavPath);
-        }
-      }
-    }
-
     // ========== 验证：至少要有metadata或字幕才算成功 ==========
     if (!metadata && !subtitleResult?.full_text) {
       throw new Error("无法获取视频metadata或字幕，请检查URL是否正确");
@@ -665,7 +461,12 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
 
     const contentFiles = buildYoutubeContentFiles(result);
 
-    updateJobStatus(jobId, "processed", {
+    updateJobProgress(jobId, "processed", {
+      stage: "completed",
+      percent: 100,
+      message: "YouTube 处理完成",
+      updated_at: new Date().toISOString(),
+    }, {
       title: result.title,
       content_type: result.content_type,
       data_path: path.relative(path.join(taskDir, "..", ".."), taskDir),
@@ -682,10 +483,10 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
       error: null,
     }, date);
 
-    addTimelineEvent({
+      addTimelineEvent({
       action: "processed",
       job_id: jobId,
-      details: `YouTube 处理完成 (字幕来源: ${result.transcript_source || "none"}, 视频: ${result.video_exists ? "有" : "无"})`,
+      details: `YouTube 处理完成 (字幕来源: ${result.transcript_source || "none"})`,
     }, date);
 
   } catch (error) {
@@ -693,7 +494,12 @@ async function fetchYoutube(inputTextOrUrl, options = {}) {
     result.error_hint = error.stack || null;
 
     if (jobId) {
-      updateJobStatus(jobId, "processed", {
+      updateJobProgress(jobId, "failed", {
+        stage: "failed",
+        percent: 100,
+        message: `处理失败: ${result.error}`,
+        updated_at: new Date().toISOString(),
+      }, {
         notes: `处理失败: ${result.error}`,
       });
       addTimelineEvent({
@@ -759,7 +565,7 @@ function parseArgs(argv) {
   if (!args.input) {
     throw new Error(
       "Usage: node fetch_youtube.js <input_text_or_url> " +
-        "[--output-dir ./downloads] [--cookies-from-browser chrome] [--cookies-file cookies.txt] [--pretty]\n\n" +
+        "[--output-dir ./downloads] [--pretty]\n\n" +
         "  [--max-height 480]\n\n" +
         "Example:\n" +
         "  node scripts/fetch_youtube.js \"dQw4w9WgXcQ\" --pretty"
@@ -799,7 +605,6 @@ module.exports = {
   fetchYoutubeMetadata,
   downloadYoutubeVideo,
   metadataIndicatesNoSubtitles,
-  shouldAttemptVideoDownload,
   shouldFinalizeAsEmptyResult,
   buildYoutubeContentFiles,
   buildYoutubeIndexFiles,

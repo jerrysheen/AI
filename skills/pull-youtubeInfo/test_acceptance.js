@@ -5,10 +5,7 @@
  *
  * 验收标准（来自Task.md）:
  * - 测试用例: 有字幕视频，验证字幕获取
- * - 验收: Metadata获取 + 字幕获取成功 (视频下载可选)
- * - 有视频时需ASR转写
- *
- * 重要: 如果有视频文件，ASR转写是验收标准的必需项，远端未返回则验收失败
+ * - 验收: Metadata获取成功；有字幕则保存字幕；无字幕则按空结果正常完成
  */
 
 const fs = require("node:fs");
@@ -77,33 +74,16 @@ function validateYoutubeDir(dir) {
     throw new Error(`${prefix} content.txt 为空`);
   }
 
-  // 检查视频文件
-  const videoFile = files.find((f) => f === "video.mp4");
-  const hasVideo = !!videoFile;
-
-  if (hasVideo) {
-    const videoPath = path.join(dir, videoFile);
-    const videoStats = fs.statSync(videoPath);
-    if (videoStats.size === 0) {
-      throw new Error(`${prefix} 视频文件大小为 0`);
-    }
-    console.log(`    ${colors.info} 视频大小: ${(videoStats.size / 1024 / 1024).toFixed(2)} MB`);
-
-    // ==========================================
-    // 重要: ASR 转写验证 - 有视频时是验收标准必需项
-    // ==========================================
-    const transcriptFile = files.find((f) => f === "transcript.txt");
-    if (!transcriptFile) {
-      throw new Error(`${prefix} ❌ transcript.txt 不存在 - 有视频时ASR转写未完成，验收失败`);
-    }
+  const transcriptFile = files.find((f) => f === "transcript.txt");
+  if (transcriptFile) {
     const transcriptPath = path.join(dir, transcriptFile);
     const transcript = fs.readFileSync(transcriptPath, "utf8");
     if (!transcript || transcript.trim().length === 0) {
-      throw new Error(`${prefix} ❌ transcript.txt 为空 - ASR转写结果为空，验收失败`);
+      throw new Error(`${prefix} transcript.txt 为空`);
     }
-    console.log(`    ${colors.info} ASR转写: 已完成 (${transcript.trim().length} 字符)`);
+    console.log(`    ${colors.info} 字幕已保存 (${transcript.trim().length} 字符)`);
   } else {
-    console.log(`    ${colors.info} 无视频文件，跳过ASR转写验证`);
+    console.log(`    ${colors.info} 无字幕文件，按空结果正常完成`);
   }
 
   return true;
@@ -161,7 +141,6 @@ const tests = [
     fn: async () => {
       const shim = require("./scripts/runtime_shim");
       const requiredExports = [
-        "getYoutubeDownloadDir",
         "ensureDir",
         "getTaskItemDir",
         "addJobToDailyJobs",
@@ -176,7 +155,7 @@ const tests = [
     },
   },
   {
-    name: "YouTube视频目录验证通过（有视频时需ASR转写）",
+    name: "YouTube视频目录验证通过（允许无字幕空结果）",
     fn: async () => {
       const testDir = TEST_CONFIG.getLatestTestDir();
       return validateYoutubeDir(testDir);
@@ -189,8 +168,7 @@ async function main() {
   let failed = 0;
 
   console.log("\n=== pull-youtubeInfo 验收测试开始 ===\n");
-  console.log("  验收标准: Metadata获取 + 字幕获取成功");
-  console.log("  重要: 有视频时ASR转写是验收标准的必需项，未完成则验收失败\n");
+  console.log("  验收标准: Metadata获取成功；有字幕则保存字幕；无字幕则按空结果正常完成\n");
 
   for (const test of tests) {
     try {
@@ -215,7 +193,7 @@ async function main() {
     console.log(`\n${colors.info} 验收项全部通过:`);
     console.log(`   ✓ Metadata 获取成功`);
     console.log(`   ✓ 字幕检测逻辑正常`);
-    console.log(`   ✓ 有视频时ASR转写成功（验收标准必需项）`);
+    console.log(`   ✓ 无字幕时按空结果正常收口`);
     process.exit(0);
   }
 }
