@@ -21,6 +21,12 @@ info-grab-manager/
 - pull-xhs: 处理小红书笔记
 - pull-Twitter: 处理 Twitter 推文
 
+## 调用建议
+
+- 上层如果需要“抓取并总结”，不要拆成 `add` + `process`
+- 统一使用 `node skills/info-grab-manager/scripts/job_manager.js fetch-and-summarize <url> [source]`
+- 这样 CLI 会持续输出 `[progress] ...` 进度，避免上层静默等待
+
 ## 数据存储
 
 任务数据存储在 `downloads/daily_jobs.json`，按日期组织下载内容。

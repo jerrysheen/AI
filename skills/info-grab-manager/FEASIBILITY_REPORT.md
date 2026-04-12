@@ -14,8 +14,8 @@
 | pull-tiktok | 页面解析 + 直链下载 | ✅ | ❌ | `fetchTikTokVideo(url, { job })` |
 | pull-xhs | 页面解析 + 直链下载 | ✅ | ❌ | `fetchXhsNote(url, { job })` |
 | pull-Twitter | Nitter RSS + 直链下载 | ✅ | ❌ | `fetchTwitter(url, { job })` |
-| pull-bilibiliInfo | Chrome CDP + yt-dlp | ⚠️ 仅音频 | ✅ AI字幕 | 需要适配 |
-| pull-youtubeInfo | Chrome CDP | ❌ | ✅ AI字幕 | 需要适配 |
+| pull-bilibiliInfo | Chrome CDP + yt-dlp | ✅ 条件式 | ✅ AI字幕 | 已适配 |
+| pull-youtubeInfo | Chrome CDP | ❌ | ✅ AI字幕 | 已适配 |
 
 ### 1.2 现有工具链
 
@@ -128,9 +128,8 @@ yt-dlp -f "bestvideo+bestaudio/best" \
 ### Phase 2: pull-youtubeInfo 增强
 1. **创建 `fetch_youtube.js` 统一接口**
    - 复用 `fetchYouTubeSubtitle()` 获取 AI 字幕
-   - 新增 `downloadYouTubeVideo()` 使用 yt-dlp
-   - 新增 `downloadYouTubeAudio()` 可选
    - 按 info-grab-manager 格式落盘
+   - 当前策略为 metadata/subtitle only，不做视频下载
 
 2. **更新 info-grab-manager**
    - 添加 `processYoutubeJob()` 函数

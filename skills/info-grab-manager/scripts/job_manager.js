@@ -2,6 +2,7 @@
 
 const path = require("node:path");
 const fs = require("node:fs");
+const { spawn } = require("node:child_process");
 
 // 找到 repo root 和 shared 目录
 const SKILL_DIR = path.resolve(__dirname, "..");
@@ -41,6 +42,301 @@ const {
   ensureDir,
 } = runtimeConfig;
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function normalizeInput(value) {
+  return String(value || "").trim();
+}
+
+function findExistingJob(source, sourceUrl) {
+  const normalizedSourceUrl = normalizeInput(sourceUrl);
+  if (!normalizedSourceUrl) {
+    return null;
+  }
+
+  const sourceType = detectSourceType(source, normalizedSourceUrl);
+  const jobsData = loadOrCreateDailyJobs();
+  const jobs = [...jobsData.jobs].reverse();
+
+  return jobs.find((job) => {
+    if (sourceType && job.source !== sourceType) {
+      return false;
+    }
+    return normalizeInput(job.source_url) === normalizedSourceUrl;
+  }) || null;
+}
+
+function reconcileJobArtifacts(job) {
+  if (!job?.job_id || !job?.data_path) {
+    return job;
+  }
+
+  const taskDir = resolveJobTaskDir(job);
+  if (!taskDir || !fs.existsSync(taskDir)) {
+    return job;
+  }
+
+  const detectedFiles = {
+    text: fs.existsSync(path.join(taskDir, "content.txt")) ? "content.txt" : null,
+    transcript: fs.existsSync(path.join(taskDir, "transcript.txt")) ? "transcript.txt" : null,
+    images: null,
+    video: fs.existsSync(path.join(taskDir, "video.mp4")) ? "video.mp4" : null,
+  };
+  const hasSummary = fs.existsSync(path.join(taskDir, "summary.json"));
+
+  const currentFiles = job.content_files || {};
+  const mergedFiles = {
+    text: currentFiles.text || detectedFiles.text,
+    transcript: currentFiles.transcript || detectedFiles.transcript,
+    images: currentFiles.images || detectedFiles.images,
+    video: currentFiles.video || detectedFiles.video,
+  };
+
+  const needsFileUpdate = JSON.stringify(currentFiles) !== JSON.stringify(mergedFiles);
+  const nextContentType = {
+    has_video: Boolean(mergedFiles.video),
+    has_images: Boolean(mergedFiles.images),
+    has_text: Boolean(mergedFiles.text || mergedFiles.transcript),
+  };
+  const needsContentTypeUpdate = JSON.stringify(job.content_type || {}) !== JSON.stringify(nextContentType);
+
+  let nextStatus = job.status;
+  if ((mergedFiles.transcript || hasSummary) && !["processed", "failed"].includes(job.status)) {
+    nextStatus = "processed";
+  }
+  const needsStatusUpdate = nextStatus !== job.status;
+
+  if (!needsFileUpdate && !needsContentTypeUpdate && !needsStatusUpdate) {
+    return job;
+  }
+
+  return updateJobStatus(job.job_id, nextStatus, {
+    content_files: mergedFiles,
+    content_type: nextContentType,
+  });
+}
+
+function spawnProcess(jobId) {
+  const child = spawn(process.execPath, [__filename, "process", jobId], {
+    cwd: REPO_ROOT,
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
+}
+
+function getJobStatusSummary(jobId) {
+  const job = reconcileJobArtifacts(getJobById(jobId));
+  if (!job) {
+    return null;
+  }
+
+  return {
+    job_id: job.job_id,
+    source: job.source,
+    source_url: job.source_url,
+    title: job.title || "",
+    status: job.status,
+    is_terminal: job.status === "processed" || job.status === "failed",
+    progress: job.progress || null,
+    notes: job.notes || "",
+    content_type: job.content_type || null,
+    data_path: job.data_path || null,
+    content_files: job.content_files || null,
+    created_at: job.created_at,
+    updated_at: job.updated_at,
+  };
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForJob(jobId, options = {}) {
+  const timeoutMs = Number(options.timeoutMs || 10 * 60 * 1000);
+  const pollIntervalMs = Number(options.pollIntervalMs || 2000);
+  const start = Date.now();
+  let lastProgressSignature = "";
+
+  while (Date.now() - start < timeoutMs) {
+    const status = getJobStatusSummary(jobId);
+    if (!status) {
+      throw new Error(`Job not found: ${jobId}`);
+    }
+
+    const progress = status.progress || {};
+    const signature = [
+      status.status,
+      progress.stage || "",
+      Number.isFinite(progress.percent) ? progress.percent : "",
+      progress.message || "",
+    ].join("|");
+
+    if (signature !== lastProgressSignature) {
+      lastProgressSignature = signature;
+      const percent = Number.isFinite(progress.percent) ? `${progress.percent}%` : "?";
+      const stage = progress.stage || status.status;
+      const message = progress.message || "";
+      console.log(`[progress] ${status.job_id} status=${status.status} stage=${stage} percent=${percent} ${message}`.trim());
+    }
+
+    if (status.is_terminal) {
+      return status;
+    }
+
+    await sleep(pollIntervalMs);
+  }
+
+  throw new Error(`Timed out while waiting for job: ${jobId}`);
+}
+
+function resolveJobTaskDir(job) {
+  if (!job?.data_path) {
+    return null;
+  }
+  const jobDate = getDateStr(new Date(job.created_at || Date.now()));
+  return path.join(getDownloadsRootDir(), jobDate, job.data_path);
+}
+
+function readTextIfExists(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return "";
+  }
+  return fs.readFileSync(filePath, "utf8");
+}
+
+function buildSummaryArtifacts(job) {
+  job = reconcileJobArtifacts(job);
+  if (!job) {
+    throw new Error("Job not found.");
+  }
+  if (job.status !== "processed") {
+    throw new Error(`Job is not ready for summarization: ${job.job_id} (${job.status})`);
+  }
+
+  const taskDir = resolveJobTaskDir(job);
+  if (!taskDir || !fs.existsSync(taskDir)) {
+    throw new Error(`Task directory not found for job: ${job.job_id}`);
+  }
+
+  const title = path.basename(taskDir);
+  const transcriptPath = job.content_files?.transcript
+    ? path.join(taskDir, job.content_files.transcript)
+    : null;
+  const contentPath = job.content_files?.text
+    ? path.join(taskDir, job.content_files.text)
+    : null;
+  const metadataPath = fs.existsSync(path.join(taskDir, "metadata.json"))
+    ? path.join(taskDir, "metadata.json")
+    : null;
+  const transcriptText = readTextIfExists(transcriptPath).trim();
+  const contentText = readTextIfExists(contentPath).trim();
+
+  const summaryPayload = {
+    title,
+    source: job.source,
+    source_url: job.source_url,
+    content: contentText,
+    transcript: transcriptText,
+  };
+
+  const summaryText = `${JSON.stringify(summaryPayload, null, 2)}\n`;
+  const summaryTxtPath = path.join(taskDir, "summary.txt");
+  const summaryJsonPath = path.join(taskDir, "summary.json");
+  fs.writeFileSync(summaryTxtPath, summaryText, "utf8");
+  fs.writeFileSync(summaryJsonPath, JSON.stringify(summaryPayload, null, 2), "utf8");
+
+  return {
+    ok: true,
+    job_id: job.job_id,
+    source: job.source,
+    title,
+    status: job.status,
+    summary: summaryPayload,
+    summary_txt_path: summaryTxtPath,
+    summary_json_path: summaryJsonPath,
+    artifacts: {
+      task_dir: taskDir,
+      transcript_path: transcriptPath,
+      content_path: contentPath,
+      metadata_path: metadataPath,
+    },
+  };
+}
+
+function fetchJob(source, sourceUrl, title = "") {
+  const existing = findExistingJob(source, sourceUrl);
+  if (existing) {
+    if (existing.status === "raw" || existing.status === "pending" || existing.status === "failed") {
+      spawnProcess(existing.job_id);
+    }
+    return {
+      ok: true,
+      reused_existing_job: true,
+      job_id: existing.job_id,
+      source: existing.source,
+      source_url: existing.source_url,
+      status: existing.status,
+      progress: existing.progress || null,
+    };
+  }
+
+  const job = addJob(source, sourceUrl, title);
+  updateJobStatus(job.job_id, "raw", {
+    progress: {
+      stage: "queued",
+      percent: 0,
+      message: "任务已创建，等待处理",
+      updated_at: nowIso(),
+    },
+  });
+  spawnProcess(job.job_id);
+  return {
+    ok: true,
+    reused_existing_job: false,
+    job_id: job.job_id,
+    source: job.source,
+    source_url: job.source_url,
+    status: "raw",
+    progress: {
+      stage: "queued",
+      percent: 0,
+      message: "任务已创建，等待处理",
+      updated_at: nowIso(),
+    },
+  };
+}
+
+function summarizeJob(inputOrJobId, source = null) {
+  const normalized = normalizeInput(inputOrJobId);
+  const job = normalized.startsWith("job_")
+    ? getJobById(normalized)
+    : findExistingJob(source, normalized);
+
+  if (!job) {
+    throw new Error(`No existing job found for: ${inputOrJobId}`);
+  }
+
+  return buildSummaryArtifacts(job);
+}
+
+async function fetchAndSummarize(source, sourceUrl, options = {}) {
+  const started = fetchJob(source, sourceUrl, options.title || "");
+  const finalStatus = await waitForJob(started.job_id, options);
+  if (finalStatus.status !== "processed") {
+    return {
+      ok: false,
+      job_id: started.job_id,
+      status: finalStatus.status,
+      progress: finalStatus.progress || null,
+      notes: finalStatus.notes || "",
+    };
+  }
+  return buildSummaryArtifacts(getJobById(started.job_id));
+}
+
 // ========== 工具函数 ==========
 
 function clearAllDownloads() {
@@ -74,7 +370,7 @@ function listJobs(status = null) {
     return;
   }
 
-  let jobs = jobsData.jobs;
+  let jobs = jobsData.jobs.map((job) => reconcileJobArtifacts(job));
   if (status) {
     jobs = jobs.filter((j) => j.status === status);
   }
@@ -149,7 +445,14 @@ async function processJob(jobId) {
   console.log(`Processing job: ${job.job_id} (${job.source})`);
 
   // 更新状态为 pending
-  updateJobStatus(jobId, "pending");
+  updateJobStatus(jobId, "pending", {
+    progress: {
+      stage: "dispatching",
+      percent: 5,
+      message: `正在分发到 ${job.source} 抓取器`,
+      updated_at: new Date().toISOString(),
+    },
+  });
 
   // 根据 source 调用不同的处理函数
   let result;
@@ -390,6 +693,9 @@ Commands:
   clear-jobs               清空所有任务（保留下载内容）
   list [status]            列出所有任务（可选状态过滤：raw/pending/processed/translated/summarized/reported）
   add <url> [source]       添加新任务
+  fetch <url> [source]     抓取任务，如已有则复用
+  summarize <url|jobId> [source]  为已有任务生成总结文件
+  fetch-and-summarize <url> [source]  抓取并轮询进度，完成后生成总结
   process [jobId]          处理任务（不指定 jobId 则处理所有 pending）
   process-all              处理所有待处理任务（同 process）
   help                     显示帮助
@@ -402,6 +708,9 @@ Examples:
   node skills/info-grab-manager/scripts/job_manager.js add "https://xhslink.com/xxxx/" xhs
   node skills/info-grab-manager/scripts/job_manager.js add "https://www.bilibili.com/video/BV1xx411c7mD" bilibili
   node skills/info-grab-manager/scripts/job_manager.js add "https://www.youtube.com/watch?v=dQw4w9WgXcQ" youtube
+  node skills/info-grab-manager/scripts/job_manager.js fetch "https://www.bilibili.com/video/BV1xx411c7mD" bilibili
+  node skills/info-grab-manager/scripts/job_manager.js summarize "https://www.bilibili.com/video/BV1xx411c7mD" bilibili
+  node skills/info-grab-manager/scripts/job_manager.js fetch-and-summarize "https://www.bilibili.com/video/BV1xx411c7mD" bilibili
   node skills/info-grab-manager/scripts/job_manager.js process
   node skills/info-grab-manager/scripts/job_manager.js process-all
   node skills/info-grab-manager/scripts/job_manager.js process job_20260411_abc123
@@ -435,6 +744,51 @@ async function main() {
         process.exit(1);
       }
       addJob(source, inputText);
+      break;
+    }
+
+    case "fetch": {
+      const inputText = args._?.[0];
+      const source = args._?.[1] || args.options.source || null;
+      if (!inputText) {
+        console.error("Error: URL or input text is required for fetch command");
+        printHelp();
+        process.exit(1);
+      }
+      const result = fetchJob(source, inputText);
+      console.log(JSON.stringify(result, null, 2));
+      break;
+    }
+
+    case "summarize": {
+      const inputText = args._?.[0];
+      const source = args._?.[1] || args.options.source || null;
+      if (!inputText) {
+        console.error("Error: URL or jobId is required for summarize command");
+        printHelp();
+        process.exit(1);
+      }
+      const result = summarizeJob(inputText, source);
+      console.log(JSON.stringify(result, null, 2));
+      break;
+    }
+
+    case "fetch-and-summarize": {
+      const inputText = args._?.[0];
+      const source = args._?.[1] || args.options.source || null;
+      if (!inputText) {
+        console.error("Error: URL or input text is required for fetch-and-summarize command");
+        printHelp();
+        process.exit(1);
+      }
+      const result = await fetchAndSummarize(source, inputText, {
+        timeoutMs: Number(args.options.timeoutMs || args.options["timeout-ms"] || 10 * 60 * 1000),
+        pollIntervalMs: Number(args.options.pollIntervalMs || args.options["poll-interval-ms"] || 2000),
+      });
+      console.log(JSON.stringify(result, null, 2));
+      if (!result.ok) {
+        process.exitCode = 1;
+      }
       break;
     }
 

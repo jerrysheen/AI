@@ -85,15 +85,15 @@
 
 ### pull-bilibiliInfo
 - 主函数 (旧): `fetchBilibiliTranscriptAuto()` - 仅字幕
-- 主函数 (新): `fetchBilibili(url, { job })` - 优先 AI 字幕，回落 ASR
+- 主函数 (新): `fetchBilibili(url, { job })` - 优先 AI 字幕，未命中时回落视频下载 + ASR
 - 位置: `skills/pull-bilibiliInfo/scripts/fetch_bilibili.js`
-- 状态: ✅ 已实现，AI 字幕优先，视频始终下载
+- 状态: ✅ 已实现，命中字幕后直接完成，不再继续下载视频
 
 ### pull-youtubeInfo
 - 主函数 (旧): `fetchYouTubeVideoTranscript()` - 仅字幕
-- 主函数 (新): `fetchYoutube(url, { job })` - 优先 AI 字幕，回落 ASR
+- 主函数 (新): `fetchYoutube(url, { job })` - metadata/subtitle only
 - 位置: `skills/pull-youtubeInfo/scripts/fetch_youtube.js`
-- 状态: ✅ 已实现，AI 字幕优先，视频始终下载
+- 状态: ✅ 已实现，不做视频下载；无字幕时按空结果正常完成
 
 ---
 
@@ -178,8 +178,18 @@
 >
 > - 不管是 AI 字幕还是翻译完的字幕，都放在 daily_jobs 统一结构里
 > - content_files 统一字段: text, transcript, images, video
-> - status 统一流转: raw → pending → processed
+> - status 统一流转: raw → pending → processing → processed / failed
 > - job_timeline.json 统一事件记录
+
+### 上层轮询接口
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `startJob()`
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `fetchJob()`
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `getJobStatus()`
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `waitForJob()`
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `summarizeJob()`
+- [x] `skills/info-grab-manager/api/index.js` 暴露 `fetchAndSummarize()`
+- [x] Bilibili / YouTube 处理流程上报阶段性 `progress`
+- [x] 总结结果统一落盘到任务目录：`summary.txt`、`summary.json`
 
 ### 数据落盘统一格式
 ```
