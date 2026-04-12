@@ -4,7 +4,19 @@ const fs = require("node:fs");
 const path = require("node:path");
 const https = require("node:https");
 const http = require("node:http");
-const { REPO_ROOT } = require("./runtime_shim");
+const {
+  getXhsDownloadDir,
+  ensureDir,
+  getTaskItemDir,
+  getTaskImagesDir,
+  sanitizeDirName,
+  addJobToDailyJobs,
+  updateJobStatus,
+  addTimelineEvent,
+  addTaskToPlatformIndex,
+  updateTaskInPlatformIndex,
+  detectContentTypeFromData,
+} = require("./runtime_shim");
 
 // ==================== 稳健性配置 ====================
 const CONFIG = {
@@ -21,7 +33,7 @@ const CONFIG = {
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
   ],
   // 缓存目录
-  cacheDir: path.join(REPO_ROOT, ".cache"),
+  cacheDir: path.join(__dirname, "..", ".cache"),
   // 缓存有效期（毫秒）- 24小时
   cacheTtlMs: 24 * 60 * 60 * 1000,
 };
@@ -517,19 +529,11 @@ async function downloadMediaFile(mediaUrl, outputPath, redirectCount = 0) {
 
 // 主函数
 async function fetchXhsNote(inputTextOrUrl, options = {}) {
-  const outputDir = options.outputDir || path.join(REPO_ROOT, "downloads");
-  const imageDir = options.imageDir || path.join(outputDir, "images");
-  const videoDir = options.videoDir || path.join(outputDir, "videos");
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-  if (!fs.existsSync(imageDir)) {
-    fs.mkdirSync(imageDir, { recursive: true });
-  }
-  if (!fs.existsSync(videoDir)) {
-    fs.mkdirSync(videoDir, { recursive: true });
-  }
+  const date = options.date || new Date();
+  let job = options.job || null;
+  let taskDir = null;
+  let imagesDir = null;
+  let jobId = null;
 
   const result = {
     source_url: null,
@@ -559,6 +563,9 @@ async function fetchXhsNote(inputTextOrUrl, options = {}) {
     text_exists: false,
     metadata_path: null,
     metadata_exists: false,
+    content_type: { has_video: false, has_images: false, has_text: false },
+    task_dir: null,
+    job_id: null,
     error: null,
     error_hint: null,
   };
@@ -593,10 +600,62 @@ async function fetchXhsNote(inputTextOrUrl, options = {}) {
     result.image_urls = noteInfo.image_urls;
     result.video_urls = noteInfo.video_urls;
 
+    // 检测内容类型
+    result.content_type = {
+      has_video: noteInfo.video_urls.length > 0,
+      has_images: noteInfo.image_urls.length > 0,
+      has_text: !!(noteInfo.title || noteInfo.content),
+    };
+
+    // 获取或创建任务目录
+    taskDir = getTaskItemDir("xhs", noteInfo.title || noteInfo.note_id, noteInfo.note_id, date);
+    imagesDir = getTaskImagesDir("xhs", noteInfo.title || noteInfo.note_id, noteInfo.note_id, date);
+    ensureDir(taskDir);
+    ensureDir(imagesDir);
+    result.task_dir = taskDir;
+
+    // 添加到 daily_jobs.json（如果没有传入 job）
+    if (!job) {
+      job = addJobToDailyJobs({
+        source: "xhs",
+        source_url: sourceUrl,
+        title: noteInfo.title || "小红书笔记",
+        content_type: result.content_type,
+        status: "pending",
+      });
+      jobId = job.job_id;
+      result.job_id = jobId;
+
+      // 添加时间线事件
+      addTimelineEvent({
+        action: "job_created",
+        job_id: jobId,
+        content_type: result.content_type,
+        details: "从直接输入链接创建任务",
+      }, date);
+    } else {
+      jobId = job.job_id;
+      result.job_id = jobId;
+    }
+
+    // 添加到平台索引
+    addTaskToPlatformIndex("xhs", {
+      task_id: noteInfo.note_id,
+      job_id: jobId,
+      title: noteInfo.title,
+      author: noteInfo.author,
+      content_type: result.content_type,
+      status: "downloading",
+      dir_path: path.relative(path.join(getXhsDownloadDir(date), ".."), taskDir),
+    }, date);
+
+    const metadataPath = path.join(taskDir, "metadata.json");
+    const contentPath = path.join(taskDir, "content.txt");
+
     // 下载图片
     for (let i = 0; i < noteInfo.image_urls.length; i++) {
       const ext = noteInfo.image_urls[i].match(/\.(webp|jpe?g|png|heic)(?:\?|$)/i) ? "" : ".jpg";
-      const outputPath = path.join(imageDir, `${noteInfo.note_id || "unknown"}_img${i}${ext}`);
+      const outputPath = path.join(imagesDir, `img${i}${ext}`);
       try {
         const downloadedBytes = await downloadMediaFile(noteInfo.image_urls[i], outputPath);
         result.image_paths.push(outputPath);
@@ -609,23 +668,55 @@ async function fetchXhsNote(inputTextOrUrl, options = {}) {
       }
     }
 
-    // 下载视频
+    // 下载视频并转写
+    result.video_transcripts = [];
     for (let i = 0; i < noteInfo.video_urls.length; i++) {
-      const outputPath = path.join(videoDir, `${noteInfo.note_id || "unknown"}_vid${i}.mp4`);
+      const outputPath = path.join(taskDir, `video.mp4`);
+      let transcriptResult = null;
       try {
         const downloadedBytes = await downloadMediaFile(noteInfo.video_urls[i], outputPath);
         result.video_paths.push(outputPath);
         result.video_sizes.push(downloadedBytes);
         result.video_exists.push(true);
+
+        // 视频下载成功后进行转写
+        try {
+          const { transcribeVideo } = require("../../../src/shared/video_transcriber");
+          transcriptResult = await transcribeVideo(outputPath, {
+            keepWav: false,
+            outputDir: taskDir,
+          });
+          // 重命名转录文件为统一名称
+          if (transcriptResult) {
+            const targetTranscriptPath = path.join(taskDir, "transcript.txt");
+            const targetJsonPath = path.join(taskDir, "transcript.json");
+            const targetSrtPath = path.join(taskDir, "transcript.srt");
+
+            // 重命名 transcript.txt
+            if (transcriptResult.transcript_path && fs.existsSync(transcriptResult.transcript_path) && transcriptResult.transcript_path !== targetTranscriptPath) {
+              fs.renameSync(transcriptResult.transcript_path, targetTranscriptPath);
+            }
+            // 重命名 transcript.json
+            if (transcriptResult.transcript_json_path && fs.existsSync(transcriptResult.transcript_json_path) && transcriptResult.transcript_json_path !== targetJsonPath) {
+              fs.renameSync(transcriptResult.transcript_json_path, targetJsonPath);
+            }
+            // 重命名 transcript.srt
+            if (transcriptResult.transcript_srt_path && fs.existsSync(transcriptResult.transcript_srt_path) && transcriptResult.transcript_srt_path !== targetSrtPath) {
+              fs.renameSync(transcriptResult.transcript_srt_path, targetSrtPath);
+            }
+          }
+        } catch (transcribeError) {
+          console.error("Transcribe error:", transcribeError.message);
+        }
       } catch (e) {
         result.video_paths.push(outputPath);
         result.video_sizes.push(0);
         result.video_exists.push(false);
       }
+      result.video_transcripts.push(transcriptResult);
     }
 
     // 保存文字描述到文件
-    const textPath = path.join(outputDir, `${noteInfo.note_id || "unknown"}_content.txt`);
     try {
       let textContent = "";
       if (noteInfo.title) {
@@ -634,16 +725,15 @@ async function fetchXhsNote(inputTextOrUrl, options = {}) {
       if (noteInfo.content) {
         textContent += `${noteInfo.content}\n`;
       }
-      fs.writeFileSync(textPath, textContent, "utf8");
-      result.text_path = textPath;
+      fs.writeFileSync(contentPath, textContent, "utf8");
+      result.text_path = contentPath;
       result.text_exists = true;
     } catch (e) {
-      result.text_path = textPath;
+      result.text_path = contentPath;
       result.text_exists = false;
     }
 
     // 保存完整元数据到 JSON 文件
-    const metadataPath = path.join(outputDir, `${noteInfo.note_id || "unknown"}_metadata.json`);
     try {
       fs.writeFileSync(metadataPath, JSON.stringify(noteInfo, null, 2), "utf8");
       result.metadata_path = metadataPath;
@@ -652,9 +742,59 @@ async function fetchXhsNote(inputTextOrUrl, options = {}) {
       result.metadata_path = metadataPath;
       result.metadata_exists = false;
     }
+
+    // 构建 content_files 对象
+    const contentFiles = {
+      text: "content.txt",
+      transcript: noteInfo.video_urls.length > 0 ? "transcript.txt" : null,
+      images: noteInfo.image_urls.length > 0 ? "images/" : null,
+      video: noteInfo.video_urls.length > 0 ? "video.mp4" : null,
+    };
+
+    // 更新状态为 processed
+    updateJobStatus(jobId, "processed", {
+      title: result.title || "小红书笔记",
+      content_type: result.content_type,
+      data_path: path.relative(path.dirname(getXhsDownloadDir(date)), taskDir),
+      content_files: contentFiles,
+    });
+
+    updateTaskInPlatformIndex("xhs", noteInfo.note_id, {
+      title: result.title || "小红书笔记",
+      author: result.author,
+      content_type: result.content_type,
+      status: "processed",
+      files: {
+        metadata: "metadata.json",
+        content: "content.txt",
+        transcript: contentFiles.transcript,
+        translated: null,
+        summary: null,
+        images_dir: contentFiles.images,
+        video_file: contentFiles.video,
+      },
+    }, date);
+
+    addTimelineEvent({
+      action: "processed",
+      job_id: jobId,
+      details: "笔记内容下载完成",
+    }, date);
+
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
     result.error_hint = error.stack || null;
+
+    if (jobId) {
+      updateJobStatus(jobId, "processed", {
+        notes: `处理失败: ${result.error}`,
+      });
+      addTimelineEvent({
+        action: "error",
+        job_id: jobId,
+        details: `处理失败: ${result.error}`,
+      }, date);
+    }
   }
 
   return result;

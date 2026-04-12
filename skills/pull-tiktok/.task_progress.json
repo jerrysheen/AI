@@ -1,6 +1,6 @@
 {
   "status": "completed",
-  "current_phase": "验收通过！",
+  "current_phase": "验收",
   "task_goal": "实现抖音分享链接视频下载模块，输入抖音分享链接或分享文本，下载视频到本地并返回本地文件路径与基础元数据。",
   "selected_strategy": "直接解析抖音移动端分享页面的 _ROUTER_DATA（不需要 cookies！）",
   "attempted_strategies": [
@@ -20,14 +20,41 @@
     "实现视频信息提取",
     "实现视频下载功能",
     "创建完整文档",
-    "验收测试通过！"
+    "验收测试通过！",
+    "新增链接最终验收：全球美食探索视频（82MB）下载 + Whisper 转录成功"
   ],
   "problems": [],
   "acceptance": {
-    "command": "node scripts/fetch_tiktok_video.js \"https://v.douyin.com/NOccTLWH2fI/\" --pretty",
-    "passed": true,
-    "last_run": "2026-04-10",
-    "summary": "完美！视频下载成功！无需 cookies，无需登录，文件已保存到本地，文件大小 3.5 MB！"
+    "test_acceptance_passed": true,
+    "test_acceptance_output": "=== 结果: 5/5 通过 ===",
+    "checklist": [
+      {
+        "item": "运行 test_acceptance.js 全部通过",
+        "verified": true,
+        "command": "node test_acceptance.js",
+        "evidence": "✅ 验收全部通过！"
+      },
+      {
+        "item": "主函数能正常调用",
+        "verified": true,
+        "command": "node scripts/fetch_tiktok_video.js \"https://v.douyin.com/OECZakkFwoo/\" --pretty",
+        "evidence": "返回完整结果，包含 file_path, file_size 等字段"
+      },
+      {
+        "item": "视频文件正确落盘",
+        "verified": true,
+        "command": "ls -lh /Users/jerry/Desktop/AI/downloads/2026-04-11/tiktok/7614044691718725046/video.mp4",
+        "evidence": "文件存在，大小 82896079 字节"
+      },
+      {
+        "item": "metadata.json 包含必需字段",
+        "verified": true,
+        "command": "cat /Users/jerry/Desktop/AI/downloads/2026-04-11/tiktok/7614044691718725046/metadata.json",
+        "evidence": "包含 video_id, title, author, play_url 等字段"
+      }
+    ],
+    "overall_pass": true,
+    "summary": "验收通过！test_acceptance.js 5/5 通过，端到端测试验证视频下载、文件落盘、元数据保存全部正常"
   },
   "artifacts": [
     "scripts/runtime_shim.js",
@@ -35,22 +62,22 @@
     "api/index.js",
     "SKILL.md",
     "README.md",
-    "downloads/7625864551589910693.mp4"
+    "test_acceptance.js"
   ],
   "inputs": {
-    "sample_share_input": "4.38 09/05 q@r.EH oqR:/ 贴一只乌萨奇 # 胶带拼贴 # 手帐拼贴 # chiikawa # 乌萨奇  https://v.douyin.com/NOccTLWH2fI/ 复制此链接，打开Dou音搜索，直接观看视频！",
-    "output_dir": "downloads"
+    "final_acceptance_input": "8.25 02/20 FuF:/ e@o.Qx 全球美食探索（上集）：世界各国的代表性早餐，哪个国家的最好吃# 美食  https://v.douyin.com/OECZakkFwoo/ 复制此链接，打开Dou音搜索，直接观看视频！",
+    "output_dir": "/Users/jerry/Desktop/AI/downloads/2026-04-11/tiktok"
   },
   "result": {
-    "source_url": "https://v.douyin.com/NOccTLWH2fI/",
-    "resolved_url": "https://www.iesdouyin.com/share/video/7625864551589910693/...",
-    "video_id": "7625864551589910693",
-    "file_path": "/Users/jerry/Desktop/AI/skills/pull-tiktok/downloads/7625864551589910693.mp4",
+    "source_url": "https://v.douyin.com/OECZakkFwoo/",
+    "video_id": "7614044691718725046",
+    "file_path": "/Users/jerry/Desktop/AI/downloads/2026-04-11/tiktok/7614044691718725046/video.mp4",
     "file_exists": true,
-    "file_size": 3502659,
-    "title": "贴一只乌萨奇 #胶带拼贴 #手帐拼贴 #chiikawa #乌萨奇",
-    "author": "土豆大大王"
+    "file_size": 82896079,
+    "title": "全球美食探索（上集）：世界各国的代表性早餐，哪个国家的最好吃#美食",
+    "author": "大飞【说】",
+    "transcript_enabled": true
   },
-  "next_action": "任务完成！模块已交付使用。",
-  "last_updated": "2026-04-10T19:48:00.108060"
+  "next_action": "任务最终完成！验收测试和清单全部通过。",
+  "last_updated": "2026-04-12T11:44:51.998108"
 }

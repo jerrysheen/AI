@@ -1,0 +1,34 @@
+{
+  "status": "completed",
+  "current_phase": "验收测试完成",
+  "task_goal": "增强 pull-bilibiliInfo: 视频下载 + ASR 转写，适配 info-grab-manager",
+  "selected_strategy": "创建 fetch_bilibili.js 统一接口，使用 yt-dlp 下载视频 + Whisper 转写",
+  "attempted_strategies": [],
+  "completed_steps": [
+    "查看现有 pull-bilibiliInfo 代码结构",
+    "创建 fetch_bilibili.js 统一接口",
+    "实现 extractBilibiliUrl() 解析函数",
+    "实现 downloadBilibiliVideo() 使用 yt-dlp",
+    "实现 fetchBilibili() 主函数 (job 集成)",
+    "集成 Whisper 视频转写",
+    "统一落盘格式 (video.mp4, metadata.json, content.txt, transcript.txt)",
+    "修复文件重命名路径引用问题",
+    "添加上传失败时 upload.wav 清理逻辑",
+    "修复 FFmpeg 空路径问题"
+  ],
+  "problems": [
+    "FFmpeg 路径配置错误（空字符串时仍传递 --ffmpeg-location）",
+    "文件重命名后未更新 transcriptResult 路径引用"
+  ],
+  "acceptance": {
+    "command": "cd /Users/jerry/Desktop/AI && node skills/info-grab-manager/scripts/job_manager.js add https://www.bilibili.com/video/BV1Ca411W7v9 bilibili && node skills/info-grab-manager/scripts/job_manager.js process",
+    "passed": true,
+    "last_run": "2026-04-11T06:51:21.000000",
+    "summary": "验收测试通过！视频 BV1Ca411W7v9 无字幕，成功下载并通过远端 ASR 转写，获得合理长度的转写内容"
+  },
+  "artifacts": [
+    "skills/pull-bilibiliInfo/scripts/fetch_bilibili.js"
+  ],
+  "next_action": "验收完成，功能正常",
+  "last_updated": "2026-04-12T11:46:15.432546"
+}

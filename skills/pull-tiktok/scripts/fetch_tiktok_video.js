@@ -4,7 +4,18 @@ const fs = require("node:fs");
 const path = require("node:path");
 const https = require("node:https");
 const http = require("node:http");
-const { REPO_ROOT } = require("./runtime_shim");
+const {
+  getTikTokDownloadDir,
+  ensureDir,
+  getTaskItemDir,
+  sanitizeDirName,
+  addJobToDailyJobs,
+  updateJobStatus,
+  addTimelineEvent,
+  addTaskToPlatformIndex,
+  updateTaskInPlatformIndex,
+  detectContentTypeFromData,
+} = require("./runtime_shim");
 
 // 从输入文本中提取抖音链接
 function extractDouyinUrl(inputText) {
@@ -290,11 +301,10 @@ async function downloadVideoFile(videoUrl, outputPath, redirectCount = 0) {
 
 // 主函数
 async function fetchTikTokVideo(inputTextOrUrl, options = {}) {
-  const outputDir = options.outputDir || path.join(REPO_ROOT, "downloads");
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
+  const date = options.date || new Date();
+  let job = options.job || null;
+  let taskDir = null;
+  let jobId = null;
 
   const result = {
     source_url: null,
@@ -305,6 +315,10 @@ async function fetchTikTokVideo(inputTextOrUrl, options = {}) {
     file_size: null,
     title: null,
     author: null,
+    transcript: null,
+    content_type: { has_video: false, has_images: false, has_text: false },
+    task_dir: null,
+    job_id: null,
     error: null,
     error_hint: null,
   };
@@ -326,9 +340,65 @@ async function fetchTikTokVideo(inputTextOrUrl, options = {}) {
     result.video_id = videoInfo.video_id;
     result.title = videoInfo.title;
     result.author = videoInfo.author;
+    result.content_type = {
+      has_video: true,
+      has_images: false,
+      has_text: !!(videoInfo.title || videoInfo.desc),
+    };
     result._play_url = videoInfo.play_url;
 
-    const outputPath = path.join(outputDir, `${videoInfo.video_id}.mp4`);
+    // 获取或创建任务目录
+    taskDir = getTaskItemDir("tiktok", videoInfo.title, videoInfo.video_id, date);
+    ensureDir(taskDir);
+    result.task_dir = taskDir;
+
+    // 添加到 daily_jobs.json（如果没有传入 job）
+    if (!job) {
+      job = addJobToDailyJobs({
+        source: "tiktok",
+        source_url: sourceUrl,
+        title: videoInfo.title || "抖音视频",
+        content_type: result.content_type,
+        status: "pending",
+      });
+      jobId = job.job_id;
+      result.job_id = jobId;
+
+      // 添加时间线事件
+      addTimelineEvent({
+        action: "job_created",
+        job_id: jobId,
+        content_type: result.content_type,
+        details: "从直接输入链接创建任务",
+      }, date);
+    } else {
+      jobId = job.job_id;
+      result.job_id = jobId;
+    }
+
+    // 添加到平台索引
+    addTaskToPlatformIndex("tiktok", {
+      task_id: videoInfo.video_id,
+      job_id: jobId,
+      title: videoInfo.title,
+      author: videoInfo.author,
+      content_type: result.content_type,
+      status: "downloading",
+      dir_path: path.relative(path.join(getTikTokDownloadDir(date), ".."), taskDir),
+    }, date);
+
+    const outputPath = path.join(taskDir, "video.mp4");
+    const metadataPath = path.join(taskDir, "metadata.json");
+    const contentPath = path.join(taskDir, "content.txt");
+
+    // 保存文字内容
+    if (videoInfo.title) {
+      try {
+        fs.writeFileSync(contentPath, videoInfo.title, "utf8");
+      } catch (e) {
+        // 忽略
+      }
+    }
 
     try {
       const downloadedBytes = await downloadVideoFile(videoInfo.play_url, outputPath);
@@ -342,13 +412,131 @@ async function fetchTikTokVideo(inputTextOrUrl, options = {}) {
           result.file_size = stats.size;
         }
       }
+
+      // 保存元数据
+      try {
+        fs.writeFileSync(metadataPath, JSON.stringify(videoInfo, null, 2), "utf8");
+      } catch (e) {
+        // 忽略
+      }
+
+      // 更新状态为 processed
+      updateJobStatus(jobId, "processed", {
+        title: result.title || "抖音视频",
+        content_type: result.content_type,
+        data_path: path.relative(path.dirname(getTikTokDownloadDir(date)), taskDir),
+        content_files: {
+          text: "content.txt",
+          transcript: null,
+          images: null,
+          video: "video.mp4",
+        },
+      });
+
+      updateTaskInPlatformIndex("tiktok", videoInfo.video_id, {
+        title: result.title || "抖音视频",
+        author: result.author,
+        content_type: result.content_type,
+        status: "processed",
+        files: {
+          metadata: "metadata.json",
+          content: "content.txt",
+          transcript: null,
+          translated: null,
+          summary: null,
+          images_dir: null,
+          video_file: "video.mp4",
+        },
+      }, date);
+
+      addTimelineEvent({
+        action: "processed",
+        job_id: jobId,
+        details: "视频下载完成",
+      }, date);
+
+      // 视频下载成功后进行转写
+      try {
+        const { transcribeVideo } = require("../../../src/shared/video_transcriber");
+        result.transcript = await transcribeVideo(outputPath, {
+          keepWav: false,
+          outputDir: taskDir,
+        });
+
+        // 重命名转录文件为统一名称
+        if (result.transcript) {
+          const targetTranscriptPath = path.join(taskDir, "transcript.txt");
+          const targetJsonPath = path.join(taskDir, "transcript.json");
+          const targetSrtPath = path.join(taskDir, "transcript.srt");
+
+          // 重命名 transcript.txt
+          if (result.transcript.transcript_path && fs.existsSync(result.transcript.transcript_path) && result.transcript.transcript_path !== targetTranscriptPath) {
+            fs.renameSync(result.transcript.transcript_path, targetTranscriptPath);
+          }
+          // 重命名 transcript.json
+          if (result.transcript.transcript_json_path && fs.existsSync(result.transcript.transcript_json_path) && result.transcript.transcript_json_path !== targetJsonPath) {
+            fs.renameSync(result.transcript.transcript_json_path, targetJsonPath);
+          }
+          // 重命名 transcript.srt
+          if (result.transcript.transcript_srt_path && fs.existsSync(result.transcript.transcript_srt_path) && result.transcript.transcript_srt_path !== targetSrtPath) {
+            fs.renameSync(result.transcript.transcript_srt_path, targetSrtPath);
+          }
+          // 更新 content_files
+          updateJobStatus(jobId, "processed", {
+            title: result.title || "抖音视频",
+            content_type: result.content_type,
+            content_files: {
+              text: "content.txt",
+              transcript: "transcript.txt",
+              images: null,
+              video: "video.mp4",
+            },
+          });
+          updateTaskInPlatformIndex("tiktok", videoInfo.video_id, {
+            title: result.title || "抖音视频",
+            author: result.author,
+            content_type: result.content_type,
+            files: {
+              metadata: "metadata.json",
+              content: "content.txt",
+              transcript: "transcript.txt",
+              translated: null,
+              summary: null,
+              images_dir: null,
+              video_file: "video.mp4",
+            },
+          }, date);
+        }
+      } catch (transcribeError) {
+        console.error("Transcribe error:", transcribeError.message);
+      }
     } catch (downloadError) {
       // 即使下载失败，我们也已经获取了视频信息，这已经很有用了
       result.download_error = downloadError instanceof Error ? downloadError.message : String(downloadError);
       result.file_path = outputPath;
+
+      updateJobStatus(jobId, "processed", {
+        notes: "下载失败，但元数据已获取",
+      });
+      updateTaskInPlatformIndex("tiktok", videoInfo.video_id, {
+        status: "processed",
+        error: result.download_error,
+      }, date);
     }
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
+    result.error_hint = error.stack || null;
+
+    if (jobId) {
+      updateJobStatus(jobId, "processed", {
+        notes: `处理失败: ${result.error}`,
+      });
+      addTimelineEvent({
+        action: "error",
+        job_id: jobId,
+        details: `处理失败: ${result.error}`,
+      }, date);
+    }
   }
 
   return result;

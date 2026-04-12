@@ -51,6 +51,10 @@ function parseArgs(argv) {
     computeType: process.env.AI_AUTO_TRANSLATE_GPU_COMPUTE_TYPE || "",
     beamSize: Number(process.env.AI_AUTO_TRANSLATE_GPU_BEAM_SIZE || 5),
     debug: false,
+    // 音频优化选项
+    sampleRate: Number(process.env.AI_AUDIO_SAMPLE_RATE || 16000),
+    audioCodec: process.env.AI_AUDIO_CODEC || "pcm_s16le", // pcm_s16le, pcm_alaw, pcm_mulaw, mp3
+    use8kHz: process.env.AI_AUDIO_USE_8KHZ === "true",
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -78,6 +82,10 @@ function parseArgs(argv) {
     }
     if (token === "--debug") {
       args.debug = true;
+      continue;
+    }
+    if (token === "--8khz") {
+      args.use8kHz = true;
       continue;
     }
 
@@ -123,6 +131,12 @@ function parseArgs(argv) {
       case "--beam-size":
         args.beamSize = Number(nextValue);
         break;
+      case "--sample-rate":
+        args.sampleRate = Number(nextValue);
+        break;
+      case "--audio-codec":
+        args.audioCodec = nextValue;
+        break;
       default:
         throw new Error(`Unknown option: ${token}`);
     }
@@ -131,7 +145,17 @@ function parseArgs(argv) {
   }
 
   if (!args.input) {
-    throw new Error("Usage: node skills/autoTranslate/scripts/submit_remote_transcribe.js <media-file> --remote-base-url http://windows-host:8768");
+    throw new Error(
+      "Usage: node skills/autoTranslate/scripts/submit_remote_transcribe.js <media-file> --remote-base-url http://windows-host:8768\n\n" +
+      "Audio optimization options:\n" +
+      "  --8khz              Use 8kHz sample rate (half size, good for speech)\n" +
+      "  --sample-rate N     Set custom sample rate (default: 16000)\n" +
+      "  --audio-codec c     Audio codec: pcm_s16le (16bit, default), pcm_alaw (8bit), pcm_mulaw (8bit)\n" +
+      "\n" +
+      "Examples:\n" +
+      "  # Optimized for speech (smallest size):\n" +
+      "  node submit_remote_transcribe.js video.mp4 --8khz --audio-codec pcm_alaw\n"
+    );
   }
   if (!args.remoteBaseUrl) {
     throw new Error("Remote base URL is required. Set --remote-base-url or AI_AUTO_TRANSLATE_REMOTE_BASE_URL.");
@@ -187,13 +211,16 @@ function splitCommand(commandText) {
   return String(commandText || "").trim().split(/\s+/).filter(Boolean);
 }
 
-function runFfmpegExtract(ffmpegCommand, inputPath, wavPath, startSeconds, clipSeconds) {
+function runFfmpegExtract(ffmpegCommand, inputPath, wavPath, startSeconds, clipSeconds, options = {}) {
+  const sampleRate = options.use8kHz ? 8000 : (options.sampleRate || 16000);
+  const codec = options.audioCodec || "pcm_s16le";
+
   return new Promise((resolve, reject) => {
     const args = [...splitCommand(ffmpegCommand), "-y"];
     if (startSeconds > 0) args.push("-ss", String(startSeconds));
     args.push("-i", inputPath);
     if (clipSeconds > 0) args.push("-t", String(clipSeconds));
-    args.push("-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", wavPath);
+    args.push("-vn", "-ac", "1", "-ar", String(sampleRate), "-c:a", codec, wavPath);
 
     const [command, ...rest] = args;
     const child = spawn(command, rest, { cwd: REPO_ROOT, env: process.env, stdio: ["ignore", "pipe", "pipe"] });
@@ -220,8 +247,9 @@ async function main() {
   let uploadPath = inputPath;
   if (args.sendWav) {
     uploadPath = path.join(runDir, "upload.wav");
-    log("prepare", `extracting wav before upload: ${uploadPath}`);
-    await runFfmpegExtract(ffmpegCommand, inputPath, uploadPath, args.startSeconds, args.clipSeconds);
+    const sampleRate = args.use8kHz ? 8000 : args.sampleRate;
+    log("prepare", `extracting wav before upload (${sampleRate}Hz, mono): ${uploadPath}`);
+    await runFfmpegExtract(ffmpegCommand, inputPath, uploadPath, args.startSeconds, args.clipSeconds, args);
   }
 
   const uploadBuffer = fs.readFileSync(uploadPath);

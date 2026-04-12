@@ -1,6 +1,6 @@
 {
   "status": "completed",
-  "current_phase": "任务完成！已成功测试并验证功能",
+  "current_phase": "验收",
   "task_goal": "实现小红书分享链接内容抓取模块，输入小红书分享链接或分享文本，下载笔记内容和图片/视频到本地并返回本地文件路径与基础元数据。",
   "selected_strategy": "直接解析页面 window.__INITIAL_STATE__（参考 XHS-Downloader）",
   "attempted_strategies": [
@@ -23,7 +23,11 @@
     "实现 window.__INITIAL_STATE__ 提取（使用 eval 沙箱方式）",
     "实现图片/视频 URL 提取",
     "实现媒体下载功能",
-    "使用用户提供的真实链接进行测试验证"
+    "使用用户提供的真实链接进行测试验证",
+    "新增视频笔记最终验收：2T显存巨兽视频下载 + Whisper 转录成功",
+    "测试新图片+推文链接：👠装拽太累了...",
+    "测试新文字+视频链接：Ai agent并行化开发",
+    "创建 test_acceptance.js 验收测试脚本，覆盖图片+推文和文字+视频两种类型"
   ],
   "problems": [
     {
@@ -32,10 +36,30 @@
     }
   ],
   "acceptance": {
-    "command": "node scripts/fetch_xhs_note.js \"https://www.xiaohongshu.com/discovery/item/69d3a873000000001f002e3f\" --pretty",
-    "passed": true,
-    "last_run": "2026-04-10",
-    "summary": "成功提取笔记数据：标题「Claude Code 必学技巧：Hooks！」，作者 Vastt.AI，35 张图片全部下载成功"
+    "test_acceptance_passed": true,
+    "test_acceptance_output": "=== 结果: 6/6 通过 ===",
+    "checklist": [
+      {
+        "item": "运行 test_acceptance.js 全部通过",
+        "verified": true,
+        "command": "node test_acceptance.js",
+        "evidence": "✅ 验收全部通过！"
+      },
+      {
+        "item": "图片+推文抓取成功",
+        "verified": true,
+        "command": "node scripts/fetch_xhs_note.js \"https://www.xiaohongshu.com/discovery/item/69da6285000000001d01ad6c\" --pretty",
+        "evidence": "3张图片成功下载，metadata 和 content.txt 正确保存"
+      },
+      {
+        "item": "文字+视频抓取成功",
+        "verified": true,
+        "command": "node scripts/fetch_xhs_note.js \"https://www.xiaohongshu.com/discovery/item/69bf808f000000001a029754\" --pretty",
+        "evidence": "视频 (5.24 MB) + 1张图片成功下载"
+      }
+    ],
+    "overall_pass": true,
+    "summary": "验收通过！test_acceptance.js 6/6 通过，验证图片+推文和文字+视频两种类型的抓取全部正常"
   },
   "artifacts": [
     "CLAUDE.md",
@@ -44,8 +68,35 @@
     "README.md",
     "scripts/runtime_shim.js",
     "scripts/fetch_xhs_note.js",
-    "api/index.js"
+    "api/index.js",
+    "test_acceptance.js"
   ],
-  "next_action": "任务已完成，可以使用 /pull-xhs 技能调用",
-  "last_updated": "2026-04-11T00:29:11.231675"
+  "inputs": {
+    "image_note_input": "9 【👠装拽太累了，还好姐姐是真…拽！ - 王予婷 | 小红书 - 你的生活兴趣社区】 😆 HHrCBzyRbqqibMc 😆 https://www.xiaohongshu.com/discovery/item/69da6285000000001d01ad6c?source=webshare&xhsshare=pc_web&xsec_token=ABMdl8lKAfyxUckj9q48gf41f1_LFca0eZ-dEIeu9uKbc=&xsec_source=pc_share",
+    "video_note_input": "66 【Ai agent并行化开发 - momo(Ai学习版） | 小红书 - 你的生活兴趣社区】 😆 R30db7hvb89q25E 😆 https://www.xiaohongshu.com/discovery/item/69bf808f000000001a029754?source=webshare&xhsshare=pc_web&xsec_token=ABpP7weR-ekhzUV0GLuhzDjQ9Ep607yaO2Rtltk1XOyTg=&xsec_source=pc_share",
+    "output_dir": "/Users/jerry/Desktop/AI/downloads/2026-04-12/xhs"
+  },
+  "result": {
+    "image_note": {
+      "source_url": "https://www.xiaohongshu.com/discovery/item/69da6285000000001d01ad6c",
+      "note_id": "69da6285000000001d01ad6c",
+      "title": "👠装拽太累了，还好姐姐是真…拽！",
+      "author": "王予婷",
+      "type": "normal",
+      "image_count": 3,
+      "has_video": false
+    },
+    "video_note": {
+      "source_url": "https://www.xiaohongshu.com/discovery/item/69bf808f000000001a029754",
+      "note_id": "69bf808f000000001a029754",
+      "title": "Ai agent并行化开发",
+      "author": "momo(Ai学习版）",
+      "type": "video",
+      "video_size": 5493041,
+      "image_count": 1,
+      "has_video": true
+    }
+  },
+  "next_action": "验收测试通过，任务完成！",
+  "last_updated": "2026-04-12T11:46:37.093157"
 }

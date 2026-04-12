@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const https = require("node:https");
+const { getTwitterDownloadDir, ensureDir } = require("./runtime_shim");
 
 const SYNDICATION_ENDPOINT = "https://cdn.syndication.twimg.com/tweet-result";
 
@@ -123,11 +124,9 @@ function sanitizeSegment(value) {
 }
 
 function buildDefaultOutputPath(metadata) {
-  const downloadsDir = path.resolve(process.cwd(), "assets", "downloads");
-  const handle = sanitizeSegment(metadata.author_handle || metadata.screen_name || "twitter");
+  const downloadsDir = getTwitterDownloadDir();
   const tweetId = sanitizeSegment(metadata.tweet_id || "tweet");
-  const bitrate = metadata.selected_variant?.bitrate || "adaptive";
-  const filename = `${handle}-${tweetId}-${bitrate}.mp4`;
+  const filename = `${tweetId}.mp4`;
   return path.join(downloadsDir, filename);
 }
 
@@ -247,9 +246,30 @@ async function downloadTwitterVideo(input, options = {}) {
   const parsed = parseTweetInput(input);
   const metadata = await fetchTweetVideoMetadata(parsed.tweetId, options.bitrate || null);
   const outputPath = path.resolve(options.output || buildDefaultOutputPath(metadata));
+  const outputDir = path.dirname(outputPath);
 
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  ensureDir(outputDir);
   const downloadResult = await downloadFile(metadata.selected_variant.url, outputPath);
+
+  // 保存元数据
+  const metadataPath = path.join(outputDir, `${metadata.tweet_id}_metadata.json`);
+  try {
+    fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf8");
+  } catch (e) {
+    // 忽略元数据保存错误
+  }
+
+  // 视频下载成功后进行转写
+  let transcript = null;
+  try {
+    const { transcribeVideo } = require("../../../src/shared/video_transcriber");
+    transcript = await transcribeVideo(outputPath, {
+      keepWav: true,
+      outputDir: outputDir,
+    });
+  } catch (transcribeError) {
+    console.error("Transcribe error:", transcribeError.message);
+  }
 
   return {
     source: "twitter_syndication_video",
@@ -265,6 +285,7 @@ async function downloadTwitterVideo(input, options = {}) {
     content_type: downloadResult.content_type,
     thumbnail_url: metadata.thumbnail_url,
     expanded_url: metadata.expanded_url,
+    transcript: transcript,
   };
 }
 

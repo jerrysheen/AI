@@ -97,3 +97,98 @@ skill/
   twitter_fetcher.py
   test_skill.py
   README.md
+```
+
+---
+
+## 附加任务：适配 info-grab-manager
+
+### 目标
+统一 pull-Twitter 接口，使其与 pull-tiktok / pull-xhs 保持一致，支持：
+1. 推文抓取（纯文本/图片）
+2. 视频抓取（包含转写）
+3. 统一的 `fetchTwitter()` 主函数
+4. 完整的 job 集成机制
+
+### 整体设计
+
+#### 内容类型区分
+在 `daily_jobs.json` 中通过 `content_type` 区分：
+```javascript
+// 纯推文（无视频）
+content_type: { has_video: false, has_images: true/false, has_text: true }
+
+// 视频推文
+content_type: { has_video: true, has_images: true/false, has_text: true }
+```
+
+#### 主函数设计
+`async function fetchTwitter(inputTextOrUrl, options = {})`
+
+**流程：**
+1. 解析输入（tweet URL / tweet ID）
+2. 先获取推文元数据（通过 Nitter RSS 或 Chrome）
+3. 判断是否有视频
+4. 如果有视频 → 走视频下载流程 + 转写
+5. 如果无视频 → 走纯推文抓取流程
+6. 统一保存文件，更新 job 状态
+
+#### 文件结构
+```
+downloads/2026-04-11/twitter/{tweet_id}-{sanitized_title}/
+├── metadata.json      # 推文元数据
+├── content.txt        # 推文文本
+├── video.mp4          # （如果有视频）
+├── transcript.txt     # （如果有视频）
+├── transcript.json    # （如果有视频）
+├── transcript.srt     # （如果有视频）
+└── images/            # （如果有图片）
+    ├── img0.jpg
+    └── ...
+```
+
+### 任务清单
+
+#### Phase 1: 设计和准备
+- [x] 分析 tiktok/xhs 的统一接口模式
+- [x] 设计 Twitter 的统一接口方案
+- [ ] 创建 `fetch_twitter.js` 主脚本框架
+
+#### Phase 2: 实现统一函数
+- [ ] 实现 `fetchTwitter()` 主函数
+- [ ] 集成 `fetchTwitterEnhanced()` 获取推文信息
+- [ ] 集成 `downloadTwitterVideo()` 下载视频
+- [ ] 实现内容类型检测（has_video / has_images / has_text）
+- [ ] 实现目录创建和文件保存
+
+#### Phase 3: Job 集成
+- [ ] 支持 `options.job` 参数
+- [ ] 实现 job 状态更新（raw → pending → processed）
+- [ ] 实现 `addJobToDailyJobs()` 集成
+- [ ] 实现 `addTimelineEvent()` 集成
+- [ ] 实现 `addTaskToPlatformIndex()` 集成
+
+#### Phase 4: 视频转写集成
+- [ ] 集成 `video_transcriber`
+- [ ] 实现视频转 wav
+- [ ] 实现远端上传
+- [ ] 实现转写结果回收
+- [ ] 实现转写文件重命名（统一命名）
+
+#### Phase 5: 测试
+- [ ] 测试纯推文抓取（无视频）
+- [ ] 测试视频推文抓取（有视频）
+- [ ] 测试通过 info-grab-manager add
+- [ ] 测试通过 info-grab-manager process
+- [ ] 验证文件落盘
+- [ ] 验证状态更新
+- [ ] 验证转写流程（视频任务）
+
+### 验收标准
+
+1. [ ] 两个接口都通（推文 + 视频）
+2. [ ] 能通过 info-grab-manager `add` 添加任务
+3. [ ] 能通过 info-grab-manager `process` / `process-all` 处理
+4. [ ] 针对视频任务：自动转 wav → 发远端 → 回收转写
+5. [ ] daily_jobs.json 正确记录 content_type
+6. [ ] 文件正确保存到对应目录
